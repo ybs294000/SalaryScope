@@ -1,0 +1,25 @@
+[theme]
+base                     = "dark"
+
+# Primary accent — teal/mint
+primaryColor             = "#00C9A7"
+
+# App & sidebar backgrounds
+backgroundColor          = "#0A0F14"
+secondaryBackgroundColor = "#111920"
+
+# Text
+textColor                = "#D6F5F0"
+
+# Font
+font                     = "sans serif"
+
+
+[browser]
+gatherUsageStats         = false
+
+
+[server]
+headless                 = true
+enableCORS               = false
+enableXsrfProtection     = true

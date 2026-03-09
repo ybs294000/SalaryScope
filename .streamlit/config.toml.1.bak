@@ -1,0 +1,25 @@
+[theme]
+base                = "dark"
+
+# Primary accent — indigo blue (buttons, sliders, active elements)
+primaryColor        = "#4F6AF5"
+
+# App & sidebar backgrounds
+backgroundColor     = "#0F1117"
+secondaryBackgroundColor = "#1A1D2E"
+
+# Text
+textColor           = "#E8EAFF"
+
+# Font
+font                = "sans serif"
+
+
+[browser]
+gatherUsageStats    = false
+
+
+[server]
+headless            = true
+enableCORS          = false
+enableXsrfProtection = true
