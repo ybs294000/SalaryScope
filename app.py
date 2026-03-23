@@ -3500,8 +3500,6 @@ with tab_objects[about_index]:
     st.markdown("### User Account System")
     st.markdown("""
 - Username/password registration and login
-- Google OAuth sign-in support
-- Secure session management via encrypted cookies (24-hour expiry)
 - Token hashing (SHA-256) with bcrypt password verification
 - SQLite-backed user, session, and prediction database
     """)
@@ -3546,6 +3544,4 @@ with tab_objects[about_index]:
 - Requests (Cloud file retrieval)
 - SQLite (user, session, and prediction storage)
 - bcrypt (password hashing)
-- streamlit-cookies-manager (encrypted session cookies)
-- streamlit-oauth (Google OAuth 2.0)
     """)
