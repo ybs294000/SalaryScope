@@ -9,9 +9,9 @@ from streamlit_cookies_manager import EncryptedCookieManager
 
 # Google OAuth imports
 from streamlit_oauth import OAuth2Component
-import os
+#import os
 import requests
-import base64
+#import base64
 
 def get_base64_image(path):
     with open(path, "rb") as img:
@@ -132,63 +132,63 @@ def get_current_url():
 # GOOGLE LOGIN (SECURE INTEGRATION)
 # ---------------------------------------------------
 
-def google_login():
-    google_icon = get_base64_image("static/google_icon.png")
-    label = f"""
-    <img src="data:image/png;base64,{google_icon}" width="18" style="vertical-align:middle; margin-right:8px;">
-    Sign in with Google
-    """
-    CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID")
-    CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET")
+#def google_login():
+#    google_icon = get_base64_image("static/google_icon.png")
+#    label = f"""
+#    <img src="data:image/png;base64,{google_icon}" width="18" style="vertical-align:middle; margin-right:8px;">
+#    Sign in with Google
+#    """
+#    CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID")
+#    CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET")
 
-    if not CLIENT_ID or not CLIENT_SECRET:
-        return
+#    if not CLIENT_ID or not CLIENT_SECRET:
+#        return
 
-    redirect_uri =  get_current_url()
+#    redirect_uri =  get_current_url()
 
-    oauth2 = OAuth2Component(
-        CLIENT_ID,
-        CLIENT_SECRET,
-        "https://accounts.google.com/o/oauth2/v2/auth",
-        "https://oauth2.googleapis.com/token",
-        "https://www.googleapis.com/oauth2/v1/userinfo",
-    )
-
-    result = oauth2.authorize_button(
-        "Sign in with Google",
-        redirect_uri=get_current_url(),
-        scope="openid email profile",
-        key="google_login",
-    )
-
-    if result and "token" in result:
-
-        token = result["token"]["access_token"]
-
-        userinfo = requests.get(
-            "https://www.googleapis.com/oauth2/v1/userinfo",
-            params={"access_token": token}
-        ).json()
-
-        email = userinfo.get("email")
-
-        if email:
-
-            user = get_user(email)
-
-            if user is None:
-                create_user(email, email, b"oauth_account")
-
-            # Use SAME secure session system
-            create_login_session(email)
-
-            st.session_state.logged_in = True
-            st.session_state.username = email
-
-            st.success(f"Logged in as {email}")
-            st.rerun()
-
-
+#    oauth2 = OAuth2Component(
+#        CLIENT_ID,
+#        CLIENT_SECRET,
+#        "https://accounts.google.com/o/oauth2/v2/auth",
+#        "https://oauth2.googleapis.com/token",
+#        "https://www.googleapis.com/oauth2/v1/userinfo",
+#    )
+#
+#    result = oauth2.authorize_button(
+#        "Sign in with Google",
+#        redirect_uri=get_current_url(),
+#        scope="openid email profile",
+#        key="google_login",
+#    )
+#
+#    if result and "token" in result:
+#
+#        token = result["token"]["access_token"]
+#
+#        userinfo = requests.get(
+#            "https://www.googleapis.com/oauth2/v1/userinfo",
+#            params={"access_token": token}
+#        ).json()
+#
+#        email = userinfo.get("email")
+#
+#        if email:
+#
+#            user = get_user(email)
+#
+#            if user is None:
+#                create_user(email, email, b"oauth_account")
+#
+#            # Use SAME secure session system
+#            create_login_session(email)
+#
+#            st.session_state.logged_in = True
+#            st.session_state.username = email
+#
+#            st.success(f"Logged in as {email}")
+#            st.rerun()
+#
+#
 # ---------------------------------------------------
 # LOGIN UI
 # ---------------------------------------------------
@@ -228,9 +228,9 @@ def login_ui():
             st.error("Incorrect password")
 
     st.divider()
-    st.markdown("**Or sign in using Google**")
+#    st.markdown("**Or sign in using Google**")
 
-    google_login()
+#    google_login()
 
     return False
 
