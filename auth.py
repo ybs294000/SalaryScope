@@ -156,7 +156,8 @@ def google_login():
 
     result = oauth2.authorize_button(
         "Sign in with Google",
-        redirect_uri=redirect_uri,
+        #redirect_uri=redirect_uri,
+        redirect_uri="https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app",
         scope="openid email profile",
         key="google_login",
     )
