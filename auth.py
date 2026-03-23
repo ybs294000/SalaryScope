@@ -2,8 +2,84 @@ import streamlit as st
 import hashlib
 import secrets
 import bcrypt
+import urllib.parse
 from datetime import datetime, timedelta
 import requests as http_requests
+
+# ---------------------------------------------------
+# GOOGLE OAUTH CALLBACK HANDLER
+# Runs at module level so ?code= is always caught on
+# every page load, regardless of sidebar tab state.
+# ---------------------------------------------------
+
+def _handle_google_callback():
+    params = st.query_params
+    code = params.get("code")
+    error = params.get("error")
+
+    if error:
+        st.query_params.clear()
+        return
+
+    if not code:
+        return
+
+    CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID", "")
+    CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET", "")
+    redirect_uri = "https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app"
+
+    if not CLIENT_ID or not CLIENT_SECRET:
+        st.query_params.clear()
+        return
+
+    token_resp = http_requests.post(
+        "https://oauth2.googleapis.com/token",
+        data={
+            "code": code,
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        },
+    )
+    token_data = token_resp.json()
+    access_token = token_data.get("access_token")
+
+    st.query_params.clear()
+
+    if not access_token:
+        st.error("Google login failed: could not obtain access token.")
+        return
+
+    userinfo = http_requests.get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        headers={"Authorization": f"Bearer {access_token}"},
+    ).json()
+
+    email = userinfo.get("email")
+    name = userinfo.get("name", email)
+
+    if not email:
+        st.error("Could not retrieve email from Google.")
+        return
+
+    expiry = datetime.utcnow() + timedelta(hours=24)
+    st.session_state.logged_in = True
+    st.session_state.username = email
+    st.session_state._firebase_id_token = access_token
+    st.session_state._session_expiry = expiry
+
+    try:
+        from database import ensure_firestore_user
+        ensure_firestore_user(email, email)
+    except Exception:
+        pass
+
+    st.success(f"Welcome, {name}!")
+    st.rerun()
+
+
+_handle_google_callback()
 
 # ---------------------------------------------------
 # FIREBASE CONFIG
@@ -204,59 +280,8 @@ def google_login():
 
     redirect_uri = get_current_url()
 
-    # ── Step 2: handle the callback ──
-    params = st.query_params
-    code = params.get("code")
-    error = params.get("error")
-
-    if error:
-        st.error(f"Google login cancelled or failed: {error}")
-        st.query_params.clear()
-        return
-
-    if code:
-        token_resp = http_requests.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "code": code,
-                "client_id": CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
-                "redirect_uri": redirect_uri,
-                "grant_type": "authorization_code",
-            },
-        )
-        token_data = token_resp.json()
-        access_token = token_data.get("access_token")
-
-        if not access_token:
-            st.error("Google login failed: could not obtain access token.")
-            st.query_params.clear()
-            return
-
-        userinfo = http_requests.get(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"},
-        ).json()
-
-        email = userinfo.get("email")
-        name = userinfo.get("name", email)
-
-        if not email:
-            st.error("Could not retrieve email from Google.")
-            st.query_params.clear()
-            return
-
-        st.query_params.clear()
-        _set_logged_in(email, id_token=access_token)
-
-        from database import ensure_firestore_user
-        ensure_firestore_user(email, email)
-
-        st.success(f"Welcome, {name}!")
-        st.rerun()
-        return
-
-    # ── Step 1: render the Sign in with Google button ──
+    # ── Render the Sign in with Google button ──
+    # (Callback is handled at module level in _handle_google_callback)
     auth_params = urllib.parse.urlencode({
         "client_id": CLIENT_ID,
         "redirect_uri": redirect_uri,
