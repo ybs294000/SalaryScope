@@ -174,26 +174,26 @@ def get_current_url():
 
 def get_oauth_redirect_uri():
     """
-    streamlit-oauth expects the redirect URI to point at the
-    component's own iframe handler, not the app root.
-    This must exactly match one of the URIs registered in
-    Google Cloud Console → OAuth 2.0 Client.
+    streamlit-oauth sends the plain app root as redirect_uri.
+    This must be registered exactly in Google Cloud Console.
     """
-    base = get_current_url().rstrip("/")
-    return f"{base}/component/streamlit_oauth.authorize_button/index.html"
+    return get_current_url()
 
 
 # ---------------------------------------------------
 # GOOGLE OAuth LOGIN
+# Direct redirect flow — works reliably on Streamlit Cloud.
+# streamlit-oauth iframes cause redirect_uri_mismatch errors.
 # ---------------------------------------------------
 
 def google_login():
-    """Google OAuth via streamlit_oauth — sets session state on success."""
-    try:
-        from streamlit_oauth import OAuth2Component
-    except ImportError:
-        st.warning("streamlit-oauth not installed. Google login unavailable.")
-        return
+    """
+    Google OAuth via direct browser redirect flow.
+    Step 1: Button sends user to Google consent page.
+    Step 2: Google redirects back with ?code=... in URL.
+    Step 3: Exchange code for token, fetch userinfo, log in.
+    """
+    import urllib.parse
 
     CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID")
     CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET")
@@ -202,51 +202,94 @@ def google_login():
         st.warning("Google OAuth credentials not configured in secrets.")
         return
 
-    oauth2 = OAuth2Component(
-        CLIENT_ID,
-        CLIENT_SECRET,
-        "https://accounts.google.com/o/oauth2/v2/auth",
-        "https://oauth2.googleapis.com/token",
-        "https://oauth2.googleapis.com/token",
-        "https://oauth2.googleapis.com/revoke",
-    )
+    redirect_uri = get_current_url()
 
-    result = oauth2.authorize_button(
-        name="Sign in with Google",
-        redirect_uri=get_oauth_redirect_uri(),
-        scope="openid email profile",
-        key="google_oauth_btn",
-        icon="https://www.google.com/favicon.ico",
-        use_container_width=True,
-    )
+    # ── Step 2: handle the callback ──
+    params = st.query_params
+    code = params.get("code")
+    error = params.get("error")
 
-    if result and "token" in result:
-        access_token = result["token"].get("access_token")
+    if error:
+        st.error(f"Google login cancelled or failed: {error}")
+        st.query_params.clear()
+        return
+
+    if code:
+        token_resp = http_requests.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+        token_data = token_resp.json()
+        access_token = token_data.get("access_token")
+
         if not access_token:
-            st.error("Google login failed: no access token returned.")
+            st.error("Google login failed: could not obtain access token.")
+            st.query_params.clear()
             return
 
-        userinfo_resp = http_requests.get(
+        userinfo = http_requests.get(
             "https://www.googleapis.com/oauth2/v3/userinfo",
             headers={"Authorization": f"Bearer {access_token}"},
-        )
-        userinfo = userinfo_resp.json()
+        ).json()
+
         email = userinfo.get("email")
         name = userinfo.get("name", email)
 
         if not email:
             st.error("Could not retrieve email from Google.")
+            st.query_params.clear()
             return
 
-        # Use a sentinel token for Google OAuth sessions
-        _set_logged_in(email, id_token="google_oauth")
+        st.query_params.clear()
+        _set_logged_in(email, id_token=access_token)
 
-        # Ensure Firestore user record exists
         from database import ensure_firestore_user
         ensure_firestore_user(email, email)
 
         st.success(f"Welcome, {name}!")
         st.rerun()
+        return
+
+    # ── Step 1: render the Sign in with Google button ──
+    auth_params = urllib.parse.urlencode({
+        "client_id": CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "online",
+        "prompt": "select_account",
+    })
+    google_auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{auth_params}"
+
+    st.markdown(
+        f"""
+        <a href="{google_auth_url}" target="_self" style="
+            display: inline-block;
+            width: 100%;
+            padding: 10px 16px;
+            background: #ffffff;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            box-sizing: border-box;
+        ">
+            <img src="https://www.google.com/favicon.ico" width="18"
+                 style="vertical-align:middle; margin-right:8px;">
+            Sign in with Google
+        </a>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ---------------------------------------------------
