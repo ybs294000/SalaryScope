@@ -127,7 +127,7 @@ def destroy_session():
 #    except Exception:
 #        return "http://localhost:8501"
 def get_current_url():
-    return "https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app/oauth2callback"
+    return "https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app"
 # ---------------------------------------------------
 # GOOGLE LOGIN (SECURE INTEGRATION)
 # ---------------------------------------------------
