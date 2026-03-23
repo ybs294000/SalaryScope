@@ -827,29 +827,15 @@ def app2_validate_bulk_dataframe(bulk_df):
 
 # ==================================================
 # LOGIN SESSION STATE
-# --------------------------------------------------
-# IMPORTANT: These keys must be initialised with
-# `not in` guards BEFORE calling get_logged_in_user().
-# Never unconditionally overwrite them at module level —
-# on Streamlit Cloud all users share the same Python
-# process, so overwriting would bleed one user's state
-# into another user's fresh browser session.
 # ==================================================
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "username" not in st.session_state:
-    st.session_state.username = None
-
-# Now verify — get_logged_in_user() checks st.session_state
-# internally and is safe to call on every rerun.
 username = get_logged_in_user()
+
 if username:
-    # Legitimate authenticated session for this browser tab
     st.session_state.logged_in = True
     st.session_state.username = username
-elif not st.session_state.logged_in:
-    # No active session for this browser tab — ensure clean state
+else:
+    st.session_state.logged_in = False
     st.session_state.username = None
 # ==================================================
 # SESSION STATE
@@ -3513,10 +3499,9 @@ with tab_objects[about_index]:
 
     st.markdown("### User Account System")
     st.markdown("""
-- Firebase Authentication (email/password + Google OAuth)
-- Per-browser session isolation via `st.session_state` — no shared state across users
-- Firestore-backed user profiles and prediction history
-- Session expiry enforced client-side (24-hour window)
+- Username/password registration and login
+- Token hashing (SHA-256) with bcrypt password verification
+- SQLite-backed user, session, and prediction database
     """)
 
     st.divider()
