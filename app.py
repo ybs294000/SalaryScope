@@ -35,7 +35,7 @@ if "db_initialized" not in st.session_state:
 st.set_page_config(
     page_title="SalaryScope",
     layout="wide",
-    page_icon="SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png"
+    #page_icon="SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png"
 )
 # ============================================================
 # DARK PROFESSIONAL — App 1 Theme (applied globally)
@@ -1389,20 +1389,20 @@ with tab_objects[0]:
                 pred_log_a2 = app2_model.predict(input_df_a2)[0]
                 prediction_a2 = float(np.expm1(pred_log_a2))
 
-                xgb_model_a2 = app2_model.named_steps["model"]
-                booster_a2 = xgb_model_a2.get_booster()
-                processed_input_a2 = app2_model.named_steps["preprocessor"].transform(input_df_a2)
-                import xgboost as xgb
-                dmatrix_a2 = xgb.DMatrix(processed_input_a2)
-                tree_predictions_log_a2 = []
-                for i in range(xgb_model_a2.n_estimators):
-                    tree_pred = booster_a2.predict(dmatrix_a2, iteration_range=(i, i + 1))[0]
-                    tree_predictions_log_a2.append(tree_pred)
-                tree_predictions_log_a2 = np.array(tree_predictions_log_a2)
-                tree_predictions_usd_a2 = np.expm1(tree_predictions_log_a2)
-                std_dev_a2 = float(np.std(tree_predictions_usd_a2))
-                lower_bound_a2 = max(prediction_a2 - 1.96 * std_dev_a2, 0.0)
-                upper_bound_a2 = prediction_a2 + 1.96 * std_dev_a2
+                #xgb_model_a2 = app2_model.named_steps["model"]
+                #booster_a2 = xgb_model_a2.get_booster()
+                #processed_input_a2 = app2_model.named_steps["preprocessor"].transform(input_df_a2)
+                #import xgboost as xgb
+                #dmatrix_a2 = xgb.DMatrix(processed_input_a2)
+                #tree_predictions_log_a2 = []
+                #for i in range(xgb_model_a2.n_estimators):
+                #    tree_pred = booster_a2.predict(dmatrix_a2, iteration_range=(i, i + 1))[0]
+                #    tree_predictions_log_a2.append(tree_pred)
+                #tree_predictions_log_a2 = np.array(tree_predictions_log_a2)
+                #tree_predictions_usd_a2 = np.expm1(tree_predictions_log_a2)
+                #std_dev_a2 = float(np.std(tree_predictions_usd_a2))
+                #lower_bound_a2 = max(prediction_a2 - 1.96 * std_dev_a2, 0.0)
+                #upper_bound_a2 = prediction_a2 + 1.96 * std_dev_a2
 
                 if employee_residence == "Other":
                     res_display = "Other"
@@ -1435,8 +1435,8 @@ with tab_objects[0]:
                 st.session_state.manual_prediction_result = {
                     "input_details": input_details_a2,
                     "prediction": prediction_a2,
-                    "lower_bound": lower_bound_a2,
-                    "upper_bound": upper_bound_a2
+                  #  "lower_bound": lower_bound_a2,
+                  #  "upper_bound": upper_bound_a2
                 }
                 st.session_state.manual_pdf_buffer = None
                 st.session_state.manual_pdf_ready = False
@@ -1450,8 +1450,8 @@ with tab_objects[0]:
         if st.session_state.manual_prediction_result is not None:
             data_a2 = st.session_state.manual_prediction_result
             prediction_a2 = data_a2["prediction"]
-            lower_bound_a2 = data_a2["lower_bound"]
-            upper_bound_a2 = data_a2["upper_bound"]
+            #lower_bound_a2 = data_a2["lower_bound"]
+            #upper_bound_a2 = data_a2["upper_bound"]
             monthly_a2 = prediction_a2 / 12
             weekly_a2 = prediction_a2 / 52
             hourly_a2 = prediction_a2 / (52 * 40)
@@ -1481,19 +1481,20 @@ with tab_objects[0]:
             col_m2.metric("Monthly (Approx)", f"${monthly_a2:,.2f}")
             col_w2.metric("Weekly (Approx)", f"${weekly_a2:,.2f}")
             col_h2.metric("Hourly (Approx, 40hr/week)", f"${hourly_a2:,.2f}")
-            st.divider()
-            st.markdown("<h3 style='text-align: center;'>Likely Salary Range (95% Confidence Interval)</h3>", unsafe_allow_html=True)
-            col_low2, col_high2 = st.columns(2)
-            col_low2.metric("Lower Estimate", f"${lower_bound_a2:,.2f}")
-            col_high2.metric("Upper Estimate", f"${upper_bound_a2:,.2f}")
-            st.caption("Range estimated using variation across individual trees in the XGBoost model.")
+            #st.divider()
+            #st.markdown("<h3 style='text-align: center;'>Likely Salary Range (95% Confidence Interval)</h3>", unsafe_allow_html=True)
+            #col_low2, col_high2 = st.columns(2)
+            #col_low2.metric("Lower Estimate", f"${lower_bound_a2:,.2f}")
+            #col_high2.metric("Upper Estimate", f"${upper_bound_a2:,.2f}")
+            #st.caption("Range estimated using variation across individual trees in the XGBoost model.")
             st.divider()
 
             # ---------------- PDF GENERATION ----------------
             if st.button("Prepare PDF Report", width='stretch'):
                 st.session_state.manual_pdf_buffer = app2_generate_manual_pdf(
                     data_a2["input_details"], data_a2["prediction"],
-                    data_a2["lower_bound"], data_a2["upper_bound"], app2_metadata
+                    #data_a2["lower_bound"], data_a2["upper_bound"], 
+                    None, None, app2_metadata
                 )
                 st.session_state.manual_pdf_ready = True
                 st.success("PDF is ready for download.")
