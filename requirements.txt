@@ -14,4 +14,3 @@ streamlit-cookies-manager
 streamlit-oauth
 matplotlib
 statsmodels
-
