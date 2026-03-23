@@ -170,6 +170,19 @@ def hash_token(token: str):
 
 def get_current_url():
     return "https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app"
+
+
+def get_oauth_redirect_uri():
+    """
+    streamlit-oauth expects the redirect URI to point at the
+    component's own iframe handler, not the app root.
+    This must exactly match one of the URIs registered in
+    Google Cloud Console → OAuth 2.0 Client.
+    """
+    base = get_current_url().rstrip("/")
+    return f"{base}/component/streamlit_oauth.authorize_button/index.html"
+
+
 # ---------------------------------------------------
 # GOOGLE OAuth LOGIN
 # ---------------------------------------------------
@@ -182,16 +195,16 @@ def google_login():
         st.warning("streamlit-oauth not installed. Google login unavailable.")
         return
 
-    GOOGLE_CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID")
-    GOOGLE_CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET")
+    CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID")
+    CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET")
 
-    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+    if not CLIENT_ID or not CLIENT_SECRET:
         st.warning("Google OAuth credentials not configured in secrets.")
         return
 
     oauth2 = OAuth2Component(
-        GOOGLE_CLIENT_ID,
-        GOOGLE_CLIENT_SECRET,
+        CLIENT_ID,
+        CLIENT_SECRET,
         "https://accounts.google.com/o/oauth2/v2/auth",
         "https://oauth2.googleapis.com/token",
         "https://oauth2.googleapis.com/token",
@@ -200,7 +213,7 @@ def google_login():
 
     result = oauth2.authorize_button(
         name="Sign in with Google",
-        redirect_uri=get_current_url(),
+        redirect_uri=get_oauth_redirect_uri(),
         scope="openid email profile",
         key="google_oauth_btn",
         icon="https://www.google.com/favicon.ico",
