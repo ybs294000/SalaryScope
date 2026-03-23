@@ -138,8 +138,8 @@ def google_login():
     <img src="data:image/png;base64,{google_icon}" width="18" style="vertical-align:middle; margin-right:8px;">
     Sign in with Google
     """
-    CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-    CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+    CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID")
+    CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET")
 
     if not CLIENT_ID or not CLIENT_SECRET:
         return
