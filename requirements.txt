@@ -14,3 +14,5 @@ streamlit-cookies-manager
 streamlit-oauth
 matplotlib
 statsmodels
+firebase-admin
+google-cloud-firestore
