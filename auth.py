@@ -120,12 +120,14 @@ def destroy_session():
 # GET CURRENT APP URL (DYNAMIC REDIRECT)
 # ---------------------------------------------------
 
+#def get_current_url():
+#    try:
+#        # Streamlit provides full current URL (localhost / IP / cloud)
+#        return st.get_url()
+#    except Exception:
+#        return "http://localhost:8501"
 def get_current_url():
-    try:
-        # Streamlit provides full current URL (localhost / IP / cloud)
-        return st.get_url()
-    except Exception:
-        return "http://localhost:8501"
+    return "https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app/"
 # ---------------------------------------------------
 # GOOGLE LOGIN (SECURE INTEGRATION)
 # ---------------------------------------------------
