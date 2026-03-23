@@ -127,7 +127,7 @@ def destroy_session():
 #    except Exception:
 #        return "http://localhost:8501"
 def get_current_url():
-    return "https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app/"
+    return "https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app/oauth2callback"
 # ---------------------------------------------------
 # GOOGLE LOGIN (SECURE INTEGRATION)
 # ---------------------------------------------------
@@ -156,8 +156,7 @@ def google_login():
 
     result = oauth2.authorize_button(
         "Sign in with Google",
-        #redirect_uri=redirect_uri,
-        redirect_uri="https://salaryscope-fhl4g2mmypfzrhwhvjcj6o.streamlit.app",
+        redirect_uri=get_current_url(),
         scope="openid email profile",
         key="google_login",
     )
