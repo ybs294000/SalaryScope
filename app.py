@@ -995,42 +995,37 @@ for key in [
 # ==================================================
 # TITLE
 # ==================================================
-
 # ==================================================
-# HEADER (same method as reference app)
+# HEADER (FINAL — HTML + img src, no base64)
 # ==================================================
-
-header_cols = st.columns([0.1, 0.6, 0.3])
-
-with header_cols[0]:
-    st.image("SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png", width=54)
-
-with header_cols[1]:
-    st.markdown(
-        """
-        <span style="
-            color:#fff;
-            font-size:2.2rem;
-            font-weight:800;
-            letter-spacing:1px;
-        ">
-            <span style="color:#5fa8f6;">Salary</span>Scope
-        </span>
-        """,
-        unsafe_allow_html=True
-    )
-
-with header_cols[2]:
-    # keep empty OR later add icons/profile
-    pass
 
 st.markdown(
     """
+    <div style="
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        gap:14px;
+        margin-bottom:6px;
+    ">
+        <img src="SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png" width="70">
+        
+        <h1 style="
+            margin:0;
+            background: linear-gradient(135deg, #4F8EF7 0%, #60A5FA 50%, #93C5FD 100%);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        ">
+            SalaryScope
+        </h1>
+    </div>
+
     <h3 style="
         text-align:center;
         color:#9BA3B0;
         font-weight:400;
-        margin-top:10px;
+        margin-top:0;
     ">
         Salary Prediction System using Machine Learning
     </h3>
