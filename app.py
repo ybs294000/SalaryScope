@@ -995,39 +995,35 @@ for key in [
 # ==================================================
 # TITLE
 # ==================================================
-header_left, header_center, header_right = st.columns([1, 6, 1])
+header_cols = st.columns([0.15, 0.7, 0.15])
 
-with header_center:
-    logo_col, title_col = st.columns([1, 8])
+with header_cols[1]:
+    inner_cols = st.columns([1, 6])
 
-    with logo_col:
-        st.image("SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png", width=70)
-    with title_col:
+    with inner_cols[0]:
+        st.image("SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png", width=55)
+
+    with inner_cols[1]:
         st.markdown(
             """
-            <h1 style="
-                margin:0;
-                background: linear-gradient(135deg, #4F8EF7 0%, #60A5FA 50%, #93C5FD 100%);
-                -webkit-background-clip:text;
-                -webkit-text-fill-color:transparent;
-                background-clip:text;
-                display:flex;
-                align-items:center;
-                height:70px;
-            ">
-                SalaryScope
-            </h1>
+            <div style="display:flex; align-items:center; height:55px;">
+                <h1 style="
+                    margin:0;
+                    background: linear-gradient(135deg, #4F8EF7 0%, #60A5FA 50%, #93C5FD 100%);
+                    -webkit-background-clip:text;
+                    -webkit-text-fill-color:transparent;
+                    background-clip:text;
+                ">
+                    SalaryScope
+                </h1>
+            </div>
             """,
             unsafe_allow_html=True
         )
+
 st.markdown(
     """
-    <h3 style="
-        text-align:center;
-        color:#9BA3B0;
-        font-weight:400;
-        margin-top:0;
-    ">
+    <h3 style="text-align:center; color:#9BA3B0; font-weight:400; margin-top:0;">
         Salary Prediction System using Machine Learning
     </h3>
     """,
