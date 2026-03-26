@@ -1,0 +1,37 @@
+[theme]
+# ─────────────────────────────────────────────────────────────────
+# SalaryScope — Dual-Theme Config
+#
+# The app manages ALL visual styling through st.markdown() CSS for
+# both dark and light modes. This file only sets Streamlit's native
+# widget baseline so it does not clash with either custom theme.
+#
+# Rule: dark base keeps native widgets from flashing light on load.
+# The custom CSS then takes over completely for both themes.
+# ─────────────────────────────────────────────────────────────────
+
+base                     = "dark"
+
+# Matches the dark theme's --primary (#3E7DE0) — used by Streamlit
+# for focus rings, sliders, and checkbox ticks before CSS loads.
+primaryColor             = "#3E7DE0"
+
+# Matches --bg-main of the dark theme exactly.
+backgroundColor          = "#0C1118"
+
+# Matches --bg-card / --bg-input of the dark theme.
+secondaryBackgroundColor = "#141A22"
+
+# Matches --text-main of the dark theme.
+textColor                = "#E6EAF0"
+
+# Sans-serif keeps Inter/Segoe UI (set in CSS) as the effective font.
+font                     = "sans serif"
+
+[browser]
+gatherUsageStats         = false
+
+[server]
+headless                 = true
+#enableCORS               = true
+#enableXsrfProtection     = true
