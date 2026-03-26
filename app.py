@@ -390,7 +390,7 @@ def get_base64_image(path):
     with open(path, "rb") as img:
         return base64.b64encode(img.read()).decode()
 
-logo_base64 = get_base64_image("SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png")
+logo_base64 = get_base64_image("static/android-chrome-512x512.png")
 # ================================================
 #
 # ================================================
