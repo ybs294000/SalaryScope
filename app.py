@@ -995,30 +995,45 @@ for key in [
 # ==================================================
 # TITLE
 # ==================================================
+header_left, header_center, header_right = st.columns([1, 6, 1])
 
-st.markdown(
-    f"""
-    <div style="display:flex;
-                justify-content:center;
+with header_center:
+    logo_col, title_col = st.columns([1, 8])
+
+    with logo_col:
+        st.image("SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png", width=70)
+    with title_col:
+        st.markdown(
+            """
+            <h1 style="
+                margin:0;
+                background: linear-gradient(135deg, #4F8EF7 0%, #60A5FA 50%, #93C5FD 100%);
+                -webkit-background-clip:text;
+                -webkit-text-fill-color:transparent;
+                background-clip:text;
+                display:flex;
                 align-items:center;
-                gap:14px;
-                margin-bottom:6px;">
-        <img src="data:image/png;base64,{logo_base64}" width="70">
-                <h1 style="margin:0;
-                   background: linear-gradient(135deg, #4F8EF7 0%, #60A5FA 50%, #93C5FD 100%);
-                   -webkit-background-clip:text;
-                   -webkit-text-fill-color:transparent;
-                   background-clip:text;">
-            SalaryScope
-        </h1>
-    </div>
-
-    <h3 style="text-align:center; color:#9BA3B0; font-weight:400; margin-top:0;">
+                height:70px;
+            ">
+                SalaryScope
+            </h1>
+            """,
+            unsafe_allow_html=True
+        )
+st.markdown(
+    """
+    <h3 style="
+        text-align:center;
+        color:#9BA3B0;
+        font-weight:400;
+        margin-top:0;
+    ">
         Salary Prediction System using Machine Learning
     </h3>
     """,
     unsafe_allow_html=True
 )
+
 st.divider()
 
 #-------------OLD OG START------------------------#
