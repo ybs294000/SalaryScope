@@ -408,7 +408,7 @@ logo_base64 = get_base64_image("static/android-chrome-512x512.png")
 # ================================================
 @st.cache_data
 def prepare_app1_dropdowns(df_app1):
-    job_titles = sorted(df_app1["Job Title"].dropna().value_counts().head(40).index.tolist())
+    job_titles = sorted(df_app1["Job Title"].dropna().value_counts().head(70).index.tolist())
     countries = sorted(df_app1["Country"].dropna().unique().tolist())
     if "Other" not in countries:
         countries.append("Other")
@@ -419,7 +419,7 @@ def prepare_app1_dropdowns(df_app1):
 # =================================================
 @st.cache_data
 def prepare_app2_dropdowns(df_app2):
-    job_titles = sorted(df_app2["job_title"].dropna().value_counts().head(50).index.tolist())
+    job_titles = sorted(df_app2["job_title"].dropna().value_counts().head(92).index.tolist())
     countries = sorted(df_app2["company_location"].dropna().unique().tolist())
     if "Other" not in countries:
         countries.append("Other")
@@ -2994,6 +2994,40 @@ with tab_objects[1]:
 
             st.divider()
 
+            # -------------------------------------------------------
+            # SALARY NEGOTIATION TIPS (APP 1 - RESUME)
+            # -------------------------------------------------------
+
+            st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
+
+            negotiation_tips_a1_r = generate_negotiation_tips_app1(
+                prediction=prediction,
+                salary_band_label=salary_band_label,
+                career_stage_label=career_stage_label,
+                experience=data["input_details"]["Years of Experience"],
+                job_title=data["input_details"]["Job Title"],
+                country=data["input_details"]["Country"],
+                senior=1 if data["input_details"]["Senior Position"] == "Yes" else 0,
+                market_type="info"
+            )
+
+            render_negotiation_tips(negotiation_tips_a1_r)
+
+            st.caption("These tips help you approach salary discussions effectively based on your experience and role.")
+
+            st.divider()
+
+            # -------------------------------------------------------
+            # CAREER RECOMMENDATIONS (APP 1 - RESUME)
+            # -------------------------------------------------------
+
+            insights_a1_r = generate_insights_app1(data["input_details"])
+
+            st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
+
+            render_recommendations(insights_a1_r["recommendations"])
+
+            st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
             # ---------------- PDF GENERATION ----------------
             st.divider()
 

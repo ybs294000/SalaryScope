@@ -36,14 +36,36 @@ SKILL_PATTERNS = [
     "regression", "classification", "clustering", "feature engineering",
     "model deployment", "api", "rest api", "firebase"
 ]
+# ADD BELOW EXISTING SKILL_PATTERNS
+SKILL_PATTERNS += [
+    # Data / Engineering
+    "spark", "hadoop", "airflow", "kafka", "dbt",
 
+    # APIs / Backend
+    "fastapi", "graphql",
+
+    # MLOps / Deployment
+    "mlops", "kubectl", "kubernetes",
+
+    # Version / Tools
+    "gitlab", "bitbucket",
+
+    # BI / Analytics
+    "looker", "sas",
+
+    # General
+    "problem solving", "data structures", "algorithms"
+]
 JOB_TITLE_ALIASES = {
+    "data engineer": [
+        "data engineer"
+    ],
     "software engineer": [
         "software engineer", "software developer", "developer", "application developer"
     ],
     "data scientist": [
         "data scientist", "machine learning engineer", "ml engineer", "ai engineer"
-    ],
+    ],    
     "data analyst": [
         "data analyst", "business analyst", "analytics analyst"
     ],
@@ -82,6 +104,141 @@ JOB_TITLE_ALIASES = {
     ]
 }
 
+# ============================
+# APP1 DATASET EXPANSION (SAFE ADDITIONS ONLY)
+# ============================
+
+JOB_TITLE_ALIASES.update({
+
+    # --------------------------------
+    # EXTENDED SOFTWARE / TECH
+    # --------------------------------
+    "software engineer": [
+        "software engineer manager",
+        "software architect",
+        "principal engineer",
+        "software manager"
+    ],
+
+    "web developer": [
+        "full stack engineer",
+        "front end developer",
+        "back end developer",
+        "frontend developer",
+        "backend developer"
+    ],
+
+    "data scientist": [
+        "research scientist",
+        "scientist",
+        "principal scientist"
+    ],
+
+    "data analyst": [
+        "operations analyst",
+        "business operations analyst"
+    ],
+
+    "devops engineer": [
+        "it manager",
+        "it consultant",
+        "it support specialist",
+        "technical support specialist",
+        "help desk analyst"
+    ],
+
+    "network engineer": [
+        "it support"
+    ],
+
+    # --------------------------------
+    # MANAGEMENT EXTENSIONS
+    # --------------------------------
+    "project manager": [
+        "project engineer",
+        "project coordinator"
+    ],
+
+    "product manager": [
+        "product development manager"
+    ],
+
+    # --------------------------------
+    # MARKETING (NEW CATEGORY)
+    # --------------------------------
+    "marketing manager": [
+        "marketing manager",
+        "marketing coordinator",
+        "marketing analyst",
+        "marketing director",
+        "digital marketing manager",
+        "content marketing manager",
+        "product marketing manager",
+        "marketing specialist",
+        "digital marketing specialist",
+        "social media manager",
+        "social media specialist",
+        "public relations manager",
+        "advertising coordinator"
+    ],
+
+    # --------------------------------
+    # SALES (NEW CATEGORY)
+    # --------------------------------
+    "sales representative": [
+        "sales associate",
+        "sales representative",
+        "sales executive"
+    ],
+
+    "sales manager": [
+        "sales manager",
+        "sales director",
+        "sales operations manager"
+    ],
+
+    # --------------------------------
+    # HR (NEW CATEGORY)
+    # --------------------------------
+    "hr manager": [
+        "human resources manager",
+        "hr manager",
+        "hr generalist",
+        "hr coordinator",
+        "human resources coordinator",
+        "human resources specialist",
+        "recruiter",
+        "technical recruiter"
+    ],
+
+    # --------------------------------
+    # FINANCE (NEW CATEGORY)
+    # --------------------------------
+    "financial analyst": [
+        "financial analyst",
+        "financial manager",
+        "financial advisor",
+        "accountant"
+    ],
+
+    # --------------------------------
+    # DESIGN EXTENSIONS
+    # --------------------------------
+    "ui ux designer": [
+        "ux researcher",
+        "designer"
+    ],
+
+    # --------------------------------
+    # OPERATIONS / GENERAL
+    # --------------------------------
+    "project manager": [
+        "operations manager",
+        "operations coordinator",
+        "operations director"
+    ]
+
+})
 EDUCATION_PATTERNS = {
     3: [
         "phd", "ph.d", "doctorate", "doctoral"
@@ -285,6 +442,7 @@ def extract_job_title(text: str, allowed_job_titles: List[str]) -> Tuple[str, st
         return "Software Engineer" if "Software Engineer" in allowed_job_titles else allowed_job_titles[0], "default"
 
     canonical_rank_map = {
+        "data engineer": "Data Engineer",
         "software engineer": "Software Engineer",
         "data scientist": "Data Scientist",
         "data analyst": "Data Analyst",
@@ -300,6 +458,14 @@ def extract_job_title(text: str, allowed_job_titles: List[str]) -> Tuple[str, st
         "cloud engineer": "Cloud Engineer",
         "qa engineer": "QA Engineer"
     }
+
+    canonical_rank_map.update({
+        "marketing manager": "Marketing Manager",
+        "sales manager": "Sales Manager",
+        "sales representative": "Sales Representative",
+        "hr manager": "Human Resources Manager",
+        "financial analyst": "Financial Analyst"
+    })
 
     for raw_phrase, canonical in candidates:
         mapped = canonical_rank_map.get(canonical, canonical.title())
