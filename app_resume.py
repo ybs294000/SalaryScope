@@ -368,7 +368,7 @@ def load_app2_dataset():
 # ==================================================
 @st.cache_data
 def load_association_rules_a1_v2():
-    df = pd.read_csv("data/association_rules_v5.csv")
+    df = pd.read_csv("data/association_rules.csv")
 
     def parse_itemset(val):
         parsed = ast.literal_eval(val)
