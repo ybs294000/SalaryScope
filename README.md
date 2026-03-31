@@ -25,9 +25,9 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes model analytics, dataset exploration, user authentication, and PDF report generation.
 
 ---
-## :link: Live Demo
+## Live Demo
 
-SalaryScope is deployed on Streamlit Cloud with two versions:
+:link: SalaryScope is deployed on Streamlit Cloud with two versions:
 
 - **Main App (Lightweight Version):**  
   https://salaryscope-fhl4g2mmypfzrhwhrvcj6o.streamlit.app/
