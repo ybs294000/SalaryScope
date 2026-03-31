@@ -287,7 +287,7 @@ client_x509_cert_url = "your_cert_url"
 | Security | bcrypt |
 | Deployment | Streamlit Cloud |
 | Language | Python 3.9+ |
-
+| NLP | spaCy, Regex, PhraseMatcher |
 ---
 
 ## Authentication & Database
