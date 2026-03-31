@@ -2078,13 +2078,17 @@ with tab_objects[1]:
     if not IS_APP1:
         st.info(
             "This deployment includes the lightweight version of SalaryScope. "
-            "The full version with resume-based NLP prediction is available in `app_resume.py` in the project repository."
+            "Resume Analysis feature is available in the full version of the app: "
+            "`https://salaryscope-app.streamlit.app/` due to memory constraints in the deployed version."
+            "The full version with resume-based NLP prediction is also available in `app_resume.py` in the project repository."
         )
     else:
         st.info(
             "This deployment includes the lightweight version of SalaryScope. "
-            "The full version with resume-based NLP prediction is available in `app_resume.py` in the project repository."
-        )
+            "Resume Analysis feature is available in the full version of the app: "
+            "`https://salaryscope-app.streamlit.app/` due to memory constraints in the deployed version."
+            "The full version with resume-based NLP prediction is also available in `app_resume.py` in the project repository."
+        )       
 # ==================================================
 # TAB 3: BULK SCANNER
 # ==================================================
