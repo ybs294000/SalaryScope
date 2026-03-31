@@ -264,11 +264,11 @@ client_x509_cert_url = "your_cert_url"
 ### Model 1 Dataset (`Salary.csv`)
 - General salary dataset covering multiple industries and countries
 - Features: Age, Years of Experience, Education Level, Senior, Gender, Job Title, Country, Salary
-
+- Source: [Kaggle — Salary by Job Title and Country](https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country)
 ### Model 2 Dataset (`ds_salaries.csv`)
 - Data science and AI/ML specific salary dataset
 - Features: experience_level, employment_type, job_title, employee_residence, remote_ratio, company_location, company_size, salary_in_usd
-- Source: [Kaggle — Data Science Job Salaries](https://www.kaggle.com/datasets/ruchi798/data-science-job-salaries)
+- Source: [Kaggle — Data Science Job Salaries](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
 
 ---
 
