@@ -48,6 +48,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
   - Country
 - Resume scoring based on experience, education, and skills
 - Uses spaCy NLP + rule-based extraction (regex + phrase matching)
+- Handles unstructured resume text and converts it into structured model-ready input
 - Extracted features are passed to the selected model for prediction
 - Supports both Model 1 and Model 2 pipelines
 
