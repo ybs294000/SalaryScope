@@ -2070,17 +2070,28 @@ with tab_objects[0]:
 with tab_objects[1]:
 
     st.header("Resume Analysis")
+
     st.caption(
         "Upload a resume (PDF) to extract structured features using NLP. "
-        "You can review and edit the extracted details before proceeding to salary prediction."
+        "Extracted details can be reviewed and edited before salary prediction."
     )
 
+    st.divider()
+
     st.info(
-        "Note: This deployed version of SalaryScope is a lightweight build due to memory limitations.\n\n"
-        "The Resume Analysis feature (NLP-based extraction and prediction) is available in the full version at salaryscope-app.streamlit.app:\n"
-        "[Open Full App](https://salaryscope-app.streamlit.app/)\n\n"
-        "You can also run the complete implementation locally using `app_resume.py` from the project repository."
-    )    
+        "This deployment is a lightweight version of SalaryScope with limited features.\n\n"
+        "For full Resume Analysis (NLP-based extraction and prediction), use the complete application:"
+    )
+
+    # Clickable button (better for demo)
+    st.link_button(
+        "Open Full SalaryScope App",
+        "https://salaryscope-app.streamlit.app/"
+    )
+
+    st.caption(
+        "Alternatively, the full version can be run locally using `app_resume.py` from the project repository."
+    )  
 # ==================================================
 # TAB 3: BULK SCANNER
 # ==================================================
