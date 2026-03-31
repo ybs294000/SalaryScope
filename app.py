@@ -2073,26 +2073,28 @@ with tab_objects[1]:
 
     st.caption(
         "Upload a resume (PDF) to extract structured features using NLP. "
-        "Extracted details can be reviewed and edited before salary prediction."
+        "Extracted information can be reviewed and edited before performing salary prediction."
     )
+
+    st.divider()
 
     st.info(
-        "This deployment is a lightweight version of SalaryScope with limited features.\n\n"
-        "For full Resume Analysis (NLP-based extraction and prediction), use the complete application below."
+        "This deployment represents a lightweight version of SalaryScope due to resource constraints. "
+        "Resume Analysis (NLP-based extraction and prediction) is available in the full application."
     )
 
-    # Button (good for demo interaction)
+    # Strong CTA
     st.link_button(
-        "Open Full SalaryScope App",
+        "Access Full SalaryScope Application",
         "https://salaryscope-app.streamlit.app/"
     )
 
-    # Visible + copyable URL (important for credibility)
+    # Visible + copyable URL (important for evaluation credibility)
     st.code("https://salaryscope-app.streamlit.app/", language="text")
 
     st.write(
-        "Note: The full version can also be run locally using `app_resume.py` from the project repository."
-    )  
+        "The complete version can also be executed locally using `app_resume.py` from the project repository."
+    )
 # ==================================================
 # TAB 3: BULK SCANNER
 # ==================================================
