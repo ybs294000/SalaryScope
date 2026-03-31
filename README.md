@@ -268,7 +268,7 @@ client_x509_cert_url = "your_cert_url"
 ### Model 2 Dataset (`ds_salaries.csv`)
 - Data science and AI/ML specific salary dataset
 - Features: experience_level, employment_type, job_title, employee_residence, remote_ratio, company_location, company_size, salary_in_usd
-- Source: [Kaggle — Data Science Job Salaries](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
+- Source: [Kaggle — Data Science Salaries 2023 💸](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
 
 ---
 
