@@ -279,3 +279,130 @@ def generate_insights_app2(input_dict, prediction, df_app2, title_features_func)
         "market_type": market_type,
         "recommendations": recs,
     }
+
+# =========================================================
+# APP 1 — JOB GROUP CLASSIFICATION (REUSED LOGIC)
+# =========================================================
+
+def classify_job_group_app1(job_title):
+    if not isinstance(job_title, str):
+        return "Operations"
+
+    t = job_title.lower()
+
+    if any(x in t for x in ["engineer", "developer", "data", "scientist", "analyst", "architect", "it", "network"]):
+        return "Tech"
+    elif any(x in t for x in ["manager", "director", "vp", "chief", "ceo"]):
+        return "Management"
+    elif any(x in t for x in ["marketing", "sales", "brand", "advertising"]):
+        return "Marketing_Sales"
+    elif any(x in t for x in ["hr", "human resources", "recruit"]):
+        return "HR"
+    elif any(x in t for x in ["finance", "financial", "account"]):
+        return "Finance"
+    elif any(x in t for x in ["designer", "ux", "graphic", "creative"]):
+        return "Design"
+    else:
+        return "Operations"
+
+
+# =========================================================
+# APP 1 — EXPERIENCE CATEGORY
+# =========================================================
+
+def get_experience_category_app1(experience):
+    if experience <= 2:
+        return "Entry"
+    elif experience <= 5:
+        return "Mid"
+    else:
+        return "Senior"
+
+
+# =========================================================
+# APP 1 — RECOMMENDATIONS
+# =========================================================
+
+APP1_BASE_RECS = {
+    "Entry": [
+        "Focus on building strong foundational skills",
+        "Work on real-world projects to gain experience",
+        "Explore different roles to identify your strengths"
+    ],
+    "Mid": [
+        "Strengthen problem-solving and domain expertise",
+        "Take ownership of projects and responsibilities",
+        "Start building a strong professional profile"
+    ],
+    "Senior": [
+        "Focus on leadership and decision-making skills",
+        "Mentor junior professionals",
+        "Drive impact through strategic contributions"
+    ],
+}
+
+APP1_ROLE_RECS = {
+    "Tech": "Improve technical depth and stay updated with new technologies",
+    "Management": "Strengthen leadership and team management skills",
+    "Marketing_Sales": "Improve communication and market understanding",
+    "HR": "Focus on people management and organizational development",
+    "Finance": "Enhance financial analysis and strategic planning skills",
+    "Design": "Build strong design thinking and creativity",
+    "Operations": "Improve process efficiency and execution skills",
+}
+
+
+def generate_recommendations_app1(job_group, experience_category, senior):
+
+    recs = list(APP1_BASE_RECS.get(experience_category, [
+        "Improve your skills and experience",
+        "Work on practical projects"
+    ]))
+
+    role_tip = APP1_ROLE_RECS.get(job_group)
+    if role_tip:
+        recs.append(role_tip)
+
+    # Senior-specific boost
+    if senior == 1:
+        recs.append("Negotiate for leadership responsibilities and higher compensation")
+
+    return recs
+
+
+# =========================================================
+# APP 1 — MAIN FUNCTION
+# =========================================================
+
+def generate_insights_app1(input_dict):
+
+    job_title = input_dict["Job Title"]
+    experience = input_dict["Years of Experience"]
+    senior = 1 if input_dict["Senior Position"] == "Yes" else 0
+
+    # classification
+    job_group = classify_job_group_app1(job_title)
+    exp_category = get_experience_category_app1(experience)
+
+    # recommendations
+    recs = generate_recommendations_app1(job_group, exp_category, senior)
+
+    return {
+        "job_group": job_group,
+        "experience_category": exp_category,
+        "recommendations": recs
+    }
+
+# =========================================================
+# RENDER FUNCTION (MATCHES NEGOTIATION TIPS STYLE)
+# =========================================================
+
+def render_recommendations(recommendations):
+    import streamlit as st
+
+    if not recommendations:
+        st.info("No recommendations available.")
+        return
+
+    for r in recommendations:
+        st.markdown(f"- {r}")

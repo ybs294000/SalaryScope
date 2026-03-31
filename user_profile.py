@@ -85,6 +85,12 @@ def show_profile():
         x="DateTime",
         y="Predicted Salary",
         color="Model",
+        color_discrete_map={
+            "Random Forest":        "#4F8EF7",  
+            "XGBoost":              "#38BDF8",
+            "Random Forest Resume": "#818CF8",  
+            "XGBoost Resume":       "#A78BFA",  
+        }
     )
 
     fig.update_traces(

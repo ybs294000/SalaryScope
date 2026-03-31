@@ -29,7 +29,7 @@ textColor                = "#E6EAF0"
 font                     = "sans serif"
 
 [browser]
-gatherUsageStats         = false
+gatherUsageStats         = true
 
 [server]
 headless                 = true
