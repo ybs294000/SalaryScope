@@ -2074,7 +2074,7 @@ with tab_objects[1]:
         "The extracted fields can be reviewed and edited before salary prediction."
     )
 
-    if not IS_APP1:
+    if IS_APP1:
         st.info(
             "This deployment includes the lightweight version of SalaryScope. "
             "The full version with resume-based NLP prediction is available in the project repository."
