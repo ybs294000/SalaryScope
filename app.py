@@ -2080,7 +2080,7 @@ with tab_objects[1]:
 
     st.info(
         "This deployment represents a lightweight version of SalaryScope due to resource constraints. "
-        "Resume Analysis (NLP-based extraction and prediction) is available in the full application."
+        "Resume Analysis (NLP-based extraction and prediction) is available in the full application at https://salaryscope-app.streamlit.app."
     )
 
     # Strong CTA
@@ -2088,9 +2088,6 @@ with tab_objects[1]:
         "Access Full SalaryScope Application",
         "https://salaryscope-app.streamlit.app/"
     )
-
-    # Visible + copyable URL (important for evaluation credibility)
-    st.code("https://salaryscope-app.streamlit.app/", language="text")
 
     st.write(
         "The complete version can also be executed locally using `app_resume.py` from the project repository."
