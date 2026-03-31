@@ -2090,7 +2090,7 @@ with tab_objects[1]:
     # Visible + copyable URL (important for credibility)
     st.code("https://salaryscope-app.streamlit.app/", language="text")
 
-    st.caption(
+    st.write(
         "Note: The full version can also be run locally using `app_resume.py` from the project repository."
     )  
 # ==================================================
