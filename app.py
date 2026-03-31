@@ -3789,7 +3789,14 @@ with tab_objects[2]:
             st.subheader("Model Comparison")
             comparison_df_a2 = pd.DataFrame(APP2_MODEL_COMPARISON)
             comparison_df_a2 = comparison_df_a2.sort_values(by="Test R²", ascending=False)
-            st.dataframe(comparison_df_a2, width='stretch')
+            def highlight_selected_a2(row):
+                if "XGBoost (Raw + Engineered)" in row["Model"]:
+                    return ["background-color: #1E2A3A"] * len(row)
+                return [""] * len(row)
+
+            styled_model_df_a2 = comparison_df_a2.style.apply(highlight_selected_a2, axis=1)
+
+            st.dataframe(styled_model_df_a2, width='stretch')
 
             st.divider()
             st.subheader("Model Performance Comparison")
