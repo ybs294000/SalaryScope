@@ -18,3 +18,5 @@ matplotlib
 statsmodels
 firebase-admin
 google-cloud-firestore
+spacy
+pdfplumber
