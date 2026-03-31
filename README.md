@@ -37,6 +37,20 @@ SalaryScope allows users to predict salaries either manually (one record at a ti
 - Confidence interval estimation based on residual standard deviation — Model 1
 - Downloadable PDF prediction report
 
+### Resume-Based Prediction (NLP)
+
+- Upload a resume (PDF format)
+- Automatic extraction of:
+  - Job Title
+  - Years of Experience
+  - Skills
+  - Education Level
+  - Country
+- Resume scoring based on experience, education, and skills
+- Uses spaCy NLP + rule-based extraction (regex + phrase matching)
+- Extracted features are passed to the selected model for prediction
+- Supports both Model 1 and Model 2 pipelines
+
 ### Batch Prediction
 - Upload files in CSV, XLSX, JSON, or SQL format
 - Upload via public Google Drive link
