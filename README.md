@@ -27,12 +27,18 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 ---
 ## Live Demo
 
-The lightweight version of SalaryScope is deployed on Streamlit Cloud:
+SalaryScope is deployed on Streamlit Cloud with two versions:
 
-:link: https://salaryscope-fhl4g2mmypfzrhwhrvcj6o.streamlit.app/
+- **Main App (Lightweight Version):**  
+  https://salaryscope-fhl4g2mmypfzrhwhrvcj6o.streamlit.app/
 
-> Note: The deployed version is optimized for cloud resource constraints.  
-> The full version with resume-based NLP prediction is available in `app_resume.py` in this repository.
+- **Full App (Includes Resume NLP):**  
+  https://salaryscope-app.streamlit.app/
+
+### Notes
+- The full version includes **spaCy-based NLP resume parsing**, which is more resource-intensive.
+- Due to Streamlit Cloud free-tier limitations (memory and performance), the applications are deployed separately for stability.
+- The repository contains the complete implementation, including the resume-based pipeline (`app_resume.py`).
 
 ## Features
 
