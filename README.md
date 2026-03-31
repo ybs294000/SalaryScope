@@ -233,6 +233,15 @@ client_x509_cert_url = "your_cert_url"
 3. Fill in the required fields and click **Predict Salary**
 4. View results, insights, and optionally download a PDF report
 
+### Resume Prediction
+
+1. Navigate to the Resume tab
+2. Upload a PDF resume
+3. Click Extract to parse resume details
+4. Review extracted features (skills, experience, job role, etc.)
+5. Run prediction using selected model
+6. View results and download PDF report
+
 ### Batch Prediction
 1. Download the sample file from the **Batch Prediction** tab to see the required format
 2. Upload your file (CSV, XLSX, JSON, or SQL) or paste a public Google Drive link
