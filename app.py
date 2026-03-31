@@ -2080,17 +2080,20 @@ with tab_objects[1]:
 
     st.info(
         "This deployment is a lightweight version of SalaryScope with limited features.\n\n"
-        "For full Resume Analysis (NLP-based extraction and prediction), use the complete application:"
+        "For full Resume Analysis (NLP-based extraction and prediction), use the complete application below."
     )
 
-    # Clickable button (better for demo)
+    # Button (good for demo interaction)
     st.link_button(
         "Open Full SalaryScope App",
         "https://salaryscope-app.streamlit.app/"
     )
 
+    # Visible + copyable URL (important for credibility)
+    st.code("https://salaryscope-app.streamlit.app/", language="text")
+
     st.caption(
-        "Alternatively, the full version can be run locally using `app_resume.py` from the project repository."
+        "Note: The full version can also be run locally using `app_resume.py` from the project repository."
     )  
 # ==================================================
 # TAB 3: BULK SCANNER
