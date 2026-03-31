@@ -2076,8 +2076,6 @@ with tab_objects[1]:
         "Extracted information can be reviewed and edited before performing salary prediction."
     )
 
-    st.divider()
-
     st.info(
         "This deployment represents a lightweight version of SalaryScope due to resource constraints. "
         "Resume Analysis (NLP-based extraction and prediction) is available in the full application at https://salaryscope-app.streamlit.app."
