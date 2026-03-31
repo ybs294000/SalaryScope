@@ -21,7 +21,13 @@ from pdf_utils_new import (
     app2_generate_bulk_pdf,
     cached_app2_model_analytics_pdf
 )
-from insights_engine import generate_insights_app2
+from insights_engine import generate_insights_app2, generate_insights_app1, render_recommendations
+from negotiation_tips import (
+    generate_negotiation_tips_app1,
+    generate_negotiation_tips_app2,
+    render_negotiation_tips
+)
+
 #--------------------OLD OG START----------------------#
 #from auth import login_ui, register_ui, logout, get_logged_in_user
 #from user_profile import show_profile
@@ -48,6 +54,9 @@ st.set_page_config(
     layout="wide",
     #page_icon="SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png"
 )
+# ============================================================
+# DARK PROFESSIONAL — App 1 Theme (applied globally)
+# ============================================================
 # ============================================================
 # DARK PROFESSIONAL — App 1 Theme (applied globally)
 # ============================================================
@@ -241,6 +250,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
 # --------------------------------------------------
 # Custom Plotly Theme (from App 1)
 # --------------------------------------------------
@@ -360,9 +370,16 @@ def load_app2_dataset():
 # ==================================================
 # ASSOCIATION RULES LOADING (APP 1)
 # ==================================================
+#@st.cache_data
+#def load_association_rules_a1():
+#    df = pd.read_csv("data/association_rules_v4.csv")
+#    df["antecedents"] = df["antecedents"].apply(ast.literal_eval)
+#    df["consequents"] = df["consequents"].apply(ast.literal_eval)
+#    return df
+
 @st.cache_data
-def load_association_rules_a1():
-    df = pd.read_csv("data/association_rules_v4.csv")
+def load_association_rules_a1_v2():
+    df = pd.read_csv("data/association_rules_v5.csv")
     df["antecedents"] = df["antecedents"].apply(ast.literal_eval)
     df["consequents"] = df["consequents"].apply(ast.literal_eval)
     return df
@@ -430,7 +447,8 @@ def prepare_app2_dropdowns(df_app2):
 
 df_app1 = load_app1_dataset()
 df_app2 = load_app2_dataset()
-assoc_rules_a1 = load_association_rules_a1()
+#assoc_rules_a1 = load_association_rules_a1()
+assoc_rules_a1_v2 = load_association_rules_a1_v2()
 
 # App1 dropdown options
 app1_job_titles, app1_countries, app1_genders = prepare_app1_dropdowns(df_app1)
@@ -765,6 +783,76 @@ def get_plot_df(df, max_points=2000):
     if len(df) > max_points:
         return df.sample(max_points, random_state=42)
     return df
+
+# --------------------------------------------------
+#
+# --------------------------------------------------
+# ==================================================
+# REUSABLE LEADERBOARD GENERATOR
+# ==================================================
+def generate_salary_leaderboard(
+    df,
+    job_col,
+    salary_col,
+    min_records=2,
+    top_n=10
+):
+    """
+    Generates ranked leaderboard of job roles by average salary.
+
+    Parameters:
+    - df: DataFrame
+    - job_col: column name for job titles
+    - salary_col: column name for salary
+    - min_records: minimum records per job (for reliability)
+    - top_n: number of top rows to return
+    """
+
+    # Group and aggregate
+    role_avg = (
+        df.groupby(job_col, as_index=False)
+        .agg(
+            Average_Salary_USD=(salary_col, "mean"),
+            Records=(job_col, "count")
+        )
+    )
+
+    # Reliability filter
+    role_avg = role_avg[role_avg["Records"] >= min_records].copy()
+
+    # Sort descending
+    role_avg = role_avg.sort_values(
+        by="Average_Salary_USD",
+        ascending=False
+    ).reset_index(drop=True)
+
+    # Rank
+    role_avg["Rank"] = range(1, len(role_avg) + 1)
+
+    # Medal logic
+    def add_medal(rank, title):
+        if rank == 1:
+            return f"{title} 🥇"
+        elif rank == 2:
+            return f"{title} 🥈"
+        elif rank == 3:
+            return f"{title} 🥉"
+        return title
+
+    role_avg["Job Title"] = role_avg.apply(
+        lambda row: add_medal(row["Rank"], row[job_col]),
+        axis=1
+    )
+
+    # Final formatting
+    leaderboard = role_avg.head(top_n).copy()
+    leaderboard["Average Salary (USD)"] = leaderboard["Average_Salary_USD"].round(2)
+
+    leaderboard = leaderboard[
+        ["Rank", "Job Title", "Average Salary (USD)", "Records"]
+    ]
+
+    return leaderboard
 # ==================================================
 # ASSOCIATION FUNCTIONS (APP 1)
 # ==================================================
@@ -855,6 +943,219 @@ def get_assoc_insight_a1(education, experience, country, job_group, predicted_sa
             )
 
     return "No strong association pattern was found for the selected combination."
+
+
+# ==================================================
+# ASSOCIATION FUNCTIONS (IMPROVED VERSION)
+# ==================================================
+def get_assoc_insight_a1_improved(
+    education,
+    experience,
+    country,
+    job_group,
+    predicted_salary,
+    rules,
+    years_experience=None   # <-- NEW (pass from app.py)
+):
+
+    def extract_salary(consequents):
+        for item in consequents:
+            if "Salary_Category" in item:
+                return item.replace("Salary_Category_", "")
+        return None
+
+    def clean(x):
+        return (
+            x.replace("Education_Category_", "")
+             .replace("Experience_Category_", "")
+             .replace("Salary_Category_", "")
+             .replace("Job_Group_", "")
+             .replace("Country_", "")
+             .replace("_", " ")
+        )
+
+    # ============================================
+    # SANITY FILTER
+    # ============================================
+    def is_unrealistic(rule_salary, experience, country, education):
+
+        if rule_salary == "Low":
+            if experience == "Senior" and (country == "USA" or education in ["Master", "PhD"]):
+                return True
+
+        if rule_salary == "Low" and experience == "Mid":
+            return True
+
+        return False
+
+    # ============================================
+    # STEP 1: FILTER RULES
+    # ============================================
+    candidates = []
+
+    for _, row in rules.iterrows():
+
+        if row["confidence"] < 0.5:
+            continue
+        if row["lift"] < 1.1:
+            continue
+        if row["support"] < 0.02:
+            continue
+
+        ant = list(row["antecedents"])
+
+        match_score = 0
+
+        if f"Education_Category_{education}" in ant:
+            match_score += 1
+        if f"Experience_Category_{experience}" in ant:
+            match_score += 2
+        if f"Job_Group_{job_group}" in ant:
+            match_score += 1
+        if country != "Other" and f"Country_{country}" in ant:
+            match_score += 1
+
+        if match_score > 0:
+            candidates.append((row, match_score))
+
+    if not candidates:
+        return (
+            f"Based on general dataset patterns, {clean(experience)}-level professionals "
+            f"show structured salary progression trends depending on role and experience."
+        )
+
+    # ============================================
+    # STEP 2: BEST RULE
+    # ============================================
+    best_rule = None
+    best_score = -1
+
+    for row, match_score in candidates:
+
+        score = (
+            match_score * 3 +
+            row["confidence"] * 2 +
+            row["lift"] * 1.5 +
+            row["support"] -
+            (0.1 * len(row["antecedents"]))
+        )
+
+        if score > best_score:
+            best_score = score
+            best_rule = row
+
+    # ============================================
+    # STEP 3: ALIGN WITH MODEL
+    # ============================================
+    aligned_rule = None
+    best_align_score = -1
+
+    for row, match_score in candidates:
+
+        cons = list(row["consequents"])
+        salary = extract_salary(cons)
+
+        if salary != predicted_salary:
+            continue
+
+        if is_unrealistic(salary, experience, country, education):
+            continue
+
+        score = (
+            match_score * 3 +
+            row["confidence"] * 2 +
+            row["lift"] +
+            row["support"]
+        )
+
+        if score > best_align_score:
+            best_align_score = score
+            aligned_rule = row
+
+    # ============================================
+    # STEP 4: FINAL RULE
+    # ============================================
+    if extract_salary(best_rule["consequents"]) == predicted_salary:
+        final_rule = best_rule
+    elif aligned_rule is not None:
+        final_rule = aligned_rule
+    else:
+        final_rule = best_rule
+
+    # ============================================
+    # STEP 5: FINAL SANITY CHECK
+    # ============================================
+    final_salary = extract_salary(final_rule["consequents"])
+
+    contradiction = is_unrealistic(final_salary, experience, country, education)
+
+    # ADD THIS CONDITION
+    if experience == "Senior" and final_salary != "High":
+        contradiction = True
+
+    if contradiction:
+
+        fallback_rule = None
+        fallback_score = -1
+
+        for row, match_score in candidates:
+
+            cons = list(row["consequents"])
+            salary = extract_salary(cons)
+
+            if is_unrealistic(salary, experience, country, education):
+                continue
+
+            score = (
+                match_score * 3 +
+                row["confidence"] * 2 +
+                row["lift"] +
+                row["support"]
+            )
+
+            if score > fallback_score:
+                fallback_score = score
+                fallback_rule = row
+
+        if fallback_rule is not None:
+            final_rule = fallback_rule
+            final_salary = extract_salary(final_rule["consequents"])
+            contradiction = False
+        else:
+            return (
+                f"{clean(experience)}-level professionals in {clean(job_group)} roles "
+                f"typically follow structured salary progression patterns influenced by experience and role."
+            )
+
+    # ============================================
+    # STEP 6: OUTPUT (NUMERIC FIX HERE)
+    # ============================================
+    cons = list(final_rule["consequents"])
+    rule_salary = extract_salary(cons)
+    conf = round(final_rule["confidence"] * 100, 2)
+
+    # CORE IDEA IMPLEMENTED HERE
+    if contradiction and years_experience is not None:
+        exp_text = f"professionals with {years_experience:.1f} years of experience"
+    else:
+        exp_text = f"{clean(experience)}-level professionals"
+
+    job_text = clean(job_group)
+    edu_text = clean(education)
+    country_text = clean(country) if country != "Other" else None
+
+    if country_text:
+        return (
+            f"{exp_text} in {job_text} roles with {edu_text} education "
+            f"in {country_text} are most frequently associated with {clean(rule_salary)} salary ranges. "
+            f"The rule shows a confidence of {conf}%, indicating a strong and reliable relationship."
+        )
+    else:
+        return (
+            f"{exp_text} in {job_text} roles with {edu_text} education "
+            f"are most frequently associated with {clean(rule_salary)} salary ranges. "
+            f"The rule shows a confidence of {conf}%, indicating a strong and reliable relationship."
+        )
 # --------------------------------------------------
 # Helper: Convert Google Drive link
 # --------------------------------------------------
@@ -1241,7 +1542,8 @@ with tab_objects[0]:
         col1, col2 = st.columns(2)
 
         with col1:
-            age = st.number_input("Age", 18, 70, 30)
+            #age = st.number_input("Age", 18, 70, 30)
+            age = st.slider("Age", 18, 70, 30)
             #education = st.selectbox(
             #    "Education Level",
             #    [0, 1, 2, 3],
@@ -1274,7 +1576,8 @@ with tab_objects[0]:
                 index=app1_job_titles.index(default_job_a1) if default_job_a1 in app1_job_titles else 0
             )
         with col2:
-            experience = st.number_input("Years of Experience", 0.0, 40.0, 5.0, 0.5)
+            #experience = st.number_input("Years of Experience", 0.0, 40.0, 5.0, 0.5)
+            experience = st.slider("Years of Experience", 0.0, 40.0, 5.0, step=0.5)
             senior = st.selectbox(
                 "Senior Position",
                 [0, 1],
@@ -1350,13 +1653,22 @@ with tab_objects[0]:
                     return "Operations"
             job_group_a1 = map_job_group_a1(job_title)
 
-            assoc_text_a1 = get_assoc_insight_a1(
+            #assoc_text_a1 = get_assoc_insight_a1(
+            #    education_cat_a1,
+            #    exp_cat_a1,
+            #    country,
+            #    job_group_a1,
+            #    band_pred,
+            #    assoc_rules_a1
+            #)
+            assoc_text_a1_improved = get_assoc_insight_a1_improved(
                 education_cat_a1,
                 exp_cat_a1,
                 country,
                 job_group_a1,
                 band_pred,
-                assoc_rules_a1
+                assoc_rules_a1_v2,
+                years_experience=experience   # <-- REQUIRED
             )
 
             # Predict cluster
@@ -1401,7 +1713,9 @@ with tab_objects[0]:
                 "upper_bound": upper_bound,
                 "salary_band_label": salary_band_label,
                 "career_stage_label": career_stage_label,
-                "assoc_text_a1": assoc_text_a1
+                #"assoc_text_a1": assoc_text_a1,
+                "assoc_text_a1_improved" : assoc_text_a1_improved
+
             }
             st.session_state.manual_pdf_buffer = None
             st.session_state.manual_pdf_ready = False
@@ -1413,7 +1727,8 @@ with tab_objects[0]:
             upper_bound = data["upper_bound"]
             salary_band_label = data["salary_band_label"]
             career_stage_label = data["career_stage_label"]
-            assoc_text_a1 = data["assoc_text_a1"]
+            #assoc_text_a1 = data["assoc_text_a1"]
+            assoc_text_a1_improved = data["assoc_text_a1_improved"]
             monthly = prediction / 12
             weekly = prediction / 52
             hourly = prediction / (52 * 40)
@@ -1516,6 +1831,22 @@ with tab_objects[0]:
 #            )
 
             st.markdown("<h3 style='text-align: center;'>Pattern Insight (Data Association)</h3>", unsafe_allow_html=True)
+            #st.markdown(
+            #    f"""
+            #    <div style='
+            #        background: linear-gradient(135deg, #1B2A45 0%, #1B2230 100%);
+            #        border: 1px solid #F59E0B;
+            #        border-left: 5px solid #F59E0B;
+            #        border-radius: 10px;
+            #        padding: 24px 32px;
+            #        margin: 8px auto;
+            #    '>
+            #        <div style='color: #E5E7EB; font-size: 18px; font-weight: 500; line-height: 1.4;'>{assoc_text_a1}</div>
+            #    </div>
+            #    """,
+            #    unsafe_allow_html=True
+            #)
+            #st.divider()
             st.markdown(
                 f"""
                 <div style='
@@ -1526,18 +1857,17 @@ with tab_objects[0]:
                     padding: 24px 32px;
                     margin: 8px auto;
                 '>
-                    <div style='color: #E5E7EB; font-size: 18px; font-weight: 500; line-height: 1.4;'>{assoc_text_a1}</div>
+                    <div style='color: #E5E7EB; font-size: 18px; font-weight: 500; line-height: 1.4;'>{assoc_text_a1_improved}</div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+
             st.caption(
                 "This insight is generated using association rule mining (Apriori algorithm), "
                 "identifying patterns between education, experience, job role, and salary levels."
             )
-
-            st.divider()
-
+            st.caption("Note: This insight reflects general dataset patterns and may not always align with individual predictions.")
             #----#
             st.divider()
             st.markdown("<h3 style='text-align: center;'>Breakdown (Approximate)</h3>", unsafe_allow_html=True)
@@ -1553,7 +1883,31 @@ with tab_objects[0]:
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
             st.divider()
 
+            #st.divider()
+            st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
+
+            negotiation_tips_a1 = generate_negotiation_tips_app1(
+                prediction=prediction,
+                salary_band_label=salary_band_label,
+                career_stage_label=career_stage_label,
+                experience=data["input_details"]["Years of Experience"],
+                job_title=data["input_details"]["Job Title"],
+                country=data["input_details"]["Country"],
+                senior=1 if data["input_details"]["Senior Position"] == "Yes" else 0,
+                market_type="info"   # Model 1 has no market comparison, so default to info
+            )
+
+            render_negotiation_tips(negotiation_tips_a1)
+
+            st.caption("These tips help you approach salary discussions effectively based on your experience and role.")
+
+            st.divider()
+            insights_a1 = generate_insights_app1(data["input_details"])
+            st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
+            render_recommendations(insights_a1["recommendations"])
+            st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
             # ---------------- PDF GENERATION ----------------
+            st.divider()
             if st.button("Prepare PDF Report", width='stretch'):
                 st.session_state.manual_pdf_buffer = app1_generate_manual_pdf(
                     data["input_details"], data["prediction"], data["lower_bound"], data["upper_bound"],
@@ -1795,7 +2149,7 @@ with tab_objects[0]:
             # SMART INSIGHTS (APP 2)
             # =====================================================
 
-            insights = generate_insights_app2(
+            insights_a2 = generate_insights_app2(
                 data_a2["input_details"],
                 prediction_a2,
                 df_app2,
@@ -1803,24 +2157,42 @@ with tab_objects[0]:
             )
 
             #st.divider()
-            st.subheader("Smart Insights")
+            #st.subheader("Smart Insights")
 
             # Market message
-            if insights["market_type"] == "success":
-                st.success(insights["market_msg"])
-            elif insights["market_type"] == "warning":
-                st.warning(insights["market_msg"])
-            else:
-                st.info(insights["market_msg"])
+            #if insights["market_type"] == "success":
+            #    st.success(insights["market_msg"])
+            #elif insights["market_type"] == "warning":
+            #    st.warning(insights["market_msg"])
+            #else:
+            #    st.info(insights["market_msg"])
 
             # Role
-            st.caption(f"Domain Focus: {insights['role']}")
+            #st.caption(f"Domain Focus: {insights['role']}")
+
+            st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
+
+            negotiation_tips_a2 = generate_negotiation_tips_app2(
+                prediction=prediction_a2,
+                experience_label=data_a2["input_details"]["Experience Level"],
+                company_size_label=data_a2["input_details"]["Company Size"],
+                remote_label=data_a2["input_details"]["Work Mode"],
+                company_location=company_location,   # ISO code already available in scope
+                job_title=data_a2["input_details"]["Job Title"],
+                role=insights_a2["role"],               # already computed from insights_engine
+                market_type=insights_a2["market_type"]  # already computed from insights_engine
+            )
+
+            render_negotiation_tips(negotiation_tips_a2)
+            st.caption("These tips help you approach salary discussions effectively based on your experience and role.")
 
             # Recommendations
-            st.subheader("How to Increase Your Salary")
-            for r in insights["recommendations"]:
-                st.write(f"- {r}")
+            st.divider()
+            st.subheader("Career Recommendations")
+            render_recommendations(insights_a2["recommendations"])
+            st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
             # ---------------- PDF GENERATION ----------------
+            st.divider()
             if st.button("Prepare PDF Report", width='stretch'):
                 st.session_state.manual_pdf_buffer = app2_generate_manual_pdf(
                     data_a2["input_details"], data_a2["prediction"],
@@ -2149,6 +2521,42 @@ with tab_objects[1]:
                 col_c1.metric("Entry Stage", entry_count)
                 col_c2.metric("Growth Stage", growth_count)
                 col_c3.metric("Leadership Stage", leader_count)
+
+
+                st.divider()
+                st.subheader("Top Salary Leaderboard")
+
+                leaderboard_a1 = generate_salary_leaderboard(
+                    df=analytics_df_a1,
+                    job_col="Job Title",
+                    salary_col="Predicted Annual Salary"
+                )
+                st.dataframe(
+                    leaderboard_a1,
+                    use_container_width=True,
+                    hide_index=True
+                )
+                st.caption("Ranks job roles by average predicted salary in the uploaded batch. Top 3 roles are highlighted with medals.")
+                st.divider()
+                st.subheader("Salary Leaderboard Visualization")
+
+                fig_lb_a1 = px.bar(
+                    leaderboard_a1.head(10),
+                    x="Average Salary (USD)",
+                    y="Job Title",
+                    orientation="h",
+                    title="Top Roles by Salary",
+                    #color="Average Salary (USD)",
+                    color_discrete_sequence=["#60A5FA"]
+                    #color_continuous_scale=[
+                    #    [0.0, "#60A5FA"],
+                    #    [0.5, "#4F8EF7"],
+                    #    [1.0, "#818CF8"]
+                    #]
+                )
+                fig_lb_a1.update_yaxes(categoryorder="total ascending")
+                _apply_theme(fig_lb_a1)
+                st.plotly_chart(fig_lb_a1, use_container_width=True)
 
                 #------------------------------------------------------------
                 # Sampling only for heavy scatter plots to improve performance
@@ -2684,52 +3092,11 @@ with tab_objects[1]:
                 st.divider()
                 st.subheader("Top Salary Leaderboard")
 
-                # --------------------------------------------------
-                # Average predicted salary by role
-                # --------------------------------------------------
-                role_avg_salary_a2 = (
-                    analytics_df_a2.groupby("job_title", as_index=False)
-                    .agg(
-                        Average_Salary_USD=("Predicted Annual Salary (USD)", "mean"),
-                        Records=("job_title", "count")
-                    )
+                leaderboard_a2 = generate_salary_leaderboard(
+                    df=analytics_df_a2,
+                    job_col="job_title",
+                    salary_col="Predicted Annual Salary (USD)"
                 )
-
-                # Optional reliability filter
-                role_avg_salary_a2 = role_avg_salary_a2[role_avg_salary_a2["Records"] >= 2].copy()
-
-                # Sort descending
-                role_avg_salary_a2 = role_avg_salary_a2.sort_values(
-                    by="Average_Salary_USD",
-                    ascending=False
-                ).reset_index(drop=True)
-
-                # Rank
-                role_avg_salary_a2["Rank"] = range(1, len(role_avg_salary_a2) + 1)
-
-                # Append medal to job title instead of separate column
-                def add_medal_to_title_a2(rank, title):
-                    if rank == 1:
-                        return f"{title} 🥇"
-                    elif rank == 2:
-                        return f"{title} 🥈"
-                    elif rank == 3:
-                        return f"{title} 🥉"
-                    return title
-
-                role_avg_salary_a2["Job Title"] = role_avg_salary_a2.apply(
-                    lambda row: add_medal_to_title_a2(row["Rank"], row["job_title"]),
-                    axis=1
-                )
-
-                # Final display table
-                leaderboard_a2 = role_avg_salary_a2.head(10).copy()
-                leaderboard_a2["Average Salary (USD)"] = leaderboard_a2["Average_Salary_USD"].round(2)
-
-                leaderboard_a2 = leaderboard_a2[
-                    ["Rank", "Job Title", "Average Salary (USD)", "Records"]
-                ]
-
                 st.dataframe(
                     leaderboard_a2,
                     use_container_width=True,
@@ -2740,6 +3107,26 @@ with tab_objects[1]:
                     "Ranks job roles by average predicted salary in the uploaded batch. "
                     "Top 3 roles are highlighted with medals."
                 )
+                st.divider()
+                st.subheader("Salary Leaderboard Visualization")
+
+                fig_lb_a2 = px.bar(
+                    leaderboard_a2.head(10),
+                    x="Average Salary (USD)",
+                    y="Job Title",
+                    orientation="h",
+                    title="Top Roles by Salary",
+                    #color="Average Salary (USD)",
+                    color_discrete_sequence=["#60A5FA"]
+                    #color_continuous_scale=[
+                    #    [0.0, "#4F8EF7"],
+                    #    [0.5, "#60A5FA"],
+                    #    [1.0, "#818CF8"]
+                    #]
+                )
+                fig_lb_a2.update_yaxes(categoryorder="total ascending")
+                _apply_theme(fig_lb_a2)
+                st.plotly_chart(fig_lb_a2, use_container_width=True)
 
                 st.divider()
                 st.subheader("Predicted Salary Distribution")
@@ -3345,7 +3732,7 @@ with tab_objects[2]:
             # -----------------------------
             # LOAD RULES
             # -----------------------------
-            rules_df = assoc_rules_a1.copy()
+            rules_df = assoc_rules_a1_v2.copy()
             rules_df = rules_df[rules_df["lift"] > 1]
             # Clean columns (convert list → readable string)
             #rules_df["antecedents"] = rules_df["antecedents"].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
@@ -3460,6 +3847,7 @@ with tab_objects[2]:
                 app1_classifier_metadata,
                 a1,
                 app1_cluster_metadata_a1,
+                assoc_rules_a1_v2,
                 app1_model,
                 app1_salary_band_model
             )
