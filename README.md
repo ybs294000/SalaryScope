@@ -111,6 +111,8 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 - Salary Level (Early Career / Professional / Executive Range)
 - Career Stage (Entry / Growth / Leadership Stage)
 - Pattern Insight (association rule)
+- Negotiation tips
+- Career recommendations
 - 95% Confidence Interval
 
 ---
@@ -131,7 +133,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 
 **Outputs:**
 - Predicted Annual Salary
-- Domain role classification
+- Negotiation tips
 - Career recommendations
 
 ---
