@@ -33,7 +33,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 - Salary level classification (Early Career / Professional / Executive Range) — Model 1
 - Career stage segmentation (Entry / Growth / Leadership Stage) — Model 1
 - Pattern insight via association rule mining — Model 1
-- Smart insights with domain classification and career recommendations — Model 2
+- Negotiation tips and career recommendations
 - Confidence interval estimation based on residual standard deviation — Model 1
 - Downloadable PDF prediction report
 
@@ -145,7 +145,7 @@ salaryscope/
 ├── resume_nlp.py                  # Resume parsing (NLP, regex, feature extraction)
 ├── auth.py                         # Firebase Authentication (login, register, session)
 ├── database.py                     # Firestore client, user and prediction functions
-├── insights_engine.py              # Smart insights and recommendations engine (Model 2)
+├── insights_engine.py              # Smart insights and recommendations engine
 ├── pdf_utils_new.py                # ReportLab PDF generation for all report types
 ├── user_profile.py                 # User profile tab UI and prediction history
 │
