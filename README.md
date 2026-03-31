@@ -163,7 +163,7 @@ salaryscope/
 ├── data/
 │   ├── Salary_Streamlit_App.csv            # Model 1 training dataset
 │   ├── ds_salaries_Streamlit_App.csv       # Model 2 training dataset
-│   └── association_rules_v4.csv            # Precomputed Apriori association rules
+│   └── association_rules_v5.csv            # Precomputed Apriori association rules
 │
 ├── static/
 │   └── android-chrome-192x192.png          # App logo
