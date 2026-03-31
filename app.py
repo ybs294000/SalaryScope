@@ -2064,9 +2064,30 @@ with tab_objects[0]:
                 )
 
 # ==================================================
-# TAB 2: BULK SCANNER
+# TAB 2: RESUME ANALYSIS
 # ==================================================
 with tab_objects[1]:
+
+    st.header("Resume Analysis")
+    st.caption(
+        "Upload a resume PDF to automatically extract structured features using NLP. "
+        "The extracted fields can be reviewed and edited before salary prediction."
+    )
+
+    if not IS_APP1:
+        st.info(
+            "This deployment includes the lightweight version of SalaryScope. "
+            "The full version with resume-based NLP prediction is available in the project repository."
+        )
+    else:
+        st.info(
+            "This deployment includes the lightweight version of SalaryScope. "
+            "The full version with resume-based NLP prediction is available in the project repository."
+        )
+# ==================================================
+# TAB 3: BULK SCANNER
+# ==================================================
+with tab_objects[2]:
 
     with st.expander("File Format & Input Guide"):
         if IS_APP1:
@@ -3153,9 +3174,9 @@ Your file must contain exactly these columns with these exact names:
 
             render_batch_analytics_a2()
 # ==================================================
-# TAB 3: MODEL ANALYTICS
+# TAB 4: MODEL ANALYTICS
 # ==================================================
-with tab_objects[2]:
+with tab_objects[3]:
 
     @st.fragment
     def render_tab3():
@@ -3961,9 +3982,9 @@ with tab_objects[2]:
             )
     render_tab3()
 # ==================================================
-# TAB 4: DATA INSIGHTS
+# TAB 5: DATA INSIGHTS
 # ==================================================
-with tab_objects[3]:
+with tab_objects[4]:
 
     @st.fragment
     def render_tab4():
@@ -4233,7 +4254,7 @@ if st.session_state.logged_in:
     with tab_objects[profile_index]:
         show_profile()
 # ==================================================
-# TAB 5: ABOUT (Merged from both apps)
+# TAB 6: ABOUT (Merged from both apps)
 # ==================================================
 about_index = tabs.index("About")
 with tab_objects[about_index]:
