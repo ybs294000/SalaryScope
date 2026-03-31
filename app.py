@@ -2077,7 +2077,7 @@ with tab_objects[1]:
 
     st.info(
         "Note: This deployed version of SalaryScope is a lightweight build due to memory limitations.\n\n"
-        "The Resume Analysis feature (NLP-based extraction and prediction) is available in the full version:\n"
+        "The Resume Analysis feature (NLP-based extraction and prediction) is available in the full version at https://salaryscope-app.streamlit.app:\n"
         "[Open Full App](https://salaryscope-app.streamlit.app/)\n\n"
         "You can also run the complete implementation locally using `app_resume.py` from the project repository."
     )    
