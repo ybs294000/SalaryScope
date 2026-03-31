@@ -2076,8 +2076,6 @@ with tab_objects[1]:
         "Extracted details can be reviewed and edited before salary prediction."
     )
 
-    st.divider()
-
     st.info(
         "This deployment is a lightweight version of SalaryScope with limited features.\n\n"
         "For full Resume Analysis (NLP-based extraction and prediction), use the complete application below."
