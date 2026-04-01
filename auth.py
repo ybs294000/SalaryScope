@@ -87,11 +87,10 @@ FIREBASE_AUTH_BASE = "https://identitytoolkit.googleapis.com/v1/accounts"
 
 
 def _get_firebase_api_key():
-    api_key = st.secrets.get("FIREBASE_API_KEY")
-    if not api_key:
-        st.error("Missing FIREBASE_API_KEY in Streamlit secrets.")
-        st.stop()
-    return api_key
+    try:
+        return st.secrets.get("FIREBASE_API_KEY")
+    except Exception:
+        return None
 
 
 # ---------------------------------------------------
@@ -100,6 +99,10 @@ def _get_firebase_api_key():
 
 def _firebase_sign_in_email(email: str, password: str) -> dict:
     api_key = _get_firebase_api_key()
+
+    if not api_key:
+        return {"error": {"message": "AUTH_DISABLED"}}
+
     url = f"{FIREBASE_AUTH_BASE}:signInWithPassword?key={api_key}"
     resp = http_requests.post(url, json={
         "email": email,
@@ -111,6 +114,10 @@ def _firebase_sign_in_email(email: str, password: str) -> dict:
 
 def _firebase_sign_up_email(email: str, password: str) -> dict:
     api_key = _get_firebase_api_key()
+
+    if not api_key:
+        return {"error": {"message": "AUTH_DISABLED"}}
+
     url = f"{FIREBASE_AUTH_BASE}:signUp?key={api_key}"
     resp = http_requests.post(url, json={
         "email": email,
@@ -131,6 +138,7 @@ def _firebase_error_message(response: dict) -> str:
         "WEAK_PASSWORD : Password should be at least 6 characters": "Password must be at least 6 characters.",
         "INVALID_EMAIL": "Invalid email address.",
         "TOO_MANY_ATTEMPTS_TRY_LATER": "Too many failed attempts. Please try again later.",
+        "AUTH_DISABLED": "Authentication is disabled (Firebase not configured).",
     }
     return messages.get(raw, raw.replace("_", " ").capitalize())
 
