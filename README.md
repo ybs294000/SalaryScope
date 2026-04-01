@@ -33,7 +33,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 
 ## Live Demo
 
-🔗 SalaryScope is deployed on Streamlit Cloud with two versions:
+:link: SalaryScope is deployed on Streamlit Cloud with two versions:
 
 - **Lite App (Lightweight Version):**  
   https://salaryscope-fhl4g2mmypfzrhwhrvcj6o.streamlit.app/
@@ -346,7 +346,7 @@ client_x509_cert_url = "your_cert_url"
 ### Model 2 Dataset (`ds_salaries.csv`)
 - Data science and AI/ML specific salary dataset
 - Features: experience_level, employment_type, job_title, employee_residence, remote_ratio, company_location, company_size, salary_in_usd
-- Source: [Kaggle — Data Science Salaries 2023](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
+- Source: [Kaggle — Data Science Salaries 2023 :money_with_wings:](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
 
 ---
 
