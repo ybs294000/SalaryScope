@@ -50,8 +50,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 
 ## Screenshots
 
-> Screenshots below show key sections of the application across both models.
-
+> Screenshots below show key sections of the application.
 ### Manual Prediction
 ![Manual Prediction](screenshots/manual_prediction.png)
 
