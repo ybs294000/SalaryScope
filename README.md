@@ -253,7 +253,7 @@ salaryscope/
 ### Steps
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/salaryscope.git
+git clone https://github.com/ybs294000/salaryscope.git
 cd salaryscope
 
 # 2. Create and activate a virtual environment
