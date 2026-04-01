@@ -1,6 +1,5 @@
 __pycache__/
-*.db
 
-old-imp/
+venv
 
 .streamlit/secrets.toml
