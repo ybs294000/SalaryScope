@@ -234,7 +234,7 @@ salaryscope/
 │   └── model_analytics.png
 │
 ├── .streamlit/
-│   └── secrets.toml                        # Firebase credentials (not committed)
+│   └── config.toml                        # Streamlit configuration
 │
 └── requirements.txt
 ```
@@ -288,6 +288,12 @@ client_x509_cert_url = "your_cert_url"
 ```
 
 > **Note:** Never commit `secrets.toml` to version control. Add it to `.gitignore`.
+
+## Important Notes
+
+* Firebase authentication requires valid credentials and may not function without proper configuration.
+* The application is fully usable without authentication for core features such as manual prediction, scenario analysis, and model analytics.
+* Resume parsing requires spaCy language model installation.
 
 ---
 
