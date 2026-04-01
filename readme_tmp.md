@@ -423,13 +423,13 @@ predictions/
 
 ## Author
 
-**[Your Name]**  
+**[Yash Shah]**  
 B.Tech Final Year Student  
-[Your Department] | [Your College / University]  
-[Your City, Country]
+[ Department] | [ College / University]  
+[ City, Country]
 
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
+- GitHub: [@ybs294000](https://github.com/ybs294000)
+- Email: yashbshah2004@gmail.com
 
 > This project was developed as a Final Year B.Tech academic submission.
 
