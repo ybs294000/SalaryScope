@@ -245,7 +245,7 @@ salaryscope/
 ## Installation
 
 ### Prerequisites
-- Python 3.9 or higher
+- Python 3.13 or higher
 - A Firebase project with Firestore enabled
 
 ### Steps
@@ -367,7 +367,7 @@ client_x509_cert_url = "your_cert_url"
 | Cloud File Retrieval | Requests |
 | Security | bcrypt |
 | Deployment | Streamlit Cloud |
-| Language | Python 3.9+ |
+| Language | Python 3.13+ |
 | NLP | spaCy, Regex, PhraseMatcher |
 
 ---
