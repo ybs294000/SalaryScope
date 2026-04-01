@@ -67,7 +67,6 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 ### Model Analytics
 ![Model Analytics](screenshots/model_analytics.png)
 
-> Place your screenshots in a `screenshots/` folder in the project root. Recommended resolution: 1280×720 or higher.
 
 ---
 
