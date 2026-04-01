@@ -11,6 +11,6 @@ echo Activating virtual environment...
 call venv\Scripts\activate
 
 echo Running SalaryScope using Python 3.13 environment...
-streamlit run app.py
+streamlit run app_resume.py
 
 pause

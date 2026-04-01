@@ -20,4 +20,4 @@ echo "Installing dependencies..."
 pip install -r requirements.txt
 
 echo "Running SalaryScope..."
-streamlit run app.py
+streamlit run app_resume.py
