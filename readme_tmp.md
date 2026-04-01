@@ -8,7 +8,6 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 
 - [Overview](#overview)
 - [Live Demo](#live-demo)
-- [Screenshots](#screenshots)
 - [Features](#features)
 - [Models](#models)
 - [Project Structure](#project-structure)
@@ -18,22 +17,17 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 - [Dataset Information](#dataset-information)
 - [Technologies Used](#technologies-used)
 - [Authentication & Database](#authentication--database)
-- [Limitations](#limitations)
-- [Future Scope](#future-scope)
-- [References](#references)
-- [Author](#author)
 
 ---
 
 ## Overview
 
-SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, user authentication, and PDF report generation.
+SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes model analytics, dataset exploration, user authentication, and PDF report generation.
 
 ---
-
 ## Live Demo
 
-🔗 SalaryScope is deployed on Streamlit Cloud with two versions:
+:link: SalaryScope is deployed on Streamlit Cloud with two versions:
 
 - **Lite App (Lightweight Version):**  
   https://salaryscope-fhl4g2mmypfzrhwhrvcj6o.streamlit.app/
@@ -45,31 +39,6 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 - The full version includes **spaCy-based NLP resume parsing**, which is more resource-intensive.
 - Due to Streamlit Cloud free-tier limitations (memory and performance), the applications are deployed separately for stability.
 - The repository contains the complete implementation, including the resume-based pipeline (`app_resume.py`).
-
----
-
-## Screenshots
-
-> Screenshots below show key sections of the application across both models.
-
-### Manual Prediction
-![Manual Prediction](screenshots/manual_prediction.png)
-
-### Scenario Analysis
-![Scenario Analysis](screenshots/scenario_analysis.png)
-
-### Resume Analysis
-![Resume Analysis](screenshots/resume_analysis.png)
-
-### Batch Prediction
-![Batch Prediction](screenshots/batch_prediction.png)
-
-### Model Analytics
-![Model Analytics](screenshots/model_analytics.png)
-
-> Place your screenshots in a `screenshots/` folder in the project root. Recommended resolution: 1280×720 or higher.
-
----
 
 ## Features
 
@@ -84,6 +53,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 - Downloadable PDF prediction report
 
 ### Resume-Based Prediction (NLP)
+
 - Upload a resume (PDF format)
 - Automatic extraction of:
   - Job Title
@@ -105,20 +75,6 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 - Full analytics dashboard after prediction (charts, summaries, leaderboard)
 - Export results in CSV, XLSX, JSON, or SQL format
 - Downloadable PDF batch analytics report
-
-### Scenario Analysis
-- Build and compare up to 5 fully customisable named scenarios in a single session
-- Each scenario accepts the same inputs as manual prediction for the active model
-- Run all scenarios simultaneously with a single button click
-- Side-by-side comparison table with predicted salary, salary level, and career stage per scenario
-- Bar chart comparing predicted annual salary across all scenarios with dollar labels
-- Charts colored by salary level and career stage (Model 1), or by experience level, company size, and work mode (Model 2)
-- Salary confidence interval chart showing 95% lower and upper bounds per scenario — Model 1
-- Experience vs Salary bubble scatter plot across all scenarios — Model 1
-- Sensitivity sweep: select a baseline scenario and simulate salary change across a continuous 0–40 year experience range (Model 1) or across all four experience levels (Model 2), with all other inputs held fixed
-- Education level sweep across High School, Bachelor's, Master's, and PhD for a selected baseline scenario — Model 1
-- Company size sweep across Small, Medium, and Large companies for a selected baseline scenario — Model 2
-- Export scenario results in CSV, XLSX, or JSON format
 
 ### Model Analytics
 - Performance metrics: R², MAE, RMSE
@@ -199,16 +155,16 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 ---
 
 ## Project Structure
+
 ```
 salaryscope/
 │
 ├── app.py                          # Lightweight Streamlit application
 ├── app_resume.py                   # Main Streamlit application with resume analysis
-├── resume_nlp.py                   # Resume parsing (NLP, regex, feature extraction)
+├── resume_nlp.py                  # Resume parsing (NLP, regex, feature extraction)
 ├── auth.py                         # Firebase Authentication (login, register, session)
 ├── database.py                     # Firestore client, user and prediction functions
 ├── insights_engine.py              # Smart insights and recommendations engine
-├── negotiation_tips.py             # Salary negotiation tips engine
 ├── pdf_utils_new.py                # ReportLab PDF generation for all report types
 ├── user_profile.py                 # User profile tab UI and prediction history
 │
@@ -223,17 +179,10 @@ salaryscope/
 ├── data/
 │   ├── Salary_Streamlit_App.csv            # Model 1 training dataset
 │   ├── ds_salaries_Streamlit_App.csv       # Model 2 training dataset
-│   └── association_rules.csv              # Precomputed Apriori association rules
+│   └── association_rules.csv            # Precomputed Apriori association rules
 │
 ├── static/
-│   └── android-chrome-512x512.png          # App logo
-│
-├── screenshots/
-│   ├── manual_prediction.png
-│   ├── scenario_analysis.png
-│   ├── resume_analysis.png
-│   ├── batch_prediction.png
-│   └── model_analytics.png
+│   └── android-chrome-192x192.png          # App logo
 │
 ├── .streamlit/
 │   └── secrets.toml                        # Firebase credentials (not committed)
@@ -250,6 +199,7 @@ salaryscope/
 - A Firebase project with Firestore enabled
 
 ### Steps
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/yourusername/salaryscope.git
@@ -273,6 +223,7 @@ streamlit run app.py
 ## Configuration
 
 Create a `.streamlit/secrets.toml` file in the project root with the following structure:
+
 ```toml
 FIREBASE_API_KEY = "your_firebase_api_key"
 
@@ -302,11 +253,12 @@ client_x509_cert_url = "your_cert_url"
 4. View results, insights, and optionally download a PDF report
 
 ### Resume Prediction
-1. Navigate to the **Resume Analysis** tab
+
+1. Navigate to the Resume tab
 2. Upload a PDF resume
-3. Click **Extract Resume Features** to parse resume details
-4. Review and edit extracted features (skills, experience, job role, etc.)
-5. Click **Predict Salary from Resume** to run prediction
+3. Click Extract to parse resume details
+4. Review extracted features (skills, experience, job role, etc.)
+5. Run prediction using selected model
 6. View results and download PDF report
 
 ### Batch Prediction
@@ -315,26 +267,12 @@ client_x509_cert_url = "your_cert_url"
 3. Click **Run Batch Prediction**
 4. Explore the analytics dashboard and export results
 
-### Scenario Analysis
-1. Navigate to the **Scenario Analysis** tab after selecting your model
-2. Each scenario is pre-filled with sensible defaults — rename it and adjust any inputs
-3. Click **Add Scenario** to add more scenarios (up to 5) or **Remove** to delete one
-4. Click **Run All Scenarios** to predict salaries for all scenarios simultaneously
-5. Review the comparison table, salary charts, and confidence interval ranges
-6. Select a baseline scenario from the sensitivity sweep dropdown to simulate how salary responds to changes in experience or education while everything else stays fixed
-7. Use the export dropdown and download button to save scenario results
-
 ### Model Analytics
 - Navigate to the **Model Analytics** tab to view full model diagnostics, comparison charts, and download the analytics PDF report
 
 ### User Account
 - Register or log in from the sidebar
 - Logged-in users can access the **Profile** tab for prediction history and exports
-- Sessions expire after 24 hours and require re-login
-
-### Google Drive Upload (Batch)
-- Set the file sharing permission to "Anyone with the link can view" before pasting the link
-- Select the correct file format from the dropdown after pasting the link
 
 ---
 
@@ -344,11 +282,10 @@ client_x509_cert_url = "your_cert_url"
 - General salary dataset covering multiple industries and countries
 - Features: Age, Years of Experience, Education Level, Senior, Gender, Job Title, Country, Salary
 - Source: [Kaggle — Salary by Job Title and Country](https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country)
-
 ### Model 2 Dataset (`ds_salaries.csv`)
 - Data science and AI/ML specific salary dataset
 - Features: experience_level, employment_type, job_title, employee_residence, remote_ratio, company_location, company_size, salary_in_usd
-- Source: [Kaggle — Data Science Salaries 2023](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
+- Source: [Kaggle — Data Science Salaries 2023 :money_with_wings:](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
 
 ---
 
@@ -370,7 +307,6 @@ client_x509_cert_url = "your_cert_url"
 | Deployment | Streamlit Cloud |
 | Language | Python 3.9+ |
 | NLP | spaCy, Regex, PhraseMatcher |
-
 ---
 
 ## Authentication & Database
@@ -381,6 +317,7 @@ client_x509_cert_url = "your_cert_url"
 - Passwords are handled entirely by Firebase — no plaintext credentials are stored
 
 ### Firestore Collections
+
 ```
 users/
   {email}/
@@ -395,43 +332,9 @@ predictions/
 
 ---
 
-## Limitations
+## License
 
-- The models are trained on publicly available datasets and may not fully reflect current real-world salary trends.
-- Model predictions depend on patterns present in the training data and may not generalize well to unseen roles or regions.
-- Resume analysis uses rule-based NLP and may not accurately extract information from complex or heavily formatted resumes.
-- Predictions do not account for real-time factors such as market demand, company-specific policies, or economic changes.
-- The confidence interval shown for Model 1 is an approximation based on training residuals and should be interpreted as an estimate rather than an exact range.
----
-
-## Future Scope
-
-- Improve model performance by training on larger and more recent datasets.
-- Enhance resume parsing using more advanced NLP techniques for better accuracy.
-- Expand the system to support additional job roles and domains beyond current datasets.
-- Add more interactive analysis features to help users better understand prediction behavior.
-
----
-
-## References
-
-- Streamlit Documentation — https://docs.streamlit.io  
-- Scikit-learn Documentation — https://scikit-learn.org  
-- XGBoost Documentation — https://xgboost.readthedocs.io  
-
----
-
-## Author
-
-**Yash Shah**  
-B.Tech Final Year Student  
-[ Department] | [ College / University]  
-[ City, Country]
-
-- GitHub: [@ybs294000](https://github.com/ybs294000)
-- Email: yashbshah2004@gmail.com
-
-> This project was developed as a Final Year B.Tech academic submission.
+This project was developed as a Final Year B.Tech academic submission.
 
 ---
 
