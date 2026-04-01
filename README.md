@@ -244,8 +244,11 @@ salaryscope/
 ## Installation
 
 ### Prerequisites
-- Python 3.13 or higher
-- A Firebase project with Firestore enabled
+
+* Python 3.13 (recommended)
+* The project may work on lower Python versions, but it has been developed and tested using Python 3.13.
+* A Firebase project with Firestore enabled
+
 
 ### Steps
 ```bash
