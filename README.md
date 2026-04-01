@@ -207,7 +207,7 @@ salaryscope/
 ├── database.py                     # Firestore client, user and prediction functions
 ├── insights_engine.py              # Smart insights and recommendations engine
 ├── negotiation_tips.py             # Salary negotiation tips engine
-├── pdf_utils_new.py                # ReportLab PDF generation for all report types
+├── pdf_utils.py                # ReportLab PDF generation for all report types
 ├── user_profile.py                 # User profile tab UI and prediction history
 │
 ├── model/

@@ -12,7 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import base64
-from pdf_utils_new import (
+from pdf_utils import (
     app1_generate_manual_pdf,
     app1_generate_resume_pdf,
     app1_generate_bulk_pdf,
