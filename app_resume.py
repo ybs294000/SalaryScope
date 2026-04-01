@@ -1440,6 +1440,7 @@ tabs = [
     "Manual Prediction",
     "Resume Analysis",
     "Batch Prediction",
+    "Scenario Analysis", 
     "Model Analytics",
     "Data Insights"
 ]
@@ -4232,10 +4233,876 @@ Your file must contain exactly these columns with these exact names:
                 st.plotly_chart(fig_country_a2, width='stretch')
 
             render_batch_analytics_a2()
+
+# ==================================================
+# TAB 3: SCENARIO ANALYSIS / WHAT-IF SIMULATION
+# ==================================================
+with tab_objects[3]:
+
+    @st.fragment
+    def render_scenario_tab():
+        st.header("Scenario Analysis & What-If Simulation")
+        st.caption(
+            "Build and compare multiple salary prediction scenarios side by side. "
+            "Adjust parameters, run all scenarios at once, and explore how changes "
+            "in experience, education, role, or location affect estimated salary."
+        )
+
+        # ------------------------------------------------------------------
+        # APP 1 — Scenario Analysis
+        # ------------------------------------------------------------------
+        if IS_APP1:
+
+            st.subheader("Configure Scenarios")
+            st.caption("Add up to 5 scenarios. Each scenario runs through both the salary regressor and salary level classifier.")
+
+            if "scenarios_a1" not in st.session_state:
+                st.session_state.scenarios_a1 = [
+                    {
+                        "label": "Scenario 1",
+                        "age": 28,
+                        "experience": 3.0,
+                        "education": 1,
+                        "senior": 0,
+                        "gender": app1_genders[0],
+                        "job_title": "Software Engineer" if "Software Engineer" in app1_job_titles else app1_job_titles[0],
+                        "country": "USA" if "USA" in app1_countries else app1_countries[0]
+                    }
+                ]
+
+            if st.button("Add Scenario", key="add_scenario_a1") and len(st.session_state.scenarios_a1) < 5:
+                idx = len(st.session_state.scenarios_a1) + 1
+                st.session_state.scenarios_a1.append({
+                    "label": f"Scenario {idx}",
+                    "age": 30,
+                    "experience": 5.0,
+                    "education": 1,
+                    "senior": 0,
+                    "gender": app1_genders[0],
+                    "job_title": "Software Engineer" if "Software Engineer" in app1_job_titles else app1_job_titles[0],
+                    "country": "USA" if "USA" in app1_countries else app1_countries[0]
+                })
+
+            to_delete = None
+
+            for i, sc in enumerate(st.session_state.scenarios_a1):
+                with st.container(border=True):
+                    col_lbl, col_del = st.columns([6, 1])
+                    with col_lbl:
+                        sc["label"] = st.text_input(
+                            "Scenario Name",
+                            value=sc["label"],
+                            key=f"sc_a1_label_{i}"
+                        )
+                    with col_del:
+                        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                        if len(st.session_state.scenarios_a1) > 1:
+                            if st.button("Remove", key=f"sc_a1_del_{i}"):
+                                to_delete = i
+
+                    col_a, col_b, col_c = st.columns(3)
+                    with col_a:
+                        sc["age"] = st.slider(
+                            "Age", 18, 70, sc["age"],
+                            key=f"sc_a1_age_{i}"
+                        )
+                        sc["education"] = st.selectbox(
+                            "Education Level",
+                            [0, 1, 2, 3],
+                            index=sc["education"],
+                            format_func=lambda x: {
+                                0: "High School",
+                                1: "Bachelor's",
+                                2: "Master's",
+                                3: "PhD"
+                            }[x],
+                            key=f"sc_a1_edu_{i}"
+                        )
+                    with col_b:
+                        sc["experience"] = st.slider(
+                            "Years of Experience", 0.0, 40.0,
+                            sc["experience"], step=0.5,
+                            key=f"sc_a1_exp_{i}"
+                        )
+                        sc["senior"] = st.selectbox(
+                            "Senior Position",
+                            [0, 1],
+                            index=sc["senior"],
+                            format_func=lambda x: "Yes" if x == 1 else "No",
+                            key=f"sc_a1_senior_{i}"
+                        )
+                    with col_c:
+                        sc["gender"] = st.selectbox(
+                            "Gender", app1_genders,
+                            index=app1_genders.index(sc["gender"]) if sc["gender"] in app1_genders else 0,
+                            key=f"sc_a1_gender_{i}"
+                        )
+                        sc["job_title"] = st.selectbox(
+                            "Job Title", app1_job_titles,
+                            index=app1_job_titles.index(sc["job_title"]) if sc["job_title"] in app1_job_titles else 0,
+                            key=f"sc_a1_job_{i}"
+                        )
+                        sc["country"] = st.selectbox(
+                            "Country", app1_countries,
+                            index=app1_countries.index(sc["country"]) if sc["country"] in app1_countries else 0,
+                            key=f"sc_a1_country_{i}"
+                        )
+
+            if to_delete is not None:
+                st.session_state.scenarios_a1.pop(to_delete)
+                st.rerun()
+
+            st.divider()
+
+            if st.button("Run All Scenarios", type="primary", width="stretch", key="run_scenarios_a1"):
+
+                results_a1 = []
+                errors_a1 = []
+
+                for i, sc in enumerate(st.session_state.scenarios_a1):
+                    min_age = 18
+                    if sc["age"] - sc["experience"] < min_age:
+                        errors_a1.append(
+                            f"**{sc['label']}**: Years of experience is not realistic for the selected age."
+                        )
+                        continue
+
+                    input_df = pd.DataFrame([{
+                        "Age": sc["age"],
+                        "Years of Experience": sc["experience"],
+                        "Education Level": sc["education"],
+                        "Senior": sc["senior"],
+                        "Gender": sc["gender"],
+                        "Job Title": sc["job_title"],
+                        "Country": sc["country"]
+                    }])
+
+                    pred = float(app1_model.predict(input_df)[0])
+                    band = app1_salary_band_model.predict(input_df)[0]
+                    band_label = SALARY_BAND_LABELS.get(band, "Unknown")
+
+                    cluster_pred = app1_cluster_model_a1.predict(
+                        pd.DataFrame([{
+                            "Years of Experience": sc["experience"],
+                            "Education Level": sc["education"]
+                        }])
+                    )[0]
+                    stage_map = app1_cluster_metadata_a1.get("cluster_stage_mapping", {})
+                    career_stage = stage_map.get(int(cluster_pred), "Unknown")
+
+                    a1_anal = load_app1_analytics()
+                    std_dev = a1_anal["residual_std"]
+                    lower = max(pred - 1.96 * std_dev, 0)
+                    upper = pred + 1.96 * std_dev
+
+                    results_a1.append({
+                        "Scenario": sc["label"],
+                        "Job Title": sc["job_title"],
+                        "Experience (yrs)": sc["experience"],
+                        "Education": {0: "High School", 1: "Bachelor's", 2: "Master's", 3: "PhD"}[sc["education"]],
+                        "Country": sc["country"],
+                        "Senior": "Yes" if sc["senior"] == 1 else "No",
+                        "Predicted Salary (USD)": round(pred, 2),
+                        "Lower Bound": round(lower, 2),
+                        "Upper Bound": round(upper, 2),
+                        "Salary Level": band_label,
+                        "Career Stage": career_stage,
+                    })
+
+                for err in errors_a1:
+                    st.error(err)
+
+                st.session_state.scenario_results_a1 = results_a1
+
+            # ------ RESULTS ------
+            if "scenario_results_a1" in st.session_state and st.session_state.scenario_results_a1:
+                results_a1 = st.session_state.scenario_results_a1
+                res_df_a1 = pd.DataFrame(results_a1)
+
+                st.caption("Results are based on model predictions learned from historical data and may reflect dataset-specific patterns.")
+
+                st.divider()
+                st.subheader("Comparison Table")
+                st.dataframe(res_df_a1, width='stretch', hide_index=True)
+
+                best_row = res_df_a1.loc[res_df_a1["Predicted Salary (USD)"].idxmax()]
+                st.success(f"Highest predicted salary: {best_row['Scenario']} — ${best_row['Predicted Salary (USD)']:,.0f}")
+                
+                st.divider()
+                st.subheader("Predicted Salary Comparison")
+
+                fig_sc_bar_a1 = px.bar(
+                    res_df_a1,
+                    x="Scenario",
+                    y="Predicted Salary (USD)",
+                    color="Scenario",
+                    title="Predicted Annual Salary by Scenario",
+                    color_discrete_sequence=_COLORWAY,
+                    text="Predicted Salary (USD)"
+                )
+                fig_sc_bar_a1.update_traces(
+                    texttemplate="$%{text:,.0f}",
+                    textposition="outside"
+                )
+                _apply_theme(fig_sc_bar_a1)
+                st.plotly_chart(fig_sc_bar_a1, width='stretch')
+                st.caption("This chart compares predicted salaries across different user-defined scenarios.")
+
+                st.divider()
+                st.subheader("Salary Range (95% Confidence Interval)")
+
+                fig_ci_a1 = go.Figure()
+                for _, row in res_df_a1.iterrows():
+                    fig_ci_a1.add_trace(go.Bar(
+                        name=row["Scenario"],
+                        x=[row["Scenario"]],
+                        y=[row["Upper Bound"] - row["Lower Bound"]],
+                        base=[row["Lower Bound"]],
+                        text=f"${row['Predicted Salary (USD)']:,.0f}",
+                        textposition="inside",
+                    ))
+                fig_ci_a1.add_trace(go.Scatter(
+                    x=res_df_a1["Scenario"],
+                    y=res_df_a1["Predicted Salary (USD)"],
+                    mode="markers",
+                    marker=dict(color="#F59E0B", size=10, symbol="diamond"),
+                    name="Point Estimate"
+                ))
+                _apply_theme(fig_ci_a1, {
+                    "title": "Salary Confidence Intervals per Scenario",
+                    "barmode": "overlay",
+                    "yaxis_title": "Salary (USD)"
+                })
+                st.plotly_chart(fig_ci_a1, width='stretch')
+
+                st.divider()
+                st.subheader("Salary Level Distribution Across Scenarios")
+
+                fig_band_sc_a1 = px.bar(
+                    res_df_a1,
+                    x="Scenario",
+                    y="Predicted Salary (USD)",
+                    color="Salary Level",
+                    title="Scenarios Colored by Salary Level",
+                    color_discrete_map={
+                        "Early Career Range": "#38BDF8",
+                        "Professional Range": "#4F8EF7",
+                        "Executive Range": "#A78BFA"
+                    }
+                )
+                _apply_theme(fig_band_sc_a1)
+                st.plotly_chart(fig_band_sc_a1, width='stretch')
+
+                st.divider()
+                st.subheader("Career Stage Across Scenarios")
+
+                fig_stage_sc_a1 = px.bar(
+                    res_df_a1,
+                    x="Scenario",
+                    y="Predicted Salary (USD)",
+                    color="Career Stage",
+                    title="Scenarios Colored by Career Stage",
+                    color_discrete_map={
+                        "Entry Stage": "#38BDF8",
+                        "Growth Stage": "#4F8EF7",
+                        "Leadership Stage": "#A78BFA"
+                    }
+                )
+                _apply_theme(fig_stage_sc_a1)
+                st.plotly_chart(fig_stage_sc_a1, width='stretch')
+
+                st.divider()
+                st.subheader("Experience vs Predicted Salary")
+
+                fig_exp_sc_a1 = px.scatter(
+                    res_df_a1,
+                    x="Experience (yrs)",
+                    y="Predicted Salary (USD)",
+                    color="Scenario",
+                    size="Predicted Salary (USD)",
+                    hover_data=["Job Title", "Education", "Country", "Salary Level", "Career Stage"],
+                    title="Experience vs Predicted Salary (Bubble = Salary Magnitude)",
+                    color_discrete_sequence=_COLORWAY,
+                    text="Scenario"
+                )
+                fig_exp_sc_a1.update_traces(textposition="top center")
+                _apply_theme(fig_exp_sc_a1)
+                st.plotly_chart(fig_exp_sc_a1, width='stretch')
+
+                st.divider()
+                st.subheader("Salary Sensitivity — Experience Sweep")
+                st.caption(
+                    "Pick one scenario as a baseline and see how predicted salary changes "
+                    "as Years of Experience increases from 0 to 40, holding all other inputs fixed."
+                )
+
+                sweep_scenario_a1 = st.selectbox(
+                    "Select Baseline Scenario for Sweep",
+                    options=[sc["label"] for sc in st.session_state.scenarios_a1],
+                    key="sweep_scenario_select_a1"
+                )
+
+                base_sc_a1 = next(
+                    (s for s in st.session_state.scenarios_a1 if s["label"] == sweep_scenario_a1),
+                    st.session_state.scenarios_a1[0]
+                )
+
+                sweep_exp_vals = [x * 0.5 for x in range(0, 81)]
+                sweep_rows = []
+                for exp_val in sweep_exp_vals:
+                    sweep_df = pd.DataFrame([{
+                        "Age": max(base_sc_a1["age"], int(18 + exp_val)),
+                        "Years of Experience": exp_val,
+                        "Education Level": base_sc_a1["education"],
+                        "Senior": base_sc_a1["senior"],
+                        "Gender": base_sc_a1["gender"],
+                        "Job Title": base_sc_a1["job_title"],
+                        "Country": base_sc_a1["country"]
+                    }])
+                    sweep_pred = float(app1_model.predict(sweep_df)[0])
+                    sweep_rows.append({"Years of Experience": exp_val, "Predicted Salary (USD)": sweep_pred})
+
+                sweep_df_plot = pd.DataFrame(sweep_rows)
+
+                fig_sweep_a1 = px.line(
+                    sweep_df_plot,
+                    x="Years of Experience",
+                    y="Predicted Salary (USD)",
+                    title=f"Salary Sensitivity: Experience Sweep — {sweep_scenario_a1}",
+                    color_discrete_sequence=["#4F8EF7"]
+                )
+                fig_sweep_a1.update_traces(line=dict(width=2.5))
+                _apply_theme(fig_sweep_a1)
+                st.plotly_chart(fig_sweep_a1, width='stretch')
+                st.caption("This chart shows how predicted salary changes as years of experience increase while all other factors remain constant.")
+
+                st.divider()
+                st.subheader("Salary Sensitivity — Education Sweep")
+                st.caption(
+                    "See how predicted salary changes across each education level "
+                    "for the selected baseline scenario."
+                )
+
+                edu_labels = {0: "High School", 1: "Bachelor's", 2: "Master's", 3: "PhD"}
+                edu_sweep_rows = []
+                for edu_val in [0, 1, 2, 3]:
+                    edu_sweep_df = pd.DataFrame([{
+                        "Age": base_sc_a1["age"],
+                        "Years of Experience": base_sc_a1["experience"],
+                        "Education Level": edu_val,
+                        "Senior": base_sc_a1["senior"],
+                        "Gender": base_sc_a1["gender"],
+                        "Job Title": base_sc_a1["job_title"],
+                        "Country": base_sc_a1["country"]
+                    }])
+                    edu_pred = float(app1_model.predict(edu_sweep_df)[0])
+                    edu_sweep_rows.append({
+                        "Education": edu_labels[edu_val],
+                        "Predicted Salary (USD)": edu_pred
+                    })
+
+                edu_sweep_df_plot = pd.DataFrame(edu_sweep_rows)
+
+                fig_edu_sweep_a1 = px.bar(
+                    edu_sweep_df_plot,
+                    x="Education",
+                    y="Predicted Salary (USD)",
+                    title=f"Salary by Education Level — {sweep_scenario_a1}",
+                    color="Education",
+                    color_discrete_sequence=["#4F8EF7", "#38BDF8", "#34D399", "#A78BFA"],
+                    text="Predicted Salary (USD)"
+                )
+                fig_edu_sweep_a1.update_traces(
+                    texttemplate="$%{text:,.0f}",
+                    textposition="outside"
+                )
+                fig_edu_sweep_a1.update_xaxes(
+                    categoryorder="array",
+                    categoryarray=["High School", "Bachelor's", "Master's", "PhD"]
+                )
+                _apply_theme(fig_edu_sweep_a1)
+                st.plotly_chart(fig_edu_sweep_a1, width='stretch')
+                st.caption("This chart compares predicted salary across different education levels for the same baseline profile.")
+
+                st.divider()
+                st.subheader("Export Scenario Results")
+                export_format_sc_a1 = st.selectbox(
+                    "Select export format",
+                    ["CSV", "XLSX", "JSON"],
+                    key="sc_export_format_a1"
+                )
+                if export_format_sc_a1 == "CSV":
+                    sc_file_data = res_df_a1.to_csv(index=False).encode("utf-8")
+                    sc_file_name = "scenario_results.csv"
+                    sc_mime = "text/csv"
+                elif export_format_sc_a1 == "XLSX":
+                    sc_buf = BytesIO()
+                    res_df_a1.to_excel(sc_buf, index=False)
+                    sc_file_data = sc_buf.getvalue()
+                    sc_file_name = "scenario_results.xlsx"
+                    sc_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                else:
+                    sc_file_data = res_df_a1.to_json(orient="records")
+                    sc_file_name = "scenario_results.json"
+                    sc_mime = "application/json"
+
+                st.download_button(
+                    "Download Scenario Results",
+                    data=sc_file_data,
+                    file_name=sc_file_name,
+                    mime=sc_mime,
+                    width="stretch"
+                )
+
+        # ------------------------------------------------------------------
+        # APP 2 — Scenario Analysis
+        # ------------------------------------------------------------------
+        else:
+
+            st.subheader("Configure Scenarios")
+            st.caption("Add up to 5 scenarios. Each scenario runs through the XGBoost salary regressor.")
+
+            if "scenarios_a2" not in st.session_state:
+                st.session_state.scenarios_a2 = [
+                    {
+                        "label": "Scenario 1",
+                        "experience_level": "SE",
+                        "employment_type": "FT",
+                        "job_title": "Data Scientist" if "Data Scientist" in app2_job_titles else app2_job_titles[0],
+                        "employee_residence": "US",
+                        "remote_ratio": 0,
+                        "company_location": "US",
+                        "company_size": "M"
+                    }
+                ]
+
+            if st.button("Add Scenario", key="add_scenario_a2") and len(st.session_state.scenarios_a2) < 5:
+                idx = len(st.session_state.scenarios_a2) + 1
+                st.session_state.scenarios_a2.append({
+                    "label": f"Scenario {idx}",
+                    "experience_level": "SE",
+                    "employment_type": "FT",
+                    "job_title": "Data Scientist" if "Data Scientist" in app2_job_titles else app2_job_titles[0],
+                    "employee_residence": "US",
+                    "remote_ratio": 0,
+                    "company_location": "US",
+                    "company_size": "M"
+                })
+
+            to_delete_a2 = None
+
+            for i, sc in enumerate(st.session_state.scenarios_a2):
+                with st.container(border=True):
+                    col_lbl, col_del = st.columns([6, 1])
+                    with col_lbl:
+                        sc["label"] = st.text_input(
+                            "Scenario Name",
+                            value=sc["label"],
+                            key=f"sc_a2_label_{i}"
+                        )
+                    with col_del:
+                        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                        if len(st.session_state.scenarios_a2) > 1:
+                            if st.button("Remove", key=f"sc_a2_del_{i}"):
+                                to_delete_a2 = i
+
+                    col_a2, col_b2, col_c2 = st.columns(3)
+
+                    exp_options_a2 = [x for x in ["EN", "MI", "SE", "EX"] if x in app2_experience_levels]
+                    emp_options_a2 = [x for x in ["FT", "PT", "CT", "FL"] if x in app2_employment_types]
+                    remote_options_a2 = [x for x in [0, 50, 100] if x in app2_remote_ratios]
+                    size_options_a2 = list(app2_company_sizes)
+
+                    with col_a2:
+                        exp_display = st.selectbox(
+                            "Experience Level",
+                            [EXPERIENCE_MAP[x] for x in exp_options_a2],
+                            index=exp_options_a2.index(sc["experience_level"]) if sc["experience_level"] in exp_options_a2 else 0,
+                            key=f"sc_a2_exp_{i}"
+                        )
+                        sc["experience_level"] = EXPERIENCE_REVERSE.get(exp_display, "SE")
+
+                        emp_display = st.selectbox(
+                            "Employment Type",
+                            [EMPLOYMENT_MAP[x] for x in emp_options_a2],
+                            index=emp_options_a2.index(sc["employment_type"]) if sc["employment_type"] in emp_options_a2 else 0,
+                            key=f"sc_a2_emp_{i}"
+                        )
+                        sc["employment_type"] = EMPLOYMENT_REVERSE.get(emp_display, "FT")
+
+                    with col_b2:
+                        sc["job_title"] = st.selectbox(
+                            "Job Title", app2_job_titles,
+                            index=app2_job_titles.index(sc["job_title"]) if sc["job_title"] in app2_job_titles else 0,
+                            key=f"sc_a2_job_{i}"
+                        )
+
+                        remote_display = st.selectbox(
+                            "Work Mode",
+                            [REMOTE_MAP[x] for x in remote_options_a2],
+                            index=remote_options_a2.index(sc["remote_ratio"]) if sc["remote_ratio"] in remote_options_a2 else 0,
+                            key=f"sc_a2_remote_{i}"
+                        )
+                        sc["remote_ratio"] = REMOTE_REVERSE.get(remote_display, 0)
+
+                    with col_c2:
+                        # Employee residence
+                        detected_res_a2_sc = COUNTRY_NAME_MAP.get(sc["employee_residence"])
+                        detected_res_display_a2_sc = (
+                            f"{detected_res_a2_sc} ({sc['employee_residence']})"
+                            if detected_res_a2_sc else sc["employee_residence"]
+                        )
+                        if detected_res_display_a2_sc not in app2_employee_residence_display_options:
+                            detected_res_display_a2_sc = (
+                                "United States (US)"
+                                if "United States (US)" in app2_employee_residence_display_options
+                                else app2_employee_residence_display_options[0]
+                            )
+                        res_display_sc = st.selectbox(
+                            "Employee Residence",
+                            app2_employee_residence_display_options,
+                            index=app2_employee_residence_display_options.index(detected_res_display_a2_sc),
+                            key=f"sc_a2_res_{i}"
+                        )
+                        if res_display_sc == "Other":
+                            sc["employee_residence"] = "US"
+                        elif "(" in res_display_sc:
+                            sc["employee_residence"] = res_display_sc.split("(")[-1].replace(")", "").strip()
+                        else:
+                            sc["employee_residence"] = res_display_sc
+
+                        # Company location
+                        detected_loc_a2_sc = COUNTRY_NAME_MAP.get(sc["company_location"])
+                        detected_loc_display_a2_sc = (
+                            f"{detected_loc_a2_sc} ({sc['company_location']})"
+                            if detected_loc_a2_sc else sc["company_location"]
+                        )
+                        if detected_loc_display_a2_sc not in app2_country_display_options:
+                            detected_loc_display_a2_sc = (
+                                "United States (US)"
+                                if "United States (US)" in app2_country_display_options
+                                else app2_country_display_options[0]
+                            )
+                        loc_display_sc = st.selectbox(
+                            "Company Location",
+                            app2_country_display_options,
+                            index=app2_country_display_options.index(detected_loc_display_a2_sc),
+                            key=f"sc_a2_loc_{i}"
+                        )
+                        if "(" in loc_display_sc:
+                            sc["company_location"] = loc_display_sc.split("(")[-1].replace(")", "").strip()
+                        else:
+                            sc["company_location"] = loc_display_sc
+
+                        size_display_sc = st.selectbox(
+                            "Company Size",
+                            [COMPANY_SIZE_MAP[x] for x in size_options_a2],
+                            index=size_options_a2.index(sc["company_size"]) if sc["company_size"] in size_options_a2 else 0,
+                            key=f"sc_a2_size_{i}"
+                        )
+                        sc["company_size"] = COMPANY_SIZE_REVERSE.get(size_display_sc, "M")
+
+            if to_delete_a2 is not None:
+                st.session_state.scenarios_a2.pop(to_delete_a2)
+                st.rerun()
+
+            st.divider()
+
+            if st.button("Run All Scenarios", type="primary", width="stretch", key="run_scenarios_a2"):
+
+                results_a2 = []
+
+                for sc in st.session_state.scenarios_a2:
+                    try:
+                        jr, sr, ex, mg, dom = title_features(sc["job_title"])
+                        exp_x_dom = f"{sc['experience_level']}_{dom}"
+
+                        input_df_a2_sc = pd.DataFrame([{
+                            "experience_level": sc["experience_level"],
+                            "employment_type": sc["employment_type"],
+                            "job_title": sc["job_title"],
+                            "employee_residence": sc["employee_residence"],
+                            "remote_ratio": int(sc["remote_ratio"]),
+                            "company_location": sc["company_location"],
+                            "company_size": sc["company_size"],
+                            "title_is_junior": jr,
+                            "title_is_senior": sr,
+                            "title_is_exec": ex,
+                            "title_is_mgmt": mg,
+                            "title_domain": dom,
+                            "exp_x_domain": exp_x_dom
+                        }])
+
+                        pred_log = app2_model.predict(input_df_a2_sc)[0]
+                        pred_usd = float(np.expm1(pred_log))
+
+                        res_name = COUNTRY_NAME_MAP.get(sc["employee_residence"], sc["employee_residence"])
+                        loc_name = COUNTRY_NAME_MAP.get(sc["company_location"], sc["company_location"])
+
+                        results_a2.append({
+                            "Scenario": sc["label"],
+                            "Job Title": sc["job_title"],
+                            "Experience Level": EXPERIENCE_MAP.get(sc["experience_level"], sc["experience_level"]),
+                            "Employment": EMPLOYMENT_MAP.get(sc["employment_type"], sc["employment_type"]),
+                            "Work Mode": REMOTE_MAP.get(sc["remote_ratio"], str(sc["remote_ratio"])),
+                            "Company Size": COMPANY_SIZE_MAP.get(sc["company_size"], sc["company_size"]),
+                            "Residence": res_name,
+                            "Company Location": loc_name,
+                            "Predicted Salary (USD)": round(pred_usd, 2)
+                        })
+
+                    except Exception as e_sc:
+                        st.error(f"Prediction failed for **{sc['label']}**: {e_sc}")
+
+                st.session_state.scenario_results_a2 = results_a2
+
+            # ------ RESULTS ------
+            if "scenario_results_a2" in st.session_state and st.session_state.scenario_results_a2:
+                results_a2 = st.session_state.scenario_results_a2
+                res_df_a2 = pd.DataFrame(results_a2)
+                st.caption("Results are based on model predictions learned from historical data and may reflect dataset-specific patterns.")
+
+                st.divider()
+                st.subheader("Comparison Table")
+                st.dataframe(res_df_a2, width='stretch', hide_index=True)
+
+                best_row_a2 = res_df_a2.loc[res_df_a2["Predicted Salary (USD)"].idxmax()]
+                st.success(f"Highest predicted salary: {best_row_a2['Scenario']} — ${best_row_a2['Predicted Salary (USD)']:,.0f}")
+
+                st.divider()
+                st.subheader("Predicted Salary Comparison")
+
+                fig_sc_bar_a2 = px.bar(
+                    res_df_a2,
+                    x="Scenario",
+                    y="Predicted Salary (USD)",
+                    color="Scenario",
+                    title="Predicted Annual Salary by Scenario",
+                    color_discrete_sequence=_COLORWAY,
+                    text="Predicted Salary (USD)"
+                )
+                fig_sc_bar_a2.update_traces(
+                    texttemplate="$%{text:,.0f}",
+                    textposition="outside"
+                )
+                _apply_theme(fig_sc_bar_a2)
+                st.plotly_chart(fig_sc_bar_a2, width='stretch')
+                st.caption("This chart compares predicted salaries across different user-defined scenarios.")
+
+                st.divider()
+                st.subheader("Salary by Experience Level")
+
+                fig_exp_sc_a2 = px.bar(
+                    res_df_a2,
+                    x="Scenario",
+                    y="Predicted Salary (USD)",
+                    color="Experience Level",
+                    title="Scenarios Colored by Experience Level",
+                    color_discrete_map={
+                        "Entry Level": "#38BDF8",
+                        "Mid Level": "#4F8EF7",
+                        "Senior Level": "#A78BFA",
+                        "Executive Level": "#F59E0B"
+                    }
+                )
+                _apply_theme(fig_exp_sc_a2)
+                st.plotly_chart(fig_exp_sc_a2, width='stretch')
+                st.caption("This chart shows how predicted salary varies across experience levels for different scenarios.")
+
+                st.divider()
+                st.subheader("Salary by Company Size")
+
+                fig_size_sc_a2 = px.bar(
+                    res_df_a2,
+                    x="Scenario",
+                    y="Predicted Salary (USD)",
+                    color="Company Size",
+                    title="Scenarios Colored by Company Size",
+                    color_discrete_map={
+                        "Small Company": "#38BDF8",
+                        "Medium Company": "#4F8EF7",
+                        "Large Company": "#A78BFA"
+                    }
+                )
+                _apply_theme(fig_size_sc_a2)
+                st.plotly_chart(fig_size_sc_a2, width='stretch')
+                st.caption("This chart compares predicted salary across different company sizes for each scenario.")
+
+                st.divider()
+                st.subheader("Salary by Work Mode")
+
+                fig_remote_sc_a2 = px.bar(
+                    res_df_a2,
+                    x="Scenario",
+                    y="Predicted Salary (USD)",
+                    color="Work Mode",
+                    title="Scenarios Colored by Work Mode",
+                    color_discrete_map={
+                        "On-site": "#38BDF8",
+                        "Hybrid": "#4F8EF7",
+                        "Fully Remote": "#34D399"
+                    }
+                )
+                _apply_theme(fig_remote_sc_a2)
+                st.plotly_chart(fig_remote_sc_a2, width='stretch')
+                st.caption("This chart shows how predicted salary varies based on work mode (on-site, hybrid, remote).")
+
+                st.divider()
+                st.subheader("Salary Sensitivity — Experience Level Sweep")
+                st.caption(
+                    "Pick one scenario as a baseline and see how predicted salary changes "
+                    "across all four experience levels, holding all other inputs fixed."
+                )
+
+                sweep_scenario_a2 = st.selectbox(
+                    "Select Baseline Scenario for Sweep",
+                    options=[sc["label"] for sc in st.session_state.scenarios_a2],
+                    key="sweep_scenario_select_a2"
+                )
+
+                base_sc_a2 = next(
+                    (s for s in st.session_state.scenarios_a2 if s["label"] == sweep_scenario_a2),
+                    st.session_state.scenarios_a2[0]
+                )
+
+                sweep_exp_rows_a2 = []
+                for exp_code in ["EN", "MI", "SE", "EX"]:
+                    jr2, sr2, ex2, mg2, dom2 = title_features(base_sc_a2["job_title"])
+                    exp_x_dom2 = f"{exp_code}_{dom2}"
+                    sweep_input = pd.DataFrame([{
+                        "experience_level": exp_code,
+                        "employment_type": base_sc_a2["employment_type"],
+                        "job_title": base_sc_a2["job_title"],
+                        "employee_residence": base_sc_a2["employee_residence"],
+                        "remote_ratio": int(base_sc_a2["remote_ratio"]),
+                        "company_location": base_sc_a2["company_location"],
+                        "company_size": base_sc_a2["company_size"],
+                        "title_is_junior": jr2,
+                        "title_is_senior": sr2,
+                        "title_is_exec": ex2,
+                        "title_is_mgmt": mg2,
+                        "title_domain": dom2,
+                        "exp_x_domain": exp_x_dom2
+                    }])
+                    sw_pred = float(np.expm1(app2_model.predict(sweep_input)[0]))
+                    sweep_exp_rows_a2.append({
+                        "Experience Level": EXPERIENCE_MAP[exp_code],
+                        "Predicted Salary (USD)": sw_pred
+                    })
+
+                sweep_exp_df_a2 = pd.DataFrame(sweep_exp_rows_a2)
+
+                fig_sweep_exp_a2 = px.line(
+                    sweep_exp_df_a2,
+                    x="Experience Level",
+                    y="Predicted Salary (USD)",
+                    title=f"Salary Sensitivity: Experience Level Sweep — {sweep_scenario_a2}",
+                    markers=True,
+                    color_discrete_sequence=["#4F8EF7"],
+                    text="Predicted Salary (USD)"
+                )
+                fig_sweep_exp_a2.update_traces(
+                    texttemplate="$%{text:,.0f}",
+                    textposition="top center"
+                )
+                fig_sweep_exp_a2.update_xaxes(
+                    categoryorder="array",
+                    categoryarray=["Entry Level", "Mid Level", "Senior Level", "Executive Level"]
+                )
+                _apply_theme(fig_sweep_exp_a2)
+                st.plotly_chart(fig_sweep_exp_a2, width='stretch')
+                st.caption("This chart shows how predicted salary changes across experience levels while all other inputs remain constant.")
+
+                st.divider()
+                st.subheader("Salary Sensitivity — Company Size Sweep")
+                st.caption(
+                    "See how predicted salary changes across company sizes "
+                    "for the selected baseline scenario."
+                )
+
+                size_sweep_rows_a2 = []
+                for size_code in ["S", "M", "L"]:
+                    jr3, sr3, ex3, mg3, dom3 = title_features(base_sc_a2["job_title"])
+                    exp_x_dom3 = f"{base_sc_a2['experience_level']}_{dom3}"
+                    size_sweep_input = pd.DataFrame([{
+                        "experience_level": base_sc_a2["experience_level"],
+                        "employment_type": base_sc_a2["employment_type"],
+                        "job_title": base_sc_a2["job_title"],
+                        "employee_residence": base_sc_a2["employee_residence"],
+                        "remote_ratio": int(base_sc_a2["remote_ratio"]),
+                        "company_location": base_sc_a2["company_location"],
+                        "company_size": size_code,
+                        "title_is_junior": jr3,
+                        "title_is_senior": sr3,
+                        "title_is_exec": ex3,
+                        "title_is_mgmt": mg3,
+                        "title_domain": dom3,
+                        "exp_x_domain": exp_x_dom3
+                    }])
+                    sz_pred = float(np.expm1(app2_model.predict(size_sweep_input)[0]))
+                    size_sweep_rows_a2.append({
+                        "Company Size": COMPANY_SIZE_MAP[size_code],
+                        "Predicted Salary (USD)": sz_pred
+                    })
+
+                size_sweep_df_a2 = pd.DataFrame(size_sweep_rows_a2)
+
+                fig_sweep_size_a2 = px.bar(
+                    size_sweep_df_a2,
+                    x="Company Size",
+                    y="Predicted Salary (USD)",
+                    title=f"Salary by Company Size — {sweep_scenario_a2}",
+                    color="Company Size",
+                    color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"],
+                    text="Predicted Salary (USD)"
+                )
+                fig_sweep_size_a2.update_traces(
+                    texttemplate="$%{text:,.0f}",
+                    textposition="outside"
+                )
+                fig_sweep_size_a2.update_xaxes(
+                    categoryorder="array",
+                    categoryarray=["Small Company", "Medium Company", "Large Company"]
+                )
+                _apply_theme(fig_sweep_size_a2)
+                st.plotly_chart(fig_sweep_size_a2, width='stretch')
+                st.caption("This chart shows how predicted salary changes across company sizes for the selected baseline scenario.")
+
+                st.divider()
+                st.subheader("Export Scenario Results")
+                export_format_sc_a2 = st.selectbox(
+                    "Select export format",
+                    ["CSV", "XLSX", "JSON"],
+                    key="sc_export_format_a2"
+                )
+                if export_format_sc_a2 == "CSV":
+                    sc_file_data_a2 = res_df_a2.to_csv(index=False).encode("utf-8")
+                    sc_file_name_a2 = "scenario_results.csv"
+                    sc_mime_a2 = "text/csv"
+                elif export_format_sc_a2 == "XLSX":
+                    sc_buf_a2 = BytesIO()
+                    res_df_a2.to_excel(sc_buf_a2, index=False)
+                    sc_file_data_a2 = sc_buf_a2.getvalue()
+                    sc_file_name_a2 = "scenario_results.xlsx"
+                    sc_mime_a2 = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                else:
+                    sc_file_data_a2 = res_df_a2.to_json(orient="records")
+                    sc_file_name_a2 = "scenario_results.json"
+                    sc_mime_a2 = "application/json"
+
+                st.download_button(
+                    "Download Scenario Results",
+                    data=sc_file_data_a2,
+                    file_name=sc_file_name_a2,
+                    mime=sc_mime_a2,
+                    width="stretch"
+                )
+
+    render_scenario_tab()
 # ==================================================
 # TAB 4: MODEL ANALYTICS
 # ==================================================
-with tab_objects[3]:
+with tab_objects[4]:
 
     @st.fragment
     def render_tab3():
@@ -5116,7 +5983,7 @@ with tab_objects[3]:
 # ==================================================
 # TAB 5: DATA INSIGHTS
 # ==================================================
-with tab_objects[4]:
+with tab_objects[5]:
 
     @st.fragment
     def render_tab4():
@@ -5376,6 +6243,7 @@ with tab_objects[4]:
             _apply_theme(fig_job_di_a2)
             st.plotly_chart(fig_job_di_a2, width='stretch')
     render_tab4()
+
 # =================================================
 # Add Profile Tab If Logged In
 # =================================================
@@ -5398,15 +6266,8 @@ with tab_objects[about_index]:
         "It uses machine learning models to give an estimated salary along with some basic insights. "
         "The application supports manual input, resume-based prediction, and batch prediction. "
         "It is designed to help students and job seekers get a general idea of salary expectations."
-
-       # "SalaryScope is a machine learning-based web application "
-       # "developed as a Final Year B.Tech Project. It provides salary "
-       # "prediction capabilities through two distinct models, each trained "
-       # "on a different dataset and targeting different use cases."
     )
     with st.expander("Features & Modules"):
-
-        #st.divider()
 
         col_ab1, col_ab2 = st.columns(2)
 
@@ -5448,6 +6309,7 @@ with tab_objects[about_index]:
     - Classification confusion matrix & feature importance
     - Career stage clustering analytics (PCA visualization, silhouette score, Davies-Bouldin score)
     - Association rule analytics (support, confidence, lift visualizations)
+    - Scenario Analysis: build up to 5 named scenarios side by side, compare predicted salaries, salary levels, and career stages, and run sensitivity sweeps across experience and education
     - Multi-format export (CSV, JSON, XLSX, SQL)
     - Google Drive public link upload
     - PDF report generation (manual + resume analysis + bulk + model analytics)
@@ -5475,6 +6337,7 @@ with tab_objects[about_index]:
     - Predicted vs Actual diagnostics
     - Residual analysis
     - Prediction uncertainty distribution
+    - Scenario Analysis: build up to 5 named scenarios side by side, compare predicted salaries by experience level, company size, and work mode, and run sensitivity sweeps across experience levels and company sizes
     - Multi-format export (CSV, JSON, XLSX, SQL)
     - Google Drive public link upload
     - PDF report generation (manual + resume analysis + bulk + model analytics)
@@ -5493,7 +6356,27 @@ with tab_objects[about_index]:
     - Profile strength label: Basic, Moderate, or Strong
     - Extracted fields are fully editable before prediction
     - Salary prediction using the same models as manual prediction
-    - Results include annual salary, salary level, career stage, association pattern insight, confidence interval, negotiation tips, and career recommendations    """)
+    - Results include annual salary, salary level, career stage, association pattern insight, confidence interval, negotiation tips, and career recommendations
+        """)
+
+        st.divider()
+
+        st.markdown("### Scenario Analysis")
+        st.markdown("""
+    - Available for both models
+    - Build up to 5 fully customisable named scenarios in a single session
+    - Each scenario accepts the same inputs as manual prediction for the active model
+    - Run all scenarios simultaneously with a single button click
+    - Side-by-side comparison table showing predicted salary, salary level, career stage (Model 1) or experience level, company size, and work mode (Model 2) per scenario
+    - Bar chart comparing predicted annual salary across all scenarios with dollar labels
+    - Charts colored by salary level and career stage (Model 1), or by experience level, company size, and work mode (Model 2)
+    - Salary confidence interval chart showing 95% lower and upper bounds per scenario (Model 1)
+    - Experience vs Salary bubble scatter plot across scenarios (Model 1)
+    - Sensitivity sweep: select a baseline scenario and simulate how salary changes across a continuous experience range 0–40 years (Model 1) or across all four experience levels (Model 2), with all other inputs held fixed
+    - Education level sweep: see how predicted salary shifts across High School, Bachelor's, Master's, and PhD for a selected baseline scenario (Model 1)
+    - Company size sweep: see how predicted salary changes across Small, Medium, and Large companies for a selected baseline scenario (Model 2)
+    - Export scenario results in CSV, XLSX, or JSON format
+        """)
 
         st.divider()
 
@@ -5522,7 +6405,7 @@ with tab_objects[about_index]:
         st.markdown("""
     - Model switcher to toggle between both prediction systems
     - Unified dark professional theme across the entire application
-    - Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Model Analytics, Data Insights, Profile (logged-in only), About
+    - Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Profile (logged-in only), About
     - ReportLab-based multi-page PDF reports with embedded charts
     - State-managed UI to prevent re-computation on interaction
     - Google Drive public link upload for batch files
@@ -5566,6 +6449,13 @@ with tab_objects[about_index]:
 - Download the sample file first to understand the required column format.
 - After prediction, a batch analytics dashboard with charts and a salary leaderboard is displayed.
 - Export results in your preferred format using the dropdown and download button.
+
+**Scenario Analysis**
+- Build up to 5 named scenarios using the same inputs as manual prediction.
+- Click Run All Scenarios to generate predictions for every scenario simultaneously.
+- Review the comparison table, salary charts, and confidence interval ranges.
+- Use the sensitivity sweep section to simulate how salary changes as experience or education varies, with all other inputs held fixed for a chosen baseline scenario.
+- Export scenario results in CSV, XLSX, or JSON format.
 
 **Model Analytics**
 - Explore the performance and internals of the active model.
@@ -5612,6 +6502,15 @@ with tab_objects[about_index]:
 - Click **Run Batch Prediction** to process all records.
 - Export results in your preferred format using the dropdown and download button.
 
+**Scenario Analysis**
+- Go to the Scenario Analysis tab after selecting your model.
+- Each scenario is pre-filled with sensible defaults — rename it and adjust any inputs.
+- Click **Add Scenario** to add more scenarios (up to 5) or **Remove** to delete one.
+- Click **Run All Scenarios** to predict salaries for all scenarios at once.
+- Scroll down to view the comparison table, salary charts, and sensitivity sweeps.
+- Select a baseline scenario from the dropdown in the sweep section to simulate how salary responds to changes in experience or education while everything else stays fixed.
+- Use the export dropdown and download button to save scenario results.
+
 **Account (Optional)**
 - Register or log in from the sidebar to save predictions.
 - Logged-in users can view their full prediction history in the Profile tab.
@@ -5628,5 +6527,6 @@ with tab_objects[about_index]:
     - Some job roles, countries, or inputs may not be fully covered in the dataset.
     - Resume analysis depends on text extraction and may not work properly for all resume formats.
     - Predictions are based on past data and do not consider current market trends or company-specific salaries.
+    - Scenario Analysis results are generated by the same underlying model as manual prediction and carry the same limitations.
     - The results should be used only as an estimate, not as an exact salary value.
         """)
