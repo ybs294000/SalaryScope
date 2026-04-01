@@ -423,7 +423,7 @@ predictions/
 
 ## Author
 
-**[Yash Shah]**  
+**Yash Shah**  
 B.Tech Final Year Student  
 [ Department] | [ College / University]  
 [ City, Country]
