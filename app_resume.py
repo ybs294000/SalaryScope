@@ -6388,7 +6388,7 @@ with tab_objects[about_index]:
     - Scenario Analysis: build up to 5 named scenarios side by side, compare predicted salaries, salary levels, and career stages, and run sensitivity sweeps across experience and education
     - Multi-format export (CSV, JSON, XLSX, SQL)
     - Google Drive public link upload
-    - PDF report generation (manual + resume analysis + bulk + model analytics)
+    - PDF report generation (manual + resume analysis + bulk + scenario analysis + model analytics)
             """)
 
         with col_ab2:
@@ -6416,7 +6416,7 @@ with tab_objects[about_index]:
     - Scenario Analysis: build up to 5 named scenarios side by side, compare predicted salaries by experience level, company size, and work mode, and run sensitivity sweeps across experience levels and company sizes
     - Multi-format export (CSV, JSON, XLSX, SQL)
     - Google Drive public link upload
-    - PDF report generation (manual + resume analysis + bulk + model analytics)
+    - PDF report generation (manual + resume analysis + bulk + scenario analysis + model analytics)
             """)
 
         st.divider()
