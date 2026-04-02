@@ -3787,9 +3787,9 @@ Your file must contain exactly these columns with these exact names:
                     color_discrete_sequence=["#4F8EF7","#38BDF8","#34D399","#A78BFA",
                                               "#F59E0B","#FB923C","#F472B6","#22D3EE","#6366F1","#14B8A6"]
                 )
-                _apply_theme(fig_job_box_a1)
                 fig_job_box_a1.update_layout(xaxis_title="Job Title",
                                               yaxis_title="Predicted Salary (USD)", showlegend=False)
+                _apply_theme(fig_job_box_a1)
                 st.plotly_chart(fig_job_box_a1, width='stretch')
             render_batch_analytics_a1()
     # -------------------------------------------------------
