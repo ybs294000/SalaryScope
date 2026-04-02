@@ -200,8 +200,8 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 ```
 salaryscope/
 │
-├── app.py                          # Lightweight Streamlit application
-├── app_resume.py                   # Main Streamlit application with resume analysis
+├── app-lite.py                          # Lightweight Streamlit application
+├── app_resume.py                   # Main Streamlit application with resume analysis and scenario/what-if analysis
 ├── resume_nlp.py                   # Resume parsing (NLP, regex, feature extraction)
 ├── auth.py                         # Firebase Authentication (login, register, session)
 ├── database.py                     # Firestore client, user and prediction functions
@@ -266,7 +266,7 @@ pip install -r requirements.txt
 # 4. Configure secrets (see Configuration section below)
 
 # 5. Run the application
-streamlit run app.py
+streamlit run app_resume.py
 ```
 
 ---
