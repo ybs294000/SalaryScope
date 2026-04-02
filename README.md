@@ -36,7 +36,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 :link: SalaryScope is deployed on Streamlit Cloud with two versions:
 
 - **Lite App (Lightweight Version):**  
-  https://salaryscope-fhl4g2mmypfzrhwhrvcj6o.streamlit.app/
+  https://salaryscope-lite-app.streamlit.app/
 
 - **Full App (Includes Resume NLP):**  
   https://salaryscope-app.streamlit.app/
