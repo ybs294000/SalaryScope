@@ -202,21 +202,6 @@ st.markdown(
     [data-testid="stMetricLabel"] { color: var(--text-muted) !important; }
     [data-testid="stMetricValue"] { color: var(--primary) !important; font-weight: 700 !important; }
 
-    /* ── Dataframe ── */
-    [data-testid="stDataFrame"], .stDataFrame {
-        border: 1px solid var(--border) !important;
-        border-radius: 8px !important;
-        overflow: hidden !important;
-    }
-
-    .stDataFrame thead th {
-        background-color: var(--bg-input) !important;
-        color: var(--text-main) !important;
-    }
-
-    .stDataFrame tbody tr:nth-child(even) td {
-        background-color: #121826 !important;
-    }
 
     /* ── File uploader ── */
     [data-testid="stFileUploader"] {
@@ -3564,7 +3549,8 @@ Your file must contain exactly these columns with these exact names:
                     color_discrete_sequence=["#4F8EF7"]
                 )
                 fig_hist_a1.update_traces(marker_line_color="#1B2230", marker_line_width=0.8)
-                _apply_theme(fig_hist_a1, {"xaxis_title": "Predicted Salary (USD)", "yaxis_title": "Count"})
+                fig_hist_a1.update_layout(xaxis_title= "Predicted Salary (USD)", yaxis_title= "Count")
+                _apply_theme(fig_hist_a1)
                 st.plotly_chart(fig_hist_a1, width='stretch')
 
                 st.divider()
@@ -5225,7 +5211,8 @@ with tab_objects[4]:
                 title="Model Comparison (Test R²)", color="Model",
                 color_discrete_sequence=_MODEL_COLORS
             )
-            _apply_theme(fig_compare_a1, {"xaxis_title": "Model", "yaxis_title": "Test R²", "showlegend": False})
+            fig_compare_a1.update_layout(xaxis_title= "Model", yaxis_title= "Test R²", showlegend= False)
+            _apply_theme(fig_compare_a1)
             st.plotly_chart(fig_compare_a1, width='stretch')
 
             st.divider()
@@ -5274,7 +5261,8 @@ with tab_objects[4]:
                 importance_sorted_a1, x=importance_sorted_a1.index + 1, y="Cumulative Importance",
                 title="Cumulative Feature Importance", markers=True
             )
-            _apply_theme(fig_cumul_a1, {"xaxis_title": "Number of Features", "yaxis_title": "Cumulative Importance"})
+            fig_cumul_a1.update_layout(xaxis_title= "Number of Features", yaxis_title= "Cumulative Importance")
+            _apply_theme(fig_cumul_a1)
             fig_cumul_a1.add_hline(y=0.80, line_dash="dash", line_color="#F59E0B")
             st.plotly_chart(fig_cumul_a1, width='stretch')
 
@@ -5291,8 +5279,9 @@ with tab_objects[4]:
             fig_avp_a1.add_trace(go.Scatter(x=[min_val_a1, max_val_a1], y=[min_val_a1, max_val_a1],
                                              mode="lines", name="Ideal Fit",
                                              line=dict(color="#EF4444", width=2)))
-            _apply_theme(fig_avp_a1, {"title": "Predicted vs Actual Salary",
-                                       "xaxis_title": "Actual Salary", "yaxis_title": "Predicted Salary"})
+            fig_avp_a1.update_layout(title= "Predicted vs Actual Salary",
+                                       xaxis_title= "Actual Salary", yaxis_title= "Predicted Salary")
+            _apply_theme(fig_avp_a1)
             st.plotly_chart(fig_avp_a1, width='stretch')
 
             st.divider()
@@ -5302,9 +5291,10 @@ with tab_objects[4]:
             fig_res_a1.add_trace(go.Scatter(x=y_test_pred_a1d, y=residuals_a1d, mode="markers",
                                              marker=dict(color="#3E7DE0", opacity=0.6)))
             fig_res_a1.add_hline(y=0, line_dash="dash", line_color="#EF4444")
-            _apply_theme(fig_res_a1, {"title": "Residuals vs Predicted Values",
-                                       "xaxis_title": "Predicted Salary",
-                                       "yaxis_title": "Residual (Actual - Predicted)"})
+            fig_res_a1.update_layout(title= "Residuals vs Predicted Values",
+                                       xaxis_title= "Predicted Salary",
+                                       yaxis_title= "Residual (Actual - Predicted)")
+            _apply_theme(fig_res_a1)
             st.plotly_chart(fig_res_a1, width='stretch')
 
             st.divider()
@@ -5313,7 +5303,8 @@ with tab_objects[4]:
                                          labels={"x": "Residual"}, title="Distribution of Residuals",
                                          color_discrete_sequence=["#A78BFA"])
             fig_rdist_a1.update_traces(marker_line_color="#1B2230", marker_line_width=0.8)
-            _apply_theme(fig_rdist_a1, {"xaxis_title": "Residual", "yaxis_title": "Count"})
+            fig_rdist_a1.update_layout(xaxis_title="Residual", yaxis_title= "Count")
+            _apply_theme(fig_rdist_a1)
             st.plotly_chart(fig_rdist_a1, width='stretch')
 
             st.divider()
@@ -5358,7 +5349,8 @@ with tab_objects[4]:
                 title="Classification Model Comparison (F1 Score)",
                 color="Model", color_discrete_sequence=_MODEL_COLORS
             )
-            _apply_theme(fig_cls_compare_a1, {"xaxis_title": "Model", "yaxis_title": "F1 Score", "showlegend": False})
+            fig_cls_compare_a1.update_layout(xaxis_title= "Model", yaxis_title= "F1 Score", showlegend= False)
+            _apply_theme(fig_cls_compare_a1)
             st.plotly_chart(fig_cls_compare_a1, width='stretch')
 
             st.divider()
