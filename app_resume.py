@@ -6091,7 +6091,8 @@ with tab_objects[5]:
                                            title="Salary Distribution",
                                            color_discrete_sequence=["#4F8EF7"])
             fig_hist_di_a1.update_traces(marker_line_color="#1B2230", marker_line_width=0.8)
-            _apply_theme(fig_hist_di_a1, {"xaxis_title": "Salary (USD)", "yaxis_title": "Count"})
+            fig_hist_di_a1.update_layout(xaxis_title = "Salary (USD)", yaxis_title= "Count")
+            _apply_theme(fig_hist_di_a1)
             st.plotly_chart(fig_hist_di_a1, width='stretch')
 
             st.divider()
