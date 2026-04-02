@@ -422,9 +422,11 @@ predictions/
 
 ## References
 
+- Python Documentation — https://docs.python.org/3/
 - Streamlit Documentation — https://docs.streamlit.io  
 - Scikit-learn Documentation — https://scikit-learn.org  
 - XGBoost Documentation — https://xgboost.readthedocs.io  
+- SHAP Documentation — https://shap.readthedocs.io
 
 ---
 
