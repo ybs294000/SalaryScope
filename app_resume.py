@@ -53,7 +53,7 @@ if "db_initialized" not in st.session_state:
 st.set_page_config(
     page_title="SalaryScope",
     layout="wide",
-    #page_icon="SalaryScope_Icon_Gradient_IBM_Plex_Bold_250.png"
+    #page_icon="SalaryScope_Icon.png"
 )
 # ============================================================
 # DARK PROFESSIONAL — App 1 Theme (applied globally)
