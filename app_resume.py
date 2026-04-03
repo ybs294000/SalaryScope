@@ -4332,18 +4332,14 @@ with tab_objects[3]:
                             "Age", 18, 70, sc["age"],
                             key=f"sc_a1_age_{i}"
                         )
-                        sc["education"] = st.selectbox(
-                            "Education Level",
-                            [0, 1, 2, 3],
-                            index=sc["education"],
-                            format_func=lambda x: {
-                                0: "High School",
-                                1: "Bachelor's",
-                                2: "Master's",
-                                3: "PhD"
-                            }[x],
-                            key=f"sc_a1_edu_{i}"
+
+                        sc["gender"] = st.selectbox(
+                            "Gender", app1_genders,
+                            index=app1_genders.index(sc["gender"]) if sc["gender"] in app1_genders else 0,
+                            key=f"sc_a1_gender_{i}"
                         )
+
+
                     with col_b:
                         sc["experience"] = st.slider(
                             "Years of Experience", 0.0, 40.0,
@@ -4358,11 +4354,19 @@ with tab_objects[3]:
                             key=f"sc_a1_senior_{i}"
                         )
                     with col_c:
-                        sc["gender"] = st.selectbox(
-                            "Gender", app1_genders,
-                            index=app1_genders.index(sc["gender"]) if sc["gender"] in app1_genders else 0,
-                            key=f"sc_a1_gender_{i}"
+                        sc["education"] = st.selectbox(
+                            "Education Level",
+                            [0, 1, 2, 3],
+                            index=sc["education"],
+                            format_func=lambda x: {
+                                0: "High School",
+                                1: "Bachelor's",
+                                2: "Master's",
+                                3: "PhD"
+                            }[x],
+                            key=f"sc_a1_edu_{i}"
                         )
+
                         sc["job_title"] = st.selectbox(
                             "Job Title", app1_job_titles,
                             index=app1_job_titles.index(sc["job_title"]) if sc["job_title"] in app1_job_titles else 0,
