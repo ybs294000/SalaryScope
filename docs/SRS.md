@@ -81,6 +81,7 @@ The system provides:
 5. Model Analytics and Insights
 6. User Authentication and Profile Management
 7. Prediction History Storage and Export
+8. Prediction Feedback Collection (structured, available to all users)
 
 ---
 
@@ -179,6 +180,14 @@ User → Streamlit UI → Processing Layer → ML/NLP Models → Results
 - Model performance visualization
 - Charts using Plotly and Matplotlib
 
+#### 3.3.7 Feedback Module
+
+- Implemented in `feedback.py`
+- Collapsible UI component in the Manual Prediction tab
+- Collects structured feedback after each prediction result
+- Saves to Firestore `feedback/` collection, separate from predictions
+- Available to both logged-in and anonymous users
+
 ---
 
 ## 4. Functional Requirements
@@ -258,6 +267,20 @@ Users shall export data.
 
 - System shall generate PDF reports
 - Reports shall include predictions and insights
+
+---
+
+### 4.8 Prediction Feedback
+
+- After a manual prediction result is displayed, the system shall present a collapsible feedback form
+- Users shall be able to rate prediction accuracy: Yes / Somewhat / No
+- Users shall be able to indicate direction of error: Too High / About Right / Too Low
+- Users shall be able to provide a star rating from 1 to 5
+- Users shall optionally provide their actual or expected salary in USD
+- The system shall store feedback in Firestore under a dedicated `feedback/` collection
+- Feedback shall include the prediction inputs and predicted salary alongside the user ratings
+- Feedback submission shall be available to both logged-in and anonymous users
+- The system shall allow only one feedback submission per prediction result per session
 
 ---
 
@@ -352,7 +375,10 @@ Firestore collections:
 ```
 users/
 predictions/{username}/records
+feedback/{auto-id}
 ```
+
+Feedback documents store: username, model_used, input_data, predicted_salary, accuracy_rating, direction, star_rating, actual_salary, created_at.
 
 ---
 
@@ -362,3 +388,4 @@ predictions/{username}/records
 - Dataset may not cover all roles or regions
 - Resume parsing depends on formatting
 - Market trends are not dynamically updated
+- Feedback submitted anonymously cannot be linked to a specific user session and carries no personal identifier

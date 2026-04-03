@@ -12,7 +12,7 @@ The application integrates multiple machine learning models, including Random Fo
 
 The system further enhances user experience by providing advanced features such as batch prediction, scenario analysis, prediction confidence estimation, and personalized career insights. A cloud-based authentication and storage system using Firebase enables secure user management and persistent prediction history tracking.
 
-SalaryScope serves as a decision-support tool for job seekers, students, and professionals, helping them understand salary expectations, improve negotiation strategies, and make informed career decisions.
+SalaryScope serves as a decision-support tool for job seekers, students, and professionals, helping them understand salary expectations, improve negotiation strategies, and make informed career decisions. The system also includes a structured feedback mechanism that allows users to rate prediction accuracy and submit optional actual salary data, enabling continuous quality assessment.
 
 ---
 
@@ -52,6 +52,7 @@ The main objectives of SalaryScope are:
 - To provide insights such as career stage and salary levels
 - To enable batch processing and scenario comparison
 - To store and visualize user prediction history
+- To collect structured user feedback on prediction accuracy for quality assessment
 - To assist users in making informed career decisions
 
 ---
@@ -102,6 +103,7 @@ User Input → Feature Processing → Model Prediction → Insights Generation �
 4. Resume NLP Module
 5. Database Module
 6. Analytics Module
+7. Feedback Module
 
 ---
 
@@ -306,6 +308,17 @@ predictions/{username}/records/{id}
 
 ---
 
+#### 7. Feedback Module
+
+- Implemented in `feedback.py`
+- Provides a collapsible form in the Manual Prediction tab after each result
+- Collects structured feedback: accuracy rating (Yes / Somewhat / No), direction (Too High / About Right / Too Low), star rating (1–5), and optional actual salary
+- Stores prediction inputs alongside feedback in Firestore under a dedicated `feedback/` collection
+- Available to both logged-in and anonymous users
+- Isolated from the prediction and user modules — no shared state or collections
+
+---
+
 ## 7. DATABASE DESIGN
 
 ### 7.1 Firestore Collections
@@ -336,6 +349,24 @@ predictions/
 
 ---
 
+#### Feedback Collection
+
+```
+feedback/
+   └── {auto-id}
+        ├── username
+        ├── model_used
+        ├── input_data
+        ├── predicted_salary
+        ├── accuracy_rating
+        ├── direction
+        ├── star_rating
+        ├── actual_salary
+        └── created_at
+```
+
+---
+
 ### 7.2 Data Flow
 
 ```
@@ -354,6 +385,17 @@ User → Input → Prediction → Save to Firestore → Retrieve → Display in 
   - Salary value
   - Career stage
   - Recommendations
+- Collapsible feedback form available after each result for users to rate prediction accuracy
+
+---
+
+### 8.7 Prediction Feedback
+
+- Available in the Manual Prediction tab for both models
+- Structured feedback fields: accuracy rating, direction of error, star rating (1–5), optional actual salary
+- Prediction inputs and predicted salary stored alongside feedback for full traceability
+- Accessible to logged-in and anonymous users
+- Stored in Firestore under `feedback/` — separate from prediction history
 
 ---
 
@@ -438,6 +480,7 @@ The system generates:
 - Interactive and user-friendly interface
 - Cloud-based storage for scalability
 - Scenario comparison feature
+- Structured feedback collection from all users enables ongoing prediction quality assessment
 
 ---
 
@@ -458,6 +501,7 @@ The system generates:
 - Mobile application version
 - More datasets for wider coverage
 - Personalized career path recommendations
+- Use collected feedback data to retrain or recalibrate models over time
 
 ---
 
@@ -465,4 +509,4 @@ The system generates:
 
 SalaryScope demonstrates the effective use of machine learning and NLP techniques to build an intelligent salary prediction system. By combining structured data analysis with resume-based feature extraction, the system provides a comprehensive and user-friendly solution for salary estimation.
 
-The integration of advanced features such as scenario analysis, batch processing, and cloud-based storage enhances the practicality and scalability of the application. Overall, SalaryScope serves as a valuable tool for individuals seeking data-driven insights into salary expectations and career planning.
+The integration of advanced features such as scenario analysis, batch processing, cloud-based storage, and structured prediction feedback enhances the practicality and scalability of the application. The feedback system provides a lightweight, non-intrusive mechanism for collecting user-reported accuracy data, laying the groundwork for future model improvement. Overall, SalaryScope serves as a valuable tool for individuals seeking data-driven insights into salary expectations and career planning.

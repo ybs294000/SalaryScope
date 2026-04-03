@@ -59,6 +59,8 @@ Tabs include:
 - Profile
 - About
 
+The Manual Prediction tab includes a collapsible feedback form rendered after each prediction result.
+
 ---
 
 ### 3.2 Authentication Module
@@ -126,6 +128,7 @@ PDF → Text Extraction → Cleaning → Feature Extraction → Structured Data
 ```
 users/{username}
 predictions/{username}/records/{id}
+feedback/{auto-id}
 ```
 
 **Responsibilities:**
@@ -133,6 +136,41 @@ predictions/{username}/records/{id}
 - Store user data
 - Store prediction history
 - Retrieve data for profile
+- Store structured prediction feedback from all users
+
+---
+
+### 3.7 Feedback Module
+
+- Implemented in `feedback.py`
+- Independent of the predictions and user modules
+- Provides a collapsible UI component rendered in the Manual Prediction tab after a result is generated
+
+**Responsibilities:**
+
+- Collect structured user feedback on prediction accuracy
+- Save feedback to Firestore under a dedicated `feedback/` collection
+- Accept submissions from both logged-in and anonymous users
+
+**Feedback Fields Collected:**
+
+| Field           | Type    | Description                              |
+|-----------------|---------|------------------------------------------|
+| username        | String  | Email if logged in, "anonymous" otherwise |
+| model_used      | String  | Model that produced the prediction       |
+| input_data      | JSON    | All input fields used for the prediction |
+| predicted_salary| Float   | The salary value predicted               |
+| accuracy_rating | String  | Yes / Somewhat / No                      |
+| direction       | String  | Too High / About Right / Too Low         |
+| star_rating     | Integer | 1 to 5                                   |
+| actual_salary   | Float   | Optional; None if not provided           |
+| created_at      | String  | UTC timestamp of submission              |
+
+**UI Behaviour:**
+
+- Appears as a collapsible expander below the prediction result
+- Submission is one-time per prediction within a session (form replaced by confirmation message after submit)
+- Session key is scoped to model name and predicted salary value to reset automatically on new predictions
 
 ---
 
@@ -176,6 +214,14 @@ Prediction Result → Save to Firestore → Retrieve → Display in Profile
 
 ---
 
+### 4.4 Feedback Flow
+
+```
+Prediction Result Displayed → User Opens Feedback Expander → Fills Fields → Submit → Save to Firestore feedback/
+```
+
+---
+
 ## 5. DATABASE DESIGN
 
 ### 5.1 Users Collection
@@ -197,6 +243,22 @@ Prediction Result → Save to Firestore → Retrieve → Display in Profile
 | input_data       | Input features provided  |
 | predicted_salary | Salary prediction output |
 | created_at       | Prediction timestamp     |
+
+---
+
+### 5.3 Feedback Collection
+
+| Field            | Description                                      |
+|------------------|--------------------------------------------------|
+| username         | Email if logged in, "anonymous" if not           |
+| model_used       | ML model that produced the prediction            |
+| input_data       | JSON of all input fields used for the prediction |
+| predicted_salary | Salary value that was predicted                  |
+| accuracy_rating  | User rating: Yes / Somewhat / No                 |
+| direction        | Too High / About Right / Too Low                 |
+| star_rating      | Integer rating from 1 to 5                       |
+| actual_salary    | User-provided salary in USD; null if skipped     |
+| created_at       | UTC timestamp of feedback submission             |
 
 ---
 
@@ -305,9 +367,10 @@ User Input → Processing → Model → Result → Display → Save
 - Firestore supports scalable storage
 - Modular architecture allows feature expansion
 - Models can be replaced or upgraded independently
+- Feedback data stored in a separate Firestore collection can be queried independently for future model improvement workflows
 
 ---
 
 ## 12. CONCLUSION
 
-The design of SalaryScope ensures modularity, scalability, and maintainability. The integration of machine learning, NLP, and cloud services enables the system to provide intelligent salary predictions and insights efficiently.
+The design of SalaryScope ensures modularity, scalability, and maintainability. The integration of machine learning, NLP, and cloud services enables the system to provide intelligent salary predictions and insights efficiently. The feedback module adds a lightweight, isolated data collection layer that enables continuous quality assessment without coupling to the core prediction or user systems.
