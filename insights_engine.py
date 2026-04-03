@@ -277,7 +277,7 @@ def generate_insights_app2(input_dict, prediction, df_app2, title_features_func)
         "role": role,
         "market_msg": market_msg,
         "market_type": market_type,
-        "recommendations": recs,
+        #"recommendations": recs,
     }
 
 # =========================================================
@@ -390,7 +390,7 @@ def generate_insights_app1(input_dict):
     return {
         "job_group": job_group,
         "experience_category": exp_category,
-        "recommendations": recs
+        #"recommendations": recs
     }
 
 # =========================================================

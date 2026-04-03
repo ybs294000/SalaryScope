@@ -25,7 +25,14 @@ from pdf_utils import (
     app2_generate_scenario_pdf,
     cached_app2_model_analytics_pdf
 )
-from insights_engine import generate_insights_app2, generate_insights_app1, render_recommendations
+from insights_engine import generate_insights_app2, generate_insights_app1
+
+from recommendations import (
+    generate_recommendations_app1,
+    generate_recommendations_app2,
+    render_recommendations
+)
+
 from negotiation_tips import (
     generate_negotiation_tips_app1,
     generate_negotiation_tips_app2,
@@ -399,7 +406,7 @@ logo_base64 = get_base64_image("static/android-chrome-512x512.png")
 # ================================================
 @st.cache_data
 def prepare_app1_dropdowns(df_app1):
-    job_titles = sorted(df_app1["Job Title"].dropna().value_counts().head(70).index.tolist())
+    job_titles = sorted(df_app1["Job Title"].dropna().value_counts().head(40).index.tolist())
     countries = sorted(df_app1["Country"].dropna().unique().tolist())
     if "Other" not in countries:
         countries.append("Other")
@@ -410,7 +417,7 @@ def prepare_app1_dropdowns(df_app1):
 # =================================================
 @st.cache_data
 def prepare_app2_dropdowns(df_app2):
-    job_titles = sorted(df_app2["job_title"].dropna().value_counts().head(92).index.tolist())
+    job_titles = sorted(df_app2["job_title"].dropna().value_counts().head(60).index.tolist())
     countries = sorted(df_app2["company_location"].dropna().unique().tolist())
     if "Other" not in countries:
         countries.append("Other")
@@ -1761,9 +1768,10 @@ with tab_objects[0]:
             st.caption("These tips help you approach salary discussions effectively based on your experience and role.")
 
             st.divider()
-            insights_a1 = generate_insights_app1(data["input_details"])
+            #insights_a1 = generate_insights_app1(data["input_details"])
+            recs_a1 = generate_recommendations_app1(data["input_details"])
             st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
-            render_recommendations(insights_a1["recommendations"])
+            render_recommendations(recs_a1)
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
 
             # ==============================================
@@ -2006,6 +2014,13 @@ with tab_objects[0]:
                 title_features
             )
 
+            recs_a2 = generate_recommendations_app2(
+                data_a2["input_details"],
+                prediction_a2,
+                df_app2,
+                title_features
+            )
+
             #st.divider()
             #st.subheader("Smart Insights")
 
@@ -2039,7 +2054,7 @@ with tab_objects[0]:
             # Recommendations
             st.divider()
             st.subheader("Career Recommendations")
-            render_recommendations(insights_a2["recommendations"])
+            render_recommendations(recs_a2)
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
 
             # ==============================================
@@ -2473,6 +2488,12 @@ with tab_objects[1]:
                 title_features
             )
 
+            recs_a2_r = generate_recommendations_app2(
+                data_a2_r["input_details_a2"],
+                prediction_a2_r,
+                df_app2,
+                title_features
+            )
             st.markdown(
                 "<h3 style='text-align: left;'>Salary Negotiation Tips</h3>",
                 unsafe_allow_html=True
@@ -2495,7 +2516,7 @@ with tab_objects[1]:
 
             st.divider()
             st.subheader("Career Recommendations")
-            render_recommendations(insights_a2_r["recommendations"])
+            render_recommendations(recs_a2_r)
             st.caption(
                 "These recommendations focus on long-term career growth "
                 "and skill development based on your profile."
@@ -3030,7 +3051,8 @@ with tab_objects[1]:
 
             st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
 
-            render_recommendations(insights_a1_r["recommendations"])
+            recs_a1_r = generate_recommendations_app1(data["input_details"])
+            render_recommendations(recs_a1_r)
 
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
             # ---------------- PDF GENERATION ----------------
