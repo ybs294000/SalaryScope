@@ -101,7 +101,7 @@ def classify_role_app2(domain, is_mgmt, is_exec):
 
 
 # =========================================================
-# MARKET COMPARISON (CRITICAL FIX)
+# MARKET COMPARISON 
 # =========================================================
 
 MIN_SAMPLE = 15
