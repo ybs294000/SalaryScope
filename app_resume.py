@@ -35,10 +35,12 @@ from resume_nlp import (
     extract_text_from_pdf,
     extract_resume_features,
     calculate_resume_score,
-    education_label
-)
-from resume_nlp import extract_resume_features_a2, calculate_resume_score_a2, APP2_ALLOWED_ISO_CODES_A2
+    education_label,
 
+    extract_resume_features_a2, 
+    calculate_resume_score_a2, 
+    APP2_ALLOWED_ISO_CODES_A2
+)
 from feedback import feedback_ui
 
 from auth import login_ui, register_ui, logout, get_logged_in_user
