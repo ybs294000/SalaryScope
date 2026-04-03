@@ -1768,7 +1768,7 @@ with tab_objects[0]:
             st.caption("These tips help you approach salary discussions effectively based on your experience and role.")
 
             st.divider()
-            #insights_a1 = generate_insights_app1(data["input_details"])
+            insights_a1 = generate_insights_app1(data["input_details"])
             recs_a1 = generate_recommendations_app1(data["input_details"])
             st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
             render_recommendations(recs_a1)
