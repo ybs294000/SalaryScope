@@ -5184,7 +5184,7 @@ with tab_objects[3]:
 with tab_objects[4]:
 
     @st.fragment
-    def render_model_analytics_tab():
+    def render_tab3():
         st.header("Model Analytics & Performance Evaluation")
 
         # -------------------------------------------------------
@@ -6064,14 +6064,14 @@ with tab_objects[4]:
                 mime="application/pdf",
                 width='stretch'
             )
-    render_model_analytics_tab()
+    render_tab3()
 # ==================================================
 # TAB 6: DATA INSIGHTS
 # ==================================================
 with tab_objects[5]:
 
     @st.fragment
-    def render_data_insights_tab():
+    def render_tab4():
         st.header("Dataset Insights & Exploratory Analysis")
 
         # -------------------------------------------------------
@@ -6328,7 +6328,7 @@ with tab_objects[5]:
                                          yaxis_title="Annual Salary (USD)", showlegend=False)
             _apply_theme(fig_job_di_a2)
             st.plotly_chart(fig_job_di_a2, width='stretch')
-    render_data_insights_tab()
+    render_tab4()
 
 # =================================================
 # TAB 7: Add Profile Tab If Logged In
