@@ -92,7 +92,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
             "Star rating is required; all other fields are optional."
         )
 
-        # ── Row 1: Accuracy + Direction ──────────────────────────
+        # --- Row 1: Accuracy + Direction -------------------------
         col_a, col_b = st.columns(2)
 
         with col_a:
@@ -113,7 +113,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
                 key=f"fb_direction_{model_used}_{int(predicted_salary)}"
             )
 
-        # ── Row 2: Star rating ────────────────────────────────────
+        # --- Row 2: Star rating ------------------------------
         star_rating = st.select_slider(
             "Overall rating",
             options=[1, 2, 3, 4, 5],
@@ -122,7 +122,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
             key=f"fb_stars_{model_used}_{int(predicted_salary)}"
         )
 
-        # ── Row 3: Optional actual salary ────────────────────────
+        # ── Row 3: Optional actual salary ------------------------
         actual_salary_raw = st.number_input(
             "Your actual / expected salary (USD, optional)",
             min_value=0.0,
@@ -135,7 +135,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
         )
         actual_salary = float(actual_salary_raw) if actual_salary_raw > 0 else None
 
-        # ── Submit ────────────────────────────────────────────────
+        # --- Submit ------------------------------------------------
         if st.button(
             "Submit Feedback",
             key=f"fb_submit_{model_used}_{int(predicted_salary)}",
