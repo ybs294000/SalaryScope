@@ -27,7 +27,7 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 
 ## Overview
 
-SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, user authentication, and PDF report generation.
+SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, user authentication, prediction feedback collection, and PDF report generation.
 
 ---
 
@@ -80,6 +80,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 - Negotiation tips and career recommendations
 - Confidence interval estimation based on residual standard deviation — Model 1
 - Downloadable PDF prediction report
+- Prediction feedback collection after each result (accuracy rating, direction, star rating, optional actual salary) — available to all users
 
 ### Resume-Based Prediction (NLP)
 - Upload a resume (PDF format)
@@ -117,6 +118,19 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 - Education level sweep across High School, Bachelor's, Master's, and PhD for a selected baseline scenario — Model 1
 - Company size sweep across Small, Medium, and Large companies for a selected baseline scenario — Model 2
 - Export scenario results in CSV, XLSX, or JSON format
+
+### Prediction Feedback
+- Available in the Manual Prediction tab for both models
+- Appears as a collapsible expander after a prediction result is generated
+- Structured feedback fields — no free-text input:
+  - Accuracy rating: Yes / Somewhat / No
+  - Direction: Too High / About Right / Too Low
+  - Star rating: 1–5
+  - Optional actual or expected salary (USD)
+- Available to both logged-in and anonymous users
+- Prediction inputs and predicted salary are stored alongside feedback for traceability
+- Stored in Firestore under a dedicated `feedback/` collection, separate from prediction history
+- One submission per prediction result per session
 
 ### Model Analytics
 - Performance metrics: R², MAE, RMSE
@@ -201,30 +215,31 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 salaryscope/
 │
 ├── app-lite.py                          # Lightweight Streamlit application
-├── app_resume.py                   # Main Streamlit application with resume analysis and scenario/what-if analysis
-├── resume_nlp.py                   # Resume parsing (NLP, regex, feature extraction)
-├── auth.py                         # Firebase Authentication (login, register, session)
-├── database.py                     # Firestore client, user and prediction functions
-├── insights_engine.py              # Smart insights and recommendations engine
-├── negotiation_tips.py             # Salary negotiation tips engine
-├── pdf_utils.py                # ReportLab PDF generation for all report types
-├── user_profile.py                 # User profile tab UI and prediction history
+├── app_resume.py                        # Main Streamlit application with resume analysis and scenario/what-if analysis
+├── resume_nlp.py                        # Resume parsing (NLP, regex, feature extraction)
+├── auth.py                              # Firebase Authentication (login, register, session)
+├── database.py                          # Firestore client, user and prediction functions
+├── feedback.py                          # Prediction feedback collection (UI + Firestore save)
+├── insights_engine.py                   # Smart insights and recommendations engine
+├── negotiation_tips.py                  # Salary negotiation tips engine
+├── pdf_utils.py                         # ReportLab PDF generation for all report types
+├── user_profile.py                      # User profile tab UI and prediction history
 │
 ├── model/
-│   ├── rf_model_grid.pkl           # Model 1: Random Forest pipeline + metadata
-│   ├── salary_band_classifier.pkl  # Model 1: Salary level classifier + metadata
-│   ├── career_cluster_pipeline.pkl # Model 1: KMeans clustering pipeline + metadata
-│   ├── app1_analytics.pkl          # Model 1: Precomputed analytics (residuals, PCA, etc.)
+│   ├── rf_model_grid.pkl                # Model 1: Random Forest pipeline + metadata
+│   ├── salary_band_classifier.pkl       # Model 1: Salary level classifier + metadata
+│   ├── career_cluster_pipeline.pkl      # Model 1: KMeans clustering pipeline + metadata
+│   ├── app1_analytics.pkl               # Model 1: Precomputed analytics (residuals, PCA, etc.)
 │   ├── salaryscope_3755_production_model.pkl  # Model 2: XGBoost pipeline + metadata
-│   └── app2_analytics.pkl          # Model 2: Precomputed analytics (SHAP, residuals, etc.)
+│   └── app2_analytics.pkl               # Model 2: Precomputed analytics (SHAP, residuals, etc.)
 │
 ├── data/
-│   ├── Salary_Streamlit_App.csv            # Model 1 training dataset
-│   ├── ds_salaries_Streamlit_App.csv       # Model 2 training dataset
-│   └── association_rules.csv              # Precomputed Apriori association rules
+│   ├── Salary_Streamlit_App.csv         # Model 1 training dataset
+│   ├── ds_salaries_Streamlit_App.csv    # Model 2 training dataset
+│   └── association_rules.csv           # Precomputed Apriori association rules
 │
 ├── static/
-│   └── android-chrome-512x512.png          # App logo
+│   └── android-chrome-512x512.png       # App logo
 │
 ├── screenshots/
 │   ├── manual_prediction.png
@@ -234,7 +249,7 @@ salaryscope/
 │   └── model_analytics.png
 │
 ├── .streamlit/
-│   └── config.toml                        # Streamlit configuration
+│   └── config.toml                      # Streamlit configuration
 │
 └── requirements.txt
 ```
@@ -296,6 +311,7 @@ client_x509_cert_url = "your_cert_url"
 
 * Firebase authentication requires valid credentials and may not function without proper configuration.
 * The application is fully usable without authentication for core features such as manual prediction, scenario analysis, and model analytics.
+* Feedback submission is available to all users including those not logged in.
 * Resume parsing requires spaCy language model installation.
 
 ---
@@ -307,6 +323,7 @@ client_x509_cert_url = "your_cert_url"
 2. Navigate to the **Manual Prediction** tab
 3. Fill in the required fields and click **Predict Salary**
 4. View results, insights, and optionally download a PDF report
+5. Expand the **Share Feedback on This Prediction** section to rate the prediction accuracy — login is not required
 
 ### Resume Prediction
 1. Navigate to the **Resume Analysis** tab
@@ -398,6 +415,11 @@ predictions/
     records/
       {auto-id}/
         model_used, input_data, predicted_salary, created_at
+
+feedback/
+  {auto-id}/
+    username, model_used, input_data, predicted_salary,
+    accuracy_rating, direction, actual_salary, star_rating, created_at
 ```
 
 ---
@@ -409,6 +431,8 @@ predictions/
 - Resume analysis uses rule-based NLP and may not accurately extract information from complex or heavily formatted resumes.
 - Predictions do not account for real-time factors such as market demand, company-specific policies, or economic changes.
 - The confidence interval shown for Model 1 is an approximation based on training residuals and should be interpreted as an estimate rather than an exact range.
+- Feedback submitted anonymously cannot be linked to a specific user session and is stored without any personal identifier.
+
 ---
 
 ## Future Scope
@@ -417,6 +441,7 @@ predictions/
 - Enhance resume parsing using more advanced NLP techniques for better accuracy.
 - Expand the system to support additional job roles and domains beyond current datasets.
 - Add more interactive analysis features to help users better understand prediction behavior.
+- Use collected feedback data to retrain or calibrate models over time.
 
 ---
 

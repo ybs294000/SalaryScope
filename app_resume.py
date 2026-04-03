@@ -39,6 +39,8 @@ from resume_nlp import (
 )
 from resume_nlp import extract_resume_features_a2, calculate_resume_score_a2, APP2_ALLOWED_ISO_CODES_A2
 
+from feedback import feedback_ui
+
 from auth import login_ui, register_ui, logout, get_logged_in_user
 from user_profile import show_profile
 from database import init_db, create_prediction_table, save_prediction
@@ -1761,6 +1763,12 @@ with tab_objects[0]:
             st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
             render_recommendations(insights_a1["recommendations"])
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
+
+            # ==============================================
+            # FEEDBACK
+            # ==============================================
+            st.divider()
+            feedback_ui(prediction, "Random Forest", data["input_details"])            
             # ---------------- PDF GENERATION ----------------
             st.divider()
             if st.button("Prepare PDF Report", width='stretch'):
@@ -2031,6 +2039,13 @@ with tab_objects[0]:
             st.subheader("Career Recommendations")
             render_recommendations(insights_a2["recommendations"])
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
+
+            # ==============================================
+            # FEEDBACK
+            # ==============================================
+            st.divider()
+            feedback_ui(prediction_a2, "XGBoost", data_a2["input_details"])
+
             # ---------------- PDF GENERATION ----------------
             st.divider()
             if st.button("Prepare PDF Report", width='stretch'):
@@ -6049,7 +6064,7 @@ with tab_objects[4]:
             )
     render_tab3()
 # ==================================================
-# TAB 5: DATA INSIGHTS
+# TAB 6: DATA INSIGHTS
 # ==================================================
 with tab_objects[5]:
 
@@ -6314,7 +6329,7 @@ with tab_objects[5]:
     render_tab4()
 
 # =================================================
-# Add Profile Tab If Logged In
+# TAB 7: Add Profile Tab If Logged In
 # =================================================
 if st.session_state.logged_in:
 
@@ -6323,7 +6338,7 @@ if st.session_state.logged_in:
     with tab_objects[profile_index]:
         show_profile()
 # ==================================================
-# TAB 5: ABOUT (Merged from both apps)
+# TAB 8: ABOUT (Merged from both apps)
 # ==================================================
 about_index = tabs.index("About")
 with tab_objects[about_index]:
@@ -6382,6 +6397,7 @@ with tab_objects[about_index]:
     - Multi-format export (CSV, JSON, XLSX, SQL)
     - Google Drive public link upload
     - PDF report generation (manual + resume analysis + bulk + scenario analysis + model analytics)
+    - Prediction feedback collection (accuracy rating, direction, star rating, optional actual salary)
             """)
 
         with col_ab2:
@@ -6410,6 +6426,7 @@ with tab_objects[about_index]:
     - Multi-format export (CSV, JSON, XLSX, SQL)
     - Google Drive public link upload
     - PDF report generation (manual + resume analysis + bulk + scenario analysis + model analytics)
+    - Prediction feedback collection (accuracy rating, direction, star rating, optional actual salary)
             """)
 
         st.divider()
@@ -6426,6 +6443,21 @@ with tab_objects[about_index]:
     - Extracted fields are fully editable before prediction
     - Salary prediction using the same models as manual prediction
     - Results include annual salary, salary level, career stage, association pattern insight, confidence interval, negotiation tips, and career recommendations
+        """)
+
+        st.divider()
+
+        st.markdown("### Prediction Feedback")
+        st.markdown("""
+    - Available in the Manual Prediction tab for both models
+    - Appears as a collapsible expander after a prediction is generated
+    - Allows users to rate whether the prediction was accurate (Yes / Somewhat / No)
+    - Allows users to indicate the direction of error (Too High / About Right / Too Low)
+    - Star rating from 1 to 5 for overall prediction quality
+    - Optional field to enter actual or expected salary in USD
+    - Available to both logged-in and anonymous users
+    - Feedback is stored in Firestore under a separate `feedback/` collection alongside the prediction inputs and predicted salary
+    - Submission is one-time per prediction result within a session — the form is replaced by a confirmation message after submitting
         """)
 
         st.divider()
@@ -6479,6 +6511,7 @@ with tab_objects[about_index]:
     - State-managed UI to prevent re-computation on interaction
     - Google Drive public link upload for batch files
     - Predictions saved to Firestore for logged-in users
+    - Structured prediction feedback collected from all users (logged-in and anonymous) and stored in Firestore
         """)
 
         st.divider()
@@ -6496,7 +6529,7 @@ with tab_objects[about_index]:
     - Plotly / Matplotlib
     - ReportLab (PDF generation)
     - Firebase Authentication (user login and registration)
-    - Firebase Admin SDK / Firestore (user data and prediction storage)
+    - Firebase Admin SDK / Firestore (user data, prediction storage, and feedback storage)
     - Requests (Cloud file retrieval)
     - bcrypt (password hashing utility)
         """)
@@ -6507,6 +6540,7 @@ with tab_objects[about_index]:
 - Enter your profile details and click Predict Salary to get an instant salary estimate.
 - Model 1 shows salary level, career stage, association pattern insight, negotiation tips, and career recommendations.
 - Model 2 shows domain-aware smart insights, negotiation tips, and career recommendations.
+- After results are shown, expand the Feedback section at the bottom to rate the prediction accuracy.
 
 **Resume Analysis**
 - Upload a PDF resume and click Extract Resume Features to run NLP-based extraction.
@@ -6556,6 +6590,7 @@ with tab_objects[about_index]:
 - Click **Predict Salary** to generate results.
 - Scroll down to view salary level, career stage, pattern insight, negotiation tips, and recommendations.
 - Click **Prepare PDF Report** to generate a downloadable summary, then click **Download** to save it.
+- To share feedback on the prediction, expand the **Share Feedback on This Prediction** section at the bottom, fill in the fields, and click **Submit Feedback**. Login is not required.
 
 **Resume Analysis**
 - Switch to Model 1 using the model selector.
@@ -6598,4 +6633,5 @@ with tab_objects[about_index]:
     - Predictions are based on past data and do not consider current market trends or company-specific salaries.
     - Scenario Analysis results are generated by the same underlying model as manual prediction and carry the same limitations.
     - The results should be used only as an estimate, not as an exact salary value.
+    - Feedback submitted anonymously cannot be linked to a specific user session and is stored as-is without any personal identifier.
         """)
