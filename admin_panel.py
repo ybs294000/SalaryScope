@@ -1,58 +1,16 @@
 import streamlit as st
-import sys
-import platform
-import datetime
-import gc
-
+import sys, platform, datetime, gc
 from auth import is_admin
-from database import _get_firestore_client
 
 
-# -----------------------------------
-# MEMORY HELPER
-# -----------------------------------
 def _mem_mb():
     try:
         import psutil, os
-        process = psutil.Process(os.getpid())
-        return process.memory_info().rss / 1024 / 1024
+        return psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
     except:
         return -1
 
 
-# -----------------------------------
-# FIRESTORE COUNT (SAFE)
-# -----------------------------------
-def _count_users():
-    try:
-        db = _get_firestore_client()
-        users = list(db.collection("users").stream())
-        return len(users)
-    except:
-        return -1
-
-
-def _count_predictions():
-    try:
-        db = _get_firestore_client()
-        users = db.collection("predictions").stream()
-
-        total = 0
-        for user_doc in users:
-            records = db.collection("predictions") \
-                        .document(user_doc.id) \
-                        .collection("records") \
-                        .stream()
-            total += len(list(records))
-
-        return total
-    except:
-        return -1
-
-
-# -----------------------------------
-# ADMIN PANEL
-# -----------------------------------
 def show_admin_panel(user_email):
 
     if not is_admin():
@@ -60,96 +18,102 @@ def show_admin_panel(user_email):
         return
 
     st.header("Admin")
-    st.caption("System information. No user personal data is shown.")
+    st.caption("System diagnostics. No user data is accessed.")
     st.divider()
 
-    # ==============================
+    # =========================
     # PLATFORM
-    # ==============================
+    # =========================
     st.subheader("Platform")
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Python", sys.version.split()[0])
-    c2.metric("Platform", platform.system())
+    c2.metric("OS", platform.system())
     c3.metric("Arch", platform.machine())
 
-    st.metric("Streamlit Version", st.__version__)
-
+    st.metric("Streamlit", st.__version__)
     st.divider()
 
-    # ==============================
-    # FIREBASE
-    # ==============================
+    # =========================
+    # FIREBASE CONFIG
+    # =========================
     st.subheader("Firebase")
 
     try:
         project_id = st.secrets["FIREBASE_SERVICE_ACCOUNT"]["project_id"]
-    except Exception:
+    except:
         project_id = "Not set"
-        
-    st.metric("Project ID", project_id)
+
+    api_key_status = "Available" if "FIREBASE_API_KEY" in st.secrets else "Missing"
+
+    c1, c2 = st.columns(2)
+    c1.metric("Project ID", project_id)
+    c2.metric("API Key", api_key_status)
 
     st.divider()
 
-    # ==============================
-    # USERS
-    # ==============================
-    st.subheader("Users")
+    # =========================
+    # AUTH STATUS
+    # =========================
+    st.subheader("Authentication")
 
-    if st.button("Count Users"):
-        with st.spinner("Counting users..."):
-            count = _count_users()
+    c1, c2 = st.columns(2)
 
-        if count >= 0:
-            st.metric("Total Users", count)
-        else:
-            st.warning("Could not fetch users")
+    c1.metric("Logged User", user_email)
+    c2.metric("Admin", "Yes" if st.session_state.get("is_admin") else "No")
 
-    st.divider()
-
-    # ==============================
-    # PREDICTIONS
-    # ==============================
-    st.subheader("Predictions")
-
-    if st.button("Count Predictions"):
-        with st.spinner("Counting predictions..."):
-            count = _count_predictions()
-
-        if count >= 0:
-            st.metric("Total Predictions", count)
-        else:
-            st.warning("Could not fetch predictions")
+    expiry = st.session_state.get("_session_expiry")
+    if expiry:
+        st.caption(f"Session expires at: {expiry}")
 
     st.divider()
 
-    # ==============================
+    # =========================
+    # MODEL STATUS
+    # =========================
+    st.subheader("Model Status")
+
+    try:
+        import joblib
+        st.success("joblib loaded")
+    except:
+        st.error("joblib missing")
+
+    import os
+    model_files = [
+        "model/rf_model_grid.pkl",
+        "model/salaryscope_3755_production_model.pkl"
+    ]
+
+    for f in model_files:
+        st.write(f"{f}: {'Found' if os.path.exists(f) else 'Missing'}")
+
+    st.divider()
+
+    # =========================
     # MEMORY
-    # ==============================
+    # =========================
     st.subheader("Memory")
 
     mem = _mem_mb()
-
     if mem >= 0:
         col1, col2 = st.columns(2)
-
         col1.metric("RAM Usage", f"{mem:.1f} MB")
 
         if col2.button("Run GC"):
             before = mem
             collected = gc.collect()
             after = _mem_mb()
-
-            st.success(f"Collected {collected} objects")
+            st.success(f"Freed {collected} objects")
             st.caption(f"{before:.1f} → {after:.1f} MB")
     else:
-        st.caption("Install psutil for memory tracking")
+        st.caption("Install psutil for memory stats")
 
     st.divider()
 
-    # ==============================
+    # =========================
     # CACHE
-    # ==============================
+    # =========================
     st.subheader("Cache")
 
     if st.button("Clear Cache"):
@@ -158,14 +122,17 @@ def show_admin_panel(user_email):
 
     st.divider()
 
-    # ==============================
-    # SESSION
-    # ==============================
+    # =========================
+    # SESSION DEBUG
+    # =========================
     st.subheader("Session")
 
-    col1, col2 = st.columns(2)
-    col1.metric("Session Keys", len(st.session_state))
-    col2.metric(
+    st.metric("Session Keys", len(st.session_state))
+
+    if st.checkbox("Show session keys"):
+        st.json(list(st.session_state.keys()))
+
+    st.metric(
         "UTC Time",
         datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M")
     )
