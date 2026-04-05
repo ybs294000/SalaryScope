@@ -169,6 +169,9 @@ def _set_logged_in(email: str, id_token: str):
     st.session_state._firebase_id_token = id_token
     st.session_state._session_expiry = expiry
 
+    st.session_state.is_admin = (
+        email.strip().lower() == st.secrets.get("ADMIN_EMAIL", "").strip().lower()
+    )
 
 def _clear_session():
     st.session_state.logged_in = False
@@ -319,3 +322,12 @@ def logout():
     st.session_state.logged_in = False
     st.session_state.username = None
     st.rerun()
+
+# ----------------------------------------------------
+# ADMIN
+# ----------------------------------------------------
+def is_admin():
+    admin_email = st.secrets.get("ADMIN_EMAIL", "").strip().lower()
+    user_email = st.session_state.get("username", "").strip().lower()
+
+    return user_email == admin_email

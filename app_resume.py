@@ -51,6 +51,9 @@ from resume_nlp import (
 from feedback import feedback_ui
 
 from auth import login_ui, register_ui, logout, get_logged_in_user
+from auth import is_admin
+from admin_panel import show_admin_panel
+
 from user_profile import show_profile
 from database import init_db, create_prediction_table, save_prediction
 from database import delete_expired_sessions
@@ -1445,6 +1448,10 @@ tabs = [
 
 if st.session_state.logged_in:
     tabs.append("Profile")
+
+    # ONLY ADMIN SEES THIS
+    if is_admin():
+        tabs.append("Admin")
 
 tabs.append("About")
 
@@ -6365,6 +6372,22 @@ if st.session_state.logged_in:
 
     with tab_objects[profile_index]:
         show_profile()
+
+# ==================================================
+# ADMIN TAB
+# ==================================================
+if "Admin" in tabs:
+    admin_index = tabs.index("Admin")
+
+    with tab_objects[admin_index]:
+
+        from auth import is_admin
+
+        if not is_admin():
+            st.error("Access denied.")
+            st.stop()
+
+        show_admin_panel(st.session_state.username)
 # ==================================================
 # TAB 8: ABOUT (Merged from both apps)
 # ==================================================
