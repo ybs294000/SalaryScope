@@ -218,25 +218,20 @@ def show_admin_panel(user_email):
     # ==============================
     # RECENT ACTIVITY
     # ==============================
-    st.subheader("Recent Activity")
+    with st.expander("Recent Activity"):
 
-    if st.button("Show Recent Feedback"):
-        with st.spinner("Fetching recent feedback..."):
-            feedback = _get_recent_feedback()
+        if st.button("Show Recent Feedback"):
+            with st.spinner("Fetching recent feedback..."):
+                feedback = _get_recent_feedback()
 
-        if feedback:
-            for i, item in enumerate(feedback, 1):
-                with st.expander(f"Feedback #{i}"):
-                    st.write({
-                        "model": item.get("model_used"),
-                        "rating": item.get("star_rating"),
-                        "accuracy": item.get("accuracy_rating"),
-                        "salary": item.get("predicted_salary")
-                    })
-        else:
-            st.warning("Could not fetch recent activity")
-
-    st.divider()
+            if feedback:
+                for i, item in enumerate(feedback, 1):
+                    with st.expander(f"Entry {i} | {item.get('model_used')}"):
+                        st.write("Rating:", item.get("star_rating"))
+                        st.write("Accuracy:", item.get("accuracy_rating"))
+                        st.write("Predicted Salary:", item.get("predicted_salary"))
+            else:
+                st.warning("Could not fetch recent activity")
     # ==============================
     # MEMORY
     # ==============================
