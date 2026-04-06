@@ -6224,6 +6224,10 @@ with tab_objects[5]:
             col3h.metric("Unique Job Titles", data_full_di_a2["job_title"].nunique())
 
             st.divider()
+            st.subheader("Salary Summary Statistics")
+            st.dataframe(data_full_di_a2["Salary"].describe())
+
+            st.divider()
             st.subheader("Distribution of Data Science Salaries")
             fig_hist_di_a2 = px.histogram(data_full_di_a2, x="salary_in_usd", nbins=30,
                                            title="Distribution of Annual Salaries for Data Science Roles",
