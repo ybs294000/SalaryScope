@@ -225,13 +225,14 @@ def show_admin_panel(user_email):
             feedback = _get_recent_feedback()
 
         if feedback:
-            for item in feedback:
-                st.write({
-                    "model": item.get("model_used"),
-                    "rating": item.get("star_rating"),
-                    "accuracy": item.get("accuracy_rating"),
-                    "salary": item.get("predicted_salary")
-                })
+            for i, item in enumerate(feedback, 1):
+                with st.expander(f"Feedback #{i}"):
+                    st.write({
+                        "model": item.get("model_used"),
+                        "rating": item.get("star_rating"),
+                        "accuracy": item.get("accuracy_rating"),
+                        "salary": item.get("predicted_salary")
+                    })
         else:
             st.warning("Could not fetch recent activity")
 
