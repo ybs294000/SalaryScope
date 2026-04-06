@@ -152,6 +152,7 @@ st.markdown(
         border-radius: 6px !important;
         color: var(--text-main) !important;
     }
+  
 
     /*.stTextInput input,*/
     .stNumberInput input {
