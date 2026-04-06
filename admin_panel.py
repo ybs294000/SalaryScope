@@ -241,41 +241,6 @@ def show_admin_panel(user_email):
                     st.write("Predicted Salary:", item.get("predicted_salary"))
 
     st.divider()
-    # ==============================
-    # MEMORY
-    # ==============================
-    st.subheader("Memory")
-
-    mem = _mem_mb()
-
-    if mem >= 0:
-        col1, col2 = st.columns(2)
-
-        col1.metric("RAM Usage", f"{mem:.1f} MB")
-
-        if col2.button("Run Garbage Collection"):
-            before = mem
-            collected = gc.collect()
-            after = _mem_mb()
-
-            st.success(f"Collected {collected} objects")
-            st.caption(f"{before:.1f} → {after:.1f} MB")
-    else:
-        st.caption("Install psutil for memory tracking")
-
-    st.divider()
-
-    # ==============================
-    # CACHE
-    # ==============================
-    st.subheader("Cache")
-
-    if st.button("Clear Cache"):
-        st.cache_data.clear()
-        st.success("Cache cleared")
-
-    st.divider()
-
 
     # ==============================
     # MEMORY & CACHE
