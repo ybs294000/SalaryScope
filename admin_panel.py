@@ -31,25 +31,6 @@ def _count_users():
     except:
         return -1
 
-
-def _count_predictions():
-    try:
-        db = _get_firestore_client()
-        users = db.collection("predictions").stream()
-
-        total = 0
-        for user_doc in users:
-            records = db.collection("predictions") \
-                        .document(user_doc.id) \
-                        .collection("records") \
-                        .stream()
-            total += len(list(records))
-
-        return total
-    except:
-        return -1
-
-
 # -----------------------------------
 # ADMIN PANEL
 # -----------------------------------
@@ -115,21 +96,6 @@ def show_admin_panel(user_email):
 
     st.divider()
 
-    # ==============================
-    # PREDICTIONS
-    # ==============================
-    st.subheader("Predictions")
-
-    if st.button("Count Predictions"):
-        with st.spinner("Counting predictions..."):
-            count = _count_predictions()
-
-        if count >= 0:
-            st.metric("Total Predictions", count)
-        else:
-            st.warning("Could not fetch predictions")
-
-    st.divider()
 
     # ==============================
     # MEMORY
