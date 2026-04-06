@@ -66,6 +66,21 @@ def show_admin_panel():
 
     st.divider()
 
+    # ==============================
+    # USERS
+    # ==============================
+    st.subheader("Users")
+
+    if st.button("Count Users"):
+        with st.spinner("Counting users..."):
+            count = _count_users()
+
+        if count >= 0:
+            st.metric("Total Users", count)
+        else:
+            st.warning("Could not fetch users")
+
+    st.divider()
     # =========================
     # AUTH
     # =========================
