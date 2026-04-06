@@ -108,9 +108,9 @@ def show_admin_panel(user_email):
     st.divider()
 
     # ==============================
-    # PLATFORM
+    # SYSTEM
     # ==============================
-    st.subheader("Platform")
+    st.subheader("System")
 
     try:
         import sklearn
@@ -171,50 +171,53 @@ def show_admin_panel(user_email):
     # ==============================
     st.subheader("Feedback Analytics")
 
-    if st.button("Load Feedback Analytics"):
+    if st.button("Load Feedback Analytics", key="feedback_btn"):
         with st.spinner("Loading feedback data..."):
             stats = _get_feedback_stats()
+        st.session_state["feedback_stats"] = stats
 
-        if stats:
-            # Metrics
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Total Feedback", stats["total"])
-            c2.metric("Avg Rating", stats["avg_star"])
-            c3.metric("Positive (Yes)", stats["yes"])
+    # Output in expander
+    if "feedback_stats" in st.session_state and st.session_state["feedback_stats"]:
+        stats = st.session_state["feedback_stats"]
 
-            c4, c5 = st.columns(2)
-            c4.metric("Somewhat", stats["somewhat"])
-            c5.metric("Negative (No)", stats["no"])
+        with st.expander("View Feedback Analytics", expanded=True):
 
-            # Donut Chart
-            if stats["total"] > 0:
-                import plotly.graph_objects as go
+            @st.fragment
+            def render_feedback_dashboard():
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Total Feedback", stats["total"])
+                c2.metric("Avg Rating", stats["avg_star"])
+                c3.metric("Positive (Yes)", stats["yes"])
 
-                fig = go.Figure(data=[
-                    go.Pie(
-                        labels=["Yes", "Somewhat", "No"],
-                        values=[stats["yes"], stats["somewhat"], stats["no"]],
-                        hole=0.4
+                c4, c5 = st.columns(2)
+                c4.metric("Somewhat", stats["somewhat"])
+                c5.metric("Negative (No)", stats["no"])
+
+                if stats["total"] > 0:
+                    import plotly.graph_objects as go
+
+                    fig = go.Figure(data=[
+                        go.Pie(
+                            labels=["Yes", "Somewhat", "No"],
+                            values=[stats["yes"], stats["somewhat"], stats["no"]],
+                            hole=0.4
+                        )
+                    ])
+
+                    fig.update_layout(
+                        title="Feedback Accuracy Distribution",
+                        height=400
                     )
-                ])
 
-                fig.update_layout(
-                    title="Feedback Accuracy Distribution",
-                    height=400
-                )
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.caption("No feedback data available")
 
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.caption("No feedback data available")
+                st.caption("Loaded on demand to minimize database reads")
 
-            st.caption("Loaded on demand to minimize database reads")
-
-        else:
-            st.warning("Could not fetch feedback data")
+            render_feedback_dashboard()
 
     st.divider()
-
-
     # ==============================
     # RECENT ACTIVITY
     # ==============================
@@ -250,7 +253,7 @@ def show_admin_panel(user_email):
 
         col1.metric("RAM Usage", f"{mem:.1f} MB")
 
-        if col2.button("Run GC"):
+        if col2.button("Run Garbage Collection"):
             before = mem
             collected = gc.collect()
             after = _mem_mb()
