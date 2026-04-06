@@ -4,28 +4,12 @@ from auth import is_admin
 
 
 # -------------------------------
-# SYSTEM INFO HELPERS
+# APP MEMORY (SAFE)
 # -------------------------------
-def get_system_info():
-    try:
-        import psutil
-        cpu_count = psutil.cpu_count()
-        ram = psutil.virtual_memory()
-        return {
-            "cpu": cpu_count,
-            "ram_total": ram.total / (1024**3),
-            "ram_used": ram.used / (1024**3),
-            "ram_percent": ram.percent
-        }
-    except:
-        return None
-
-
 def get_process_memory():
     try:
-        import psutil, os
-        proc = psutil.Process(os.getpid())
-        return proc.memory_info().rss / (1024**2)
+        import psutil
+        return psutil.Process(os.getpid()).memory_info().rss / (1024**2)
     except:
         return -1
 
@@ -40,7 +24,7 @@ def show_admin_panel(user_email):
         return
 
     st.header("Admin")
-    st.caption("System diagnostics — lightweight, safe, and meaningful.")
+    st.caption("System diagnostics and configuration.")
     st.divider()
 
     # =========================
@@ -53,14 +37,7 @@ def show_admin_panel(user_email):
     c2.metric("OS", platform.system())
     c3.metric("Architecture", platform.machine())
 
-    st.metric("Streamlit", st.__version__)
-
-    sysinfo = get_system_info()
-    if sysinfo:
-        c1, c2, c3 = st.columns(3)
-        c1.metric("CPU Cores", sysinfo["cpu"])
-        c2.metric("RAM Used", f"{sysinfo['ram_used']:.1f} GB")
-        c3.metric("RAM Usage", f"{sysinfo['ram_percent']}%")
+    st.metric("Streamlit Version", st.__version__)
 
     st.divider()
 
@@ -80,6 +57,11 @@ def show_admin_panel(user_email):
     c1.metric("Project ID", project_id)
     c2.metric("API Key", api_key_status)
 
+    # 🔗 Firebase Console Link
+    if project_id != "Not set":
+        firebase_url = f"https://console.firebase.google.com/project/{project_id}/overview"
+        st.markdown(f"[Open Firebase Console]({firebase_url})")
+
     st.divider()
 
     # =========================
@@ -98,28 +80,25 @@ def show_admin_panel(user_email):
     st.divider()
 
     # =========================
-    # MODEL HEALTH CHECK
+    # MEMORY (APP ONLY)
     # =========================
-
-
-    # =========================
-    # MEMORY (APP LEVEL)
-    # =========================
-    st.subheader("Memory (App Process)")
+    st.subheader("App Memory Usage")
 
     mem = get_process_memory()
     if mem >= 0:
         col1, col2 = st.columns(2)
-        col1.metric("App Memory", f"{mem:.1f} MB")
+        col1.metric("Memory Usage", f"{mem:.1f} MB")
 
-        if col2.button("Run GC"):
+        if col2.button("Run Garbage Collection"):
             before = mem
             collected = gc.collect()
             after = get_process_memory()
-            st.success(f"Collected {collected} objects")
+            st.success(f"Freed {collected} objects")
             st.caption(f"{before:.1f} → {after:.1f} MB")
     else:
-        st.caption("psutil not installed")
+        st.caption("Install psutil to enable memory tracking")
+
+    st.caption("Note: Streamlit Cloud apps typically have ~2.7 GB memory limit.")
 
     st.divider()
 
@@ -135,7 +114,7 @@ def show_admin_panel(user_email):
     st.divider()
 
     # =========================
-    # SESSION DEBUG
+    # SESSION
     # =========================
     st.subheader("Session")
 
