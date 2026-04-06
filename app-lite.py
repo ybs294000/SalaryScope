@@ -2004,6 +2004,13 @@ with tab_objects[0]:
                 title_features
             )
 
+            recs_a2 = generate_recommendations_app2(
+                data_a2["input_details"],
+                prediction_a2,
+                df_app2,
+                title_features
+            )
+
             #st.divider()
             #st.subheader("Smart Insights")
 
@@ -2037,7 +2044,7 @@ with tab_objects[0]:
             # Recommendations
             st.divider()
             st.subheader("Career Recommendations")
-            render_recommendations(insights_a2["recommendations"])
+            render_recommendations(recs_a2)
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
             # ---------------- PDF GENERATION ----------------
             st.divider()
