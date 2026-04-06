@@ -143,7 +143,7 @@ st.markdown(
     }
 
     /* ── Inputs ── */
-    .stTextInput > div > div,
+    /*.stTextInput > div > div,*/
     .stNumberInput > div > div,
     .stSelectbox > div > div,
     .stMultiSelect > div > div {
@@ -153,18 +153,19 @@ st.markdown(
         color: var(--text-main) !important;
     }
 
-    .stTextInput input,
+    /*.stTextInput input,*/
     .stNumberInput input {
         background-color: var(--bg-input) !important;
         color: var(--text-main) !important;
     }
 
-    .stTextInput > div > div:focus-within,
+    /*.stTextInput > div > div:focus-within,*/
     .stNumberInput > div > div:focus-within,
     .stSelectbox > div > div:focus-within {
         border-color: var(--primary) !important;
         box-shadow: 0 0 0 2px rgba(62,125,224,0.25) !important;
     }
+
 
     /* ── Labels ── */
     label, .stLabel, [data-testid="stWidgetLabel"] {
