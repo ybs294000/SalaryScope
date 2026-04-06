@@ -184,39 +184,57 @@ def show_admin_panel(user_email):
 
             @st.fragment
             def render_feedback_dashboard():
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Total Feedback", stats["total"])
-                c2.metric("Avg Rating", stats["avg_star"])
-                c3.metric("Positive (Yes)", stats["yes"])
 
-                c4, c5 = st.columns(2)
-                c4.metric("Somewhat", stats["somewhat"])
-                c5.metric("Negative (No)", stats["no"])
+                # Main layout: metrics (left) + chart (right)
+                left, right = st.columns([1, 1.5])
 
-                if stats["total"] > 0:
-                    import plotly.graph_objects as go
+                # -------------------------
+                # LEFT: Metrics
+                # -------------------------
+                with left:
+                    st.metric("Total Feedback", stats["total"])
+                    st.metric("Avg Rating", stats["avg_star"])
+                    st.metric("Positive (Yes)", stats["yes"])
+                    st.metric("Somewhat", stats["somewhat"])
+                    st.metric("Negative (No)", stats["no"])
 
-                    fig = go.Figure(data=[
-                        go.Pie(
-                            labels=["Yes", "Somewhat", "No"],
-                            values=[stats["yes"], stats["somewhat"], stats["no"]],
-                            hole=0.4,
-                            marker=dict(
-                                colors=["#4F8EF7", "#38BDF8", "#F59E0B"]
-                            ),
-                            textinfo="label+percent",
-                            textposition="outside",   # KEY PART
+                # -------------------------
+                # RIGHT: Chart
+                # -------------------------
+                with right:
+                    st.markdown("#### Feedback Accuracy Distribution")
+
+                    if stats["total"] > 0:
+                        import plotly.graph_objects as go
+
+                        fig = go.Figure(data=[
+                            go.Pie(
+                                labels=["Yes", "Somewhat", "No"],
+                                values=[stats["yes"], stats["somewhat"], stats["no"]],
+                                hole=0.4,
+                                marker=dict(
+                                    colors=["#4F8EF7", "#38BDF8", "#F59E0B"]
+                                ),
+                                textinfo="label+percent",
+                                textposition="inside",
+                                textfont=dict(color="white"),
+                                #pull=[0.02, 0.02, 0.04]
+                            )
+                        ])
+
+                        fig.update_layout(
+                            height=350,
+                            paper_bgcolor="#141A22",
+                            plot_bgcolor="#1B2230",
+                            font=dict(color="#E6EAF0"),
+                            showlegend=False,
+                            margin=dict(l=10, r=10, t=30, b=10)
                         )
-                    ])
 
-                    fig.update_layout(
-                        title="Feedback Accuracy Distribution",
-                        height=400
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.caption("No feedback data available")
+                        st.plotly_chart(fig, use_container_width=True)
+
+                    else:
+                        st.caption("No feedback data available")
 
                 st.caption("Loaded on demand to minimize database reads")
 
