@@ -218,20 +218,26 @@ def show_admin_panel(user_email):
     # ==============================
     # RECENT ACTIVITY
     # ==============================
-    with st.expander("Recent Activity"):
+    st.subheader("Recent Activity")
 
-        if st.button("Show Recent Feedback"):
-            with st.spinner("Fetching recent feedback..."):
-                feedback = _get_recent_feedback()
+    if st.button("Show Recent Feedback", key="recent_btn"):
+        with st.spinner("Fetching recent feedback..."):
+            feedback = _get_recent_feedback()
+        st.session_state["recent_feedback"] = feedback
 
-            if feedback:
-                for i, item in enumerate(feedback, 1):
-                    with st.expander(f"Entry {i} | {item.get('model_used')}"):
-                        st.write("Rating:", item.get("star_rating"))
-                        st.write("Accuracy:", item.get("accuracy_rating"))
-                        st.write("Predicted Salary:", item.get("predicted_salary"))
-            else:
-                st.warning("Could not fetch recent activity")
+    # Output in expander
+    if "recent_feedback" in st.session_state and st.session_state["recent_feedback"]:
+        feedback = st.session_state["recent_feedback"]
+
+        with st.expander("View Recent Feedback", expanded=True):
+
+            for i, item in enumerate(feedback, 1):
+                with st.expander(f"Entry {i} | {item.get('model_used')}"):
+                    st.write("Rating:", item.get("star_rating"))
+                    st.write("Accuracy:", item.get("accuracy_rating"))
+                    st.write("Predicted Salary:", item.get("predicted_salary"))
+
+    st.divider()
     # ==============================
     # MEMORY
     # ==============================
