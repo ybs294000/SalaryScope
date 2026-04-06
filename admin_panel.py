@@ -26,7 +26,7 @@ def show_admin_panel():
     user_email = get_logged_in_user()
 
     st.header("Admin")
-    st.caption("System diagnostics and configuration (no user data exposed).")
+    st.caption("System diagnostics and configuration.")
     st.divider()
 
     # =========================
