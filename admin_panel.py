@@ -60,7 +60,7 @@ def show_admin_panel(user_email):
         return
 
     st.header("Admin")
-    st.caption("System information. No user personal data is shown.")
+    st.caption("System diagnostics and configuration.")
     st.divider()
 
     # ==============================
