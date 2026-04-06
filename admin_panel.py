@@ -13,7 +13,17 @@ def get_process_memory():
     except:
         return -1
 
-
+# -----------------------------------
+# FIRESTORE COUNT (SAFE)
+# -----------------------------------
+def _count_users():
+    try:
+        db = _get_firestore_client()
+        users = list(db.collection("users").stream())
+        return len(users)
+    except:
+        return -1
+        
 # -------------------------------
 # ADMIN PANEL
 # -------------------------------
