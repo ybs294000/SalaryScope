@@ -276,6 +276,35 @@ def show_admin_panel(user_email):
 
     st.divider()
 
+
+    # ==============================
+    # MEMORY & CACHE
+    # ==============================
+    st.subheader("Memory & Cache")
+
+    mem = _mem_mb()
+
+    col1, col2, col3 = st.columns([2, 1, 1])
+
+    # RAM Metric (wider)
+    if mem >= 0:
+        col1.metric("RAM Usage", f"{mem:.1f} MB")
+    else:
+        col1.caption("psutil not installed")
+
+    # Garbage Collection
+    if col2.button("Run Garbage Collection"):
+        before = mem
+        collected = gc.collect()
+        after = _mem_mb()
+
+        st.success(f"Collected {collected} objects")
+        st.caption(f"{before:.1f} → {after:.1f} MB")
+
+    # Cache Clear
+    if col3.button("Clear Cache"):
+        st.cache_data.clear()
+        st.success("Cache cleared")
     # ==============================
     # SESSION
     # ==============================
