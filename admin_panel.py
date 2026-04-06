@@ -200,13 +200,20 @@ def show_admin_panel(user_email):
                         go.Pie(
                             labels=["Yes", "Somewhat", "No"],
                             values=[stats["yes"], stats["somewhat"], stats["no"]],
-                            hole=0.4
+                            hole=0.4,
+                            marker=dict(
+                                colors=["#4F8EF7", "#38BDF8", "#F59E0B"]
+                            )
                         )
                     ])
 
                     fig.update_layout(
                         title="Feedback Accuracy Distribution",
-                        height=400
+                        height=400,
+                        paper_bgcolor="#141A22",
+                        plot_bgcolor="#1B2230",
+                        font=dict(color="#E6EAF0"),
+                        legend=dict(font=dict(color="#E6EAF0"))
                     )
 
                     st.plotly_chart(fig, use_container_width=True)
