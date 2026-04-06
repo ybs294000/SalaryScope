@@ -66,13 +66,28 @@ def show_admin_panel(user_email):
     c1.metric("Project ID", project_id)
     c2.metric("API Key", api_key_status)
 
-    # 🔗 Firebase Console Link
+    # Firebase Console Link
     if project_id != "Not set":
         firebase_url = f"https://console.firebase.google.com/project/{project_id}/overview"
         st.markdown(f"[Open Firebase Console]({firebase_url})")
 
     st.divider()
 
+    # ==============================
+    # USERS
+    # ==============================
+    st.subheader("Users")
+
+    if st.button("Count Users"):
+        with st.spinner("Counting users..."):
+            count = _count_users()
+
+        if count >= 0:
+            st.metric("Total Users", count)
+        else:
+            st.warning("Could not fetch users")
+
+    st.divider()
     # =========================
     # AUTH
     # =========================
