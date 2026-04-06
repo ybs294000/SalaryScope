@@ -1,10 +1,10 @@
 import streamlit as st
 import sys, platform, datetime, gc, os
-from auth import is_admin, get_logged_in_user
+from auth import is_admin
 
 
 # -------------------------------
-# MEMORY
+# APP MEMORY (SAFE)
 # -------------------------------
 def get_process_memory():
     try:
@@ -17,13 +17,11 @@ def get_process_memory():
 # -------------------------------
 # ADMIN PANEL
 # -------------------------------
-def show_admin_panel():
+def show_admin_panel(user_email):
 
     if not is_admin():
         st.error("Access denied.")
         return
-
-    user_email = get_logged_in_user()
 
     st.header("Admin")
     st.caption("System diagnostics and configuration.")
@@ -59,9 +57,9 @@ def show_admin_panel():
     c1.metric("Project ID", project_id)
     c2.metric("API Key", api_key_status)
 
-    # 🔗 Firebase Console (from secrets)
-    firebase_url = st.secrets.get("FIREBASE_CONSOLE_URL")
-    if firebase_url:
+    # 🔗 Firebase Console Link
+    if project_id != "Not set":
+        firebase_url = f"https://console.firebase.google.com/project/{project_id}/overview"
         st.markdown(f"[Open Firebase Console]({firebase_url})")
 
     st.divider()
@@ -72,8 +70,8 @@ def show_admin_panel():
     st.subheader("Authentication")
 
     c1, c2 = st.columns(2)
-    c1.metric("Current User", user_email)
-    c2.metric("Admin Access", "Yes" if st.session_state.get("is_admin") else "No")
+    c1.metric("User", user_email)
+    c2.metric("Admin", "Yes" if st.session_state.get("is_admin") else "No")
 
     expiry = st.session_state.get("_session_expiry")
     if expiry:
@@ -82,24 +80,9 @@ def show_admin_panel():
     st.divider()
 
     # =========================
-    # APP HEALTH CHECK
-    # =========================
-    st.subheader("App Health")
-
-    # Secrets check
-    secrets_ok = "FIREBASE_SERVICE_ACCOUNT" in st.secrets
-    st.metric("Secrets Loaded", "Yes" if secrets_ok else "No")
-
-    # API key check
-    api_ok = "FIREBASE_API_KEY" in st.secrets
-    st.metric("Firebase Auth", "Configured" if api_ok else "Missing")
-
-    st.divider()
-
-    # =========================
     # MEMORY (APP ONLY)
     # =========================
-    st.subheader("App Memory")
+    st.subheader("App Memory Usage")
 
     mem = get_process_memory()
     if mem >= 0:
@@ -112,8 +95,10 @@ def show_admin_panel():
             after = get_process_memory()
             st.success(f"Freed {collected} objects")
             st.caption(f"{before:.1f} → {after:.1f} MB")
+    else:
+        st.caption("Install psutil to enable memory tracking")
 
-    st.caption("Streamlit Cloud limit ≈ 2.7 GB")
+    st.caption("Note: Streamlit Cloud apps typically have ~2.7 GB memory limit.")
 
     st.divider()
 
@@ -129,7 +114,7 @@ def show_admin_panel():
     st.divider()
 
     # =========================
-    # SESSION DEBUG
+    # SESSION
     # =========================
     st.subheader("Session")
 

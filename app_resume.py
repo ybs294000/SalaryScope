@@ -6387,7 +6387,7 @@ if "Admin" in tabs:
             st.error("Access denied.")
             st.stop()
 
-        show_admin_panel()
+        show_admin_panel(st.session_state.username)
 # ==================================================
 # TAB 8: ABOUT (Merged from both apps)
 # ==================================================
