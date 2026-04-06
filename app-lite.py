@@ -1765,8 +1765,9 @@ with tab_objects[0]:
 
             st.divider()
             insights_a1 = generate_insights_app1(data["input_details"])
+            recs_a1 = generate_recommendations_app1(data["input_details"])
             st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
-            render_recommendations(insights_a1["recommendations"])
+            render_recommendations(recs_a1)
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
             # ---------------- PDF GENERATION ----------------
             st.divider()
