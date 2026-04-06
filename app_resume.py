@@ -6225,7 +6225,7 @@ with tab_objects[5]:
 
             st.divider()
             st.subheader("Salary Summary Statistics")
-            st.dataframe(data_full_di_a2["Salary"].describe())
+            st.dataframe(data_full_di_a2["salary_in_usd"].describe())
 
             st.divider()
             st.subheader("Distribution of Data Science Salaries")
