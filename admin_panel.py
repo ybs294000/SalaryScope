@@ -169,11 +169,22 @@ def show_admin_panel(user_email):
     # ==============================
     # SESSION
     # ==============================
-    st.subheader("Session")
+    with st.expander("Advanced: Session Debug"):
 
-    col1, col2 = st.columns(2)
-    col1.metric("Session Keys", len(st.session_state))
-    col2.metric(
-        "UTC Time",
-        datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+        st.metric("Total Session Keys", len(st.session_state))
+
+        # Safe display (avoid UI lag)
+        if len(st.session_state) < 20:
+            if st.checkbox("Show session keys"):
+                st.write(list(st.session_state.keys()))
+        else:
+            st.warning("Large session — showing keys may slow down UI")
+            if st.checkbox("Show anyway"):
+                st.write(list(st.session_state.keys()))
+
+    st.divider()
+
+    st.metric(
+        "Last check (UTC):",
+        datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     )
