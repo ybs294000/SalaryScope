@@ -31,6 +31,70 @@ def _count_users():
         return -1
 
 # -----------------------------------
+# FEEDBACK ANALYTICS (CACHED)
+# -----------------------------------
+@st.cache_data(ttl=300)
+def _get_feedback_stats():
+    try:
+        db = _get_firestore_client()
+        docs = db.collection("feedback").stream()
+
+        total = 0
+        yes = somewhat = no = 0
+        star_sum = 0
+        star_count = 0
+
+        for doc in docs:
+            data = doc.to_dict()
+            total += 1
+
+            acc = data.get("accuracy_rating")
+            if acc == "Yes":
+                yes += 1
+            elif acc == "Somewhat":
+                somewhat += 1
+            elif acc == "No":
+                no += 1
+
+            star = data.get("star_rating")
+            if isinstance(star, (int, float)):
+                star_sum += star
+                star_count += 1
+
+        avg_star = round(star_sum / star_count, 2) if star_count > 0 else 0
+
+        return {
+            "total": total,
+            "yes": yes,
+            "somewhat": somewhat,
+            "no": no,
+            "avg_star": avg_star
+        }
+
+    except:
+        return None
+
+
+# -----------------------------------
+# RECENT FEEDBACK (LIMITED)
+# -----------------------------------
+@st.cache_data(ttl=120)
+def _get_recent_feedback(limit=5):
+    try:
+        db = _get_firestore_client()
+
+        docs = (
+            db.collection("feedback")
+            .order_by("created_at", direction="DESCENDING")
+            .limit(limit)
+            .stream()
+        )
+
+        return [doc.to_dict() for doc in docs]
+
+    except:
+        return None
+# -----------------------------------
 # ADMIN PANEL
 # -----------------------------------
 def show_admin_panel(user_email):
@@ -102,7 +166,76 @@ def show_admin_panel(user_email):
 
     st.divider()
 
+    # ==============================
+    # FEEDBACK ANALYTICS
+    # ==============================
+    st.subheader("Feedback Analytics")
 
+    if st.button("Load Feedback Analytics"):
+        with st.spinner("Loading feedback data..."):
+            stats = _get_feedback_stats()
+
+        if stats:
+            # Metrics
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Total Feedback", stats["total"])
+            c2.metric("Avg Rating", stats["avg_star"])
+            c3.metric("Positive (Yes)", stats["yes"])
+
+            c4, c5 = st.columns(2)
+            c4.metric("Somewhat", stats["somewhat"])
+            c5.metric("Negative (No)", stats["no"])
+
+            # Donut Chart
+            if stats["total"] > 0:
+                import plotly.graph_objects as go
+
+                fig = go.Figure(data=[
+                    go.Pie(
+                        labels=["Yes", "Somewhat", "No"],
+                        values=[stats["yes"], stats["somewhat"], stats["no"]],
+                        hole=0.4
+                    )
+                ])
+
+                fig.update_layout(
+                    title="Feedback Accuracy Distribution",
+                    height=400
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.caption("No feedback data available")
+
+            st.caption("Loaded on demand to minimize database reads")
+
+        else:
+            st.warning("Could not fetch feedback data")
+
+    st.divider()
+
+
+    # ==============================
+    # RECENT ACTIVITY
+    # ==============================
+    st.subheader("Recent Activity")
+
+    if st.button("Show Recent Feedback"):
+        with st.spinner("Fetching recent feedback..."):
+            feedback = _get_recent_feedback()
+
+        if feedback:
+            for item in feedback:
+                st.write({
+                    "model": item.get("model_used"),
+                    "rating": item.get("star_rating"),
+                    "accuracy": item.get("accuracy_rating"),
+                    "salary": item.get("predicted_salary")
+                })
+        else:
+            st.warning("Could not fetch recent activity")
+
+    st.divider()
     # ==============================
     # MEMORY
     # ==============================
