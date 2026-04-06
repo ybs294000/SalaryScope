@@ -155,4 +155,4 @@ def show_admin_panel():
 
     st.divider()
 
-    st.caption(f"Last check: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    st.metric(f"Last check: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
