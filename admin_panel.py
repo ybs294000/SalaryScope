@@ -14,21 +14,20 @@ def _get_os_info():
         system = platform.system()
 
         if system == "Windows":
-            return f"Windows {platform.version()}"
+            return f"Windows {platform.release()}"
 
         elif system == "Linux":
             try:
                 import distro
-                return f"{distro.name(pretty=True)}"
+                return distro.name(pretty=True)
             except:
-                return f"Linux ({platform.release()})"
+                return "Linux"
 
         elif system == "Darwin":
             mac_ver = platform.mac_ver()[0]
             return f"macOS {mac_ver}" if mac_ver else "macOS"
 
-        else:
-            return system
+        return system
 
     except:
         return "Unknown"
