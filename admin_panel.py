@@ -6,7 +6,6 @@ import gc
 from auth import is_admin
 from database import _get_firestore_client
 
-
 # -----------------------------------
 # MEMORY HELPER
 # -----------------------------------
@@ -35,14 +34,21 @@ def _count_users():
 # -----------------------------------
 @st.cache_data(ttl=300)
 def _get_feedback_stats():
+    """
+    Single-pass aggregation over the feedback collection.
+    Returns lightweight scalar / short-list results only.
+    """
     try:
         db = _get_firestore_client()
         docs = db.collection("feedback").stream()
 
         total = 0
         yes = somewhat = no = 0
+        too_high = about_right = too_low = 0
         star_sum = 0
         star_count = 0
+        model_counts = {}          # {"Random Forest": N, "XGBoost": N, …}
+        actual_salaries = []       # for median / avg comparison (capped at 500)
 
         for doc in docs:
             data = doc.to_dict()
@@ -56,24 +62,49 @@ def _get_feedback_stats():
             elif acc == "No":
                 no += 1
 
+            direction = data.get("direction")
+            if direction == "Too High":
+                too_high += 1
+            elif direction == "About Right":
+                about_right += 1
+            elif direction == "Too Low":
+                too_low += 1
+
             star = data.get("star_rating")
             if isinstance(star, (int, float)):
                 star_sum += star
                 star_count += 1
 
+            model = data.get("model_used", "Unknown")
+            model_counts[model] = model_counts.get(model, 0) + 1
+
+            actual = data.get("actual_salary")
+            if isinstance(actual, (int, float)) and actual > 0 and len(actual_salaries) < 500:
+                actual_salaries.append(actual)
+
         avg_star = round(star_sum / star_count, 2) if star_count > 0 else 0
+        pct_positive = round(yes / total * 100, 1) if total > 0 else 0
+
+        import statistics
+        median_actual = round(statistics.median(actual_salaries), 2) if actual_salaries else None
 
         return {
             "total": total,
             "yes": yes,
             "somewhat": somewhat,
             "no": no,
-            "avg_star": avg_star
+            "too_high": too_high,
+            "about_right": about_right,
+            "too_low": too_low,
+            "avg_star": avg_star,
+            "pct_positive": pct_positive,
+            "model_counts": model_counts,
+            "median_actual": median_actual,
+            "actual_salary_count": len(actual_salaries),
         }
 
-    except:
+    except Exception:
         return None
-
 
 # -----------------------------------
 # RECENT FEEDBACK (LIMITED)
@@ -104,7 +135,7 @@ def show_admin_panel(user_email):
         return
 
     st.header("Admin")
-    st.caption("System diagnostics and configuration.")
+    st.caption("System diagnostics and monitoring. All data is fetched on demand to minimise database reads.")
     st.divider()
 
     # ==============================
@@ -115,17 +146,35 @@ def show_admin_panel(user_email):
     try:
         import sklearn
         sklearn_version = sklearn.__version__
-    except:
+    except Exception:
         sklearn_version = "Not available"
+
+    try:
+        import xgboost as xgb
+        xgb_version = xgb.__version__
+    except Exception:
+        xgb_version = "Not available"
+
+    try:
+        import pandas as pd
+        pd_version = pd.__version__
+    except Exception:
+        pd_version = "Not available"    
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Python", sys.version.split()[0])
     c2.metric("Platform", platform.system())
     c3.metric("Arch", platform.machine())
+    st.metric("Processor", platform.processor())
+    
+    c4, c5, c6 = st.columns(3)
+    c4.metric("Streamlit Version", st.__version__)
+    c5.metric("Scikit-learn Version", sklearn_version)
+    c6.metric("XGBoost", xgb_version)
 
-    c5, c6 = st.columns(2)
-    c5.metric("Streamlit Version", st.__version__)
-    c6.metric("Scikit-learn Version", sklearn_version)
+    c7, c8, _ = st.columns(3)
+    c7.metric("Pandas", pd_version)
+    c8.metric("Python Build", platform.python_implementation())
     st.divider()
 
     # ==============================
@@ -139,10 +188,12 @@ def show_admin_panel(user_email):
         project_id = "Not set"
 
     api_key_status = "Available" if "FIREBASE_API_KEY" in st.secrets else "Missing"
+    service_acc_status = "Available" if "FIREBASE_SERVICE_ACCOUNT" in st.secrets else "Missing"
 
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
     c1.metric("Project ID", project_id)
     c2.metric("API Key", api_key_status)
+    c3.metric("Service Account", service_acc_status)
 
     # Use secrets link
     firebase_url = st.secrets.get("FIREBASE_CONSOLE_URL")
@@ -185,29 +236,26 @@ def show_admin_panel(user_email):
             @st.fragment
             def render_feedback_dashboard():
 
+                # -------------------------
+                # Metrics
+                # -------------------------
+                fd_c1, fd_c2, fd_c3 = st.columns(3)
+                fd_c4, fd_c5 = st.columns(2)
+                fd_c1.metric("Total Feedback", stats["total"])
+                fd_c2.metric("Avg Rating", stats["avg_star"])
+                fd_c3.metric("Positive (Yes)", stats["yes"])
+                fd_c4.metric("Somewhat", stats["somewhat"])
+                fd_c5.metric("Negative (No)", stats["no"])
+
                 # Main layout: metrics (left) + chart (right)
-                left, right = st.columns([1, 1.5])
-
-                # -------------------------
-                # LEFT: Metrics
-                # -------------------------
+                left, right = st.columns([1, 1])
                 with left:
-                    st.metric("Total Feedback", stats["total"])
-                    st.metric("Avg Rating", stats["avg_star"])
-                    st.metric("Positive (Yes)", stats["yes"])
-                    st.metric("Somewhat", stats["somewhat"])
-                    st.metric("Negative (No)", stats["no"])
-
-                # -------------------------
-                # RIGHT: Chart
-                # -------------------------
-                with right:
                     st.markdown("#### Feedback Accuracy Distribution")
 
                     if stats["total"] > 0:
                         import plotly.graph_objects as go
 
-                        fig = go.Figure(data=[
+                        fig_acc = go.Figure(data=[
                             go.Pie(
                                 labels=["Yes", "Somewhat", "No"],
                                 values=[stats["yes"], stats["somewhat"], stats["no"]],
@@ -222,7 +270,7 @@ def show_admin_panel(user_email):
                             )
                         ])
 
-                        fig.update_layout(
+                        fig_acc.update_layout(
                             height=350,
                             paper_bgcolor="#141A22",
                             plot_bgcolor="#1B2230",
@@ -231,10 +279,58 @@ def show_admin_panel(user_email):
                             margin=dict(l=10, r=10, t=30, b=10)
                         )
 
-                        st.plotly_chart(fig, width='stretch')
+                        st.plotly_chart(fig_acc, width='stretch')
+                    
+                # -------------------------
+                # RIGHT: Chart
+                # -------------------------
+                with right:
+                    st.markdown("#### Prediction Direction")
+                    dir_total = stats["too_high"] + stats["about_right"] + stats["too_low"]
+                    if dir_total > 0:
+                        fig_dir = go.Figure(go.Pie(
+                            labels=["Too High", "About Right", "Too Low"],
+                            values=[stats["too_high"], stats["about_right"], stats["too_low"]],
+                            hole=0.42,
+                            marker=dict(colors=["#EF4444", "#34D399", "#4F8EF7"]),
+                            textinfo="label+percent",
+                            textposition="inside",
+                            textfont=dict(color="white", size=11),
+                        ))
+                        fig_dir.update_layout(
+                            height=350,
+                            paper_bgcolor="#141A22",
+                            plot_bgcolor="#1B2230",
+                            font=dict(color="#E6EAF0"),
+                            showlegend=False,
+                            margin=dict(l=10, r=10, t=30, b=10)
+                        )
+                        st.plotly_chart(fig_dir, width='stretch')
 
                     else:
                         st.caption("No feedback data available")
+
+                if stats["model_counts"]:
+                    st.markdown("#### Feedback Submissions by Model")
+                    import plotly.express as px
+                    mc = stats["model_counts"]
+                    fig_mc = px.bar(
+                        x=list(mc.keys()),
+                        y=list(mc.values()),
+                        labels={"x": "Model", "y": "Feedback Count"},
+                        color_discrete_sequence=["#4F8EF7"],
+                        text=list(mc.values()),
+                    )
+                    fig_mc.update_traces(textposition="outside", textfont=dict(color="white"))
+                    fig_mc.update_layout(
+                        title="Feedback Count per Model",
+                        xaxis_title="Model",
+                        yaxis_title="Count",
+                        paper_bgcolor="#141A22",
+                        plot_bgcolor="#1B2230",
+                        showlegend=False,
+                    )
+                    st.plotly_chart(fig_mc, width='stretch')
 
                 st.caption("Loaded on demand to minimize database reads")
 
@@ -242,31 +338,73 @@ def show_admin_panel(user_email):
 
     st.divider()
     # ==============================
+    # RECENT ACTIVITY OLD
+    # ==============================
+    #st.subheader("Recent Activity")
+
+    #if st.button("Show Recent Feedback", key="recent_btn_old"):
+    #    with st.spinner("Fetching recent feedback..."):
+    #        feedback = _get_recent_feedback()
+    #    st.session_state["recent_feedback"] = feedback
+
+    ## Output in expander
+    #if "recent_feedback" in st.session_state and st.session_state["recent_feedback"]:
+    #    feedback = st.session_state["recent_feedback"]
+
+    #    with st.expander("View Recent Feedback", expanded=True):
+#
+#            for i, item in enumerate(feedback, 1):
+#                with st.expander(f"Entry {i} | {item.get('model_used')}"):
+#                    st.write("Rating:", item.get("star_rating"))
+#                    st.write("Accuracy:", item.get("accuracy_rating"))
+#                    # ---- FORMATTED SALARY ----
+#                    salary = item.get("predicted_salary")
+#                    if isinstance(salary, (int, float)):
+#                        st.write("Predicted Salary:", f"${salary:,.2f}")
+#                    else:
+#                        st.write("Predicted Salary:", salary)
+    st.divider()
+
+    # ==============================
     # RECENT ACTIVITY
     # ==============================
     st.subheader("Recent Activity")
 
     if st.button("Show Recent Feedback", key="recent_btn"):
-        with st.spinner("Fetching recent feedback..."):
+        with st.spinner("Fetching recent feedback…"):
             feedback = _get_recent_feedback()
         st.session_state["recent_feedback"] = feedback
 
-    # Output in expander
     if "recent_feedback" in st.session_state and st.session_state["recent_feedback"]:
         feedback = st.session_state["recent_feedback"]
 
-        with st.expander("View Recent Feedback", expanded=True):
-
+        with st.expander("Recent Feedback Entries", expanded=True):
             for i, item in enumerate(feedback, 1):
-                with st.expander(f"Entry {i} | {item.get('model_used')}"):
-                    st.write("Rating:", item.get("star_rating"))
-                    st.write("Accuracy:", item.get("accuracy_rating"))
-                    # ---- FORMATTED SALARY ----
-                    salary = item.get("predicted_salary")
+                model_label = item.get("model_used", "Unknown")
+                star        = item.get("star_rating", "—")
+                accuracy    = item.get("accuracy_rating", "—")
+                direction   = item.get("direction", "—")
+                salary      = item.get("predicted_salary")
+                ts          = item.get("created_at")
+
+                header_parts = [f"Entry {i}", model_label]
+                if ts and hasattr(ts, "strftime"):
+                    header_parts.append(ts.strftime("%Y-%m-%d %H:%M UTC"))
+                elif ts:
+                    header_parts.append(str(ts)[:16])
+
+                with st.expander(" | ".join(header_parts)):
+                    st.write("Star Rating: ", f"{'★' * int(star) if isinstance(star, (int, float)) else star}")
+                    st.write("Accuracy: ", accuracy)
+                    st.write("Direction: ", direction)
+
                     if isinstance(salary, (int, float)):
-                        st.write("Predicted Salary:", f"${salary:,.2f}")
-                    else:
-                        st.write("Predicted Salary:", salary)
+                        st.write("Predicted Salary: ", f"${salary:,.2f}")
+
+                    actual = item.get("actual_salary")
+                    if isinstance(actual, (int, float)) and actual > 0:
+                        st.write("Reported Actual Salary: ", f"${actual:,.2f}")
+
     st.divider()
 
     # ==============================
@@ -285,7 +423,7 @@ def show_admin_panel(user_email):
         col1.caption("psutil not installed")
 
     # Buttons (stacked, compact)
-    if col2.button("Run Garbage Collection", key="run_gc_btn"):
+    if col2.button("Run Garbage Collection", key="run_gc_btn", help="Force Python garbage collection"):
         before = mem
         collected = gc.collect()
         after = _mem_mb()
@@ -293,7 +431,7 @@ def show_admin_panel(user_email):
         st.success(f"Collected {collected} objects")
         st.caption(f"{before:.1f} → {after:.1f} MB")
 
-    if col2.button("Clear Cache", key="clr_cache_btn"):
+    if col2.button("Clear Cache", key="clr_cache_btn", help="Clear all @st.cache_data caches"):
         st.cache_data.clear()
         st.success("Cache cleared")
     # ==============================
@@ -303,7 +441,20 @@ def show_admin_panel(user_email):
     st.subheader("Session")
     with st.expander("Advanced: Session Debug"):
 
-        st.metric("Total Session Keys", len(st.session_state))
+        total_keys = len(st.session_state)
+        st.metric("Total Session Keys", total_keys)
+
+        # Key category breakdown — lightweight, no raw data shown
+        admin_keys    = [k for k in st.session_state if k.startswith("admin_")]
+        scenario_keys = [k for k in st.session_state if "scenario" in k.lower()]
+        bulk_keys     = [k for k in st.session_state if "bulk" in k.lower()]
+        resume_keys   = [k for k in st.session_state if "resume" in k.lower()]
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Admin Keys", len(admin_keys))
+        c2.metric("Scenario Keys", len(scenario_keys))
+        c3.metric("Bulk Keys", len(bulk_keys))
+        c4.metric("Resume Keys", len(resume_keys))
 
         # Safe display (avoid UI lag)
         if len(st.session_state) < 20:
