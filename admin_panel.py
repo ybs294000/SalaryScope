@@ -213,9 +213,8 @@ def show_admin_panel(user_email):
                         title="Feedback Accuracy Distribution",
                         height=400
                     )
-                    left, center, right = st.columns([1, 2, 1])
-                    with center:
-                        st.plotly_chart(fig, use_container_width=True)
+                    
+                    st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.caption("No feedback data available")
 
