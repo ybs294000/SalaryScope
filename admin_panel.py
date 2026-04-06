@@ -203,17 +203,15 @@ def show_admin_panel(user_email):
                             hole=0.4,
                             marker=dict(
                                 colors=["#4F8EF7", "#38BDF8", "#F59E0B"]
-                            )
+                            ),
+                            textinfo="label+percent",
+                            textposition="outside",   # KEY PART
                         )
                     ])
 
                     fig.update_layout(
                         title="Feedback Accuracy Distribution",
-                        height=400,
-                        paper_bgcolor="#141A22",
-                        plot_bgcolor="#1B2230",
-                        font=dict(color="#E6EAF0"),
-                        legend=dict(font=dict(color="#E6EAF0"))
+                        height=400
                     )
 
                     st.plotly_chart(fig, use_container_width=True)
