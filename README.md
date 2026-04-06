@@ -249,13 +249,19 @@ salaryscope/
 │   ├── salaryscope_3755_production_model.pkl  # Model 2: XGBoost pipeline + metadata
 │   └── app2_analytics.pkl               # Model 2: Precomputed analytics (SHAP, residuals, etc.)
 │
+├── notebooks/                           # Jupyter notebooks for EDA, feature engineering, and model development
+├── powerbi/                             # Power BI dashboards and exported reports
+├── docs/                                # Project documentation (SRS, design, report)
+├── samples/                             # Sample input files (CSV, resumes)
+├── assets/                              # Branding and visual assets
+├── pdf_outputs/                         # Generated PDF reports (sample outputs)
+│
 ├── data/
 │   ├── Salary_Streamlit_App.csv         # Model 1 training dataset
 │   ├── ds_salaries_Streamlit_App.csv    # Model 2 training dataset
-│   └── association_rules.csv           # Precomputed Apriori association rules
+│   └── association_rules.csv            # Precomputed Apriori association rules
 │
-├── static/
-│   └── android-chrome-512x512.png       # App logo
+├── static/                              # Icons, favicons, and web assets
 │
 ├── screenshots/
 │   ├── manual_prediction.png
@@ -267,7 +273,9 @@ salaryscope/
 ├── .streamlit/
 │   └── config.toml                      # Streamlit configuration
 │
-└── requirements.txt
+├── requirements.txt
+└── README.md
+
 ```
 
 ---
