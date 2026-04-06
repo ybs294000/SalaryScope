@@ -165,7 +165,6 @@ def show_admin_panel(user_email):
     c1.metric("Python", sys.version.split()[0])
     c2.metric("Platform", platform.system())
     c3.metric("Arch", platform.machine())
-    st.metric("Processor", platform.processor())
     
     c4, c5, c6 = st.columns(3)
     c4.metric("Streamlit Version", st.__version__)
