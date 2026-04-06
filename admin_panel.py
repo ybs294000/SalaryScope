@@ -19,7 +19,8 @@ def _get_os_info():
         elif system == "Linux":
             try:
                 import distro
-                return distro.name(pretty=True)
+                distro_name = distro.name(pretty=True).replace("GNU/Linux", "").strip()
+                return distro_name
             except:
                 return "Linux"
 
