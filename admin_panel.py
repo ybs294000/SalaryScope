@@ -261,8 +261,12 @@ def show_admin_panel(user_email):
                 with st.expander(f"Entry {i} | {item.get('model_used')}"):
                     st.write("Rating:", item.get("star_rating"))
                     st.write("Accuracy:", item.get("accuracy_rating"))
-                    st.write("Predicted Salary:", item.get("predicted_salary"))
-
+                    # ---- FORMATTED SALARY ----
+                    salary = item.get("predicted_salary")
+                    if isinstance(salary, (int, float)):
+                        st.write("Predicted Salary:", f"${salary:,.2f}")
+                    else:
+                        st.write("Predicted Salary:", salary)
     st.divider()
 
     # ==============================
