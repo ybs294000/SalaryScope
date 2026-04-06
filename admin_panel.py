@@ -208,7 +208,7 @@ def show_admin_panel(user_email):
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Python", sys.version.split()[0])
-    c2.metric("Platform", os_info)
+    c2.metric("OS", os_info)
     c3.metric("Arch", _get_arch())
 
     c4, c5, c6 = st.columns(3)
