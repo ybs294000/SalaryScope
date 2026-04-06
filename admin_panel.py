@@ -7,6 +7,32 @@ from auth import is_admin
 from database import _get_firestore_client
 
 # -----------------------------------
+# OS INFO HELPER
+# -----------------------------------
+def _get_os_info():
+    try:
+        system = platform.system()
+
+        if system == "Windows":
+            return f"Windows {platform.version()}"
+
+        elif system == "Linux":
+            try:
+                import distro
+                return f"{distro.name(pretty=True)}"
+            except:
+                return f"Linux ({platform.release()})"
+
+        elif system == "Darwin":
+            mac_ver = platform.mac_ver()[0]
+            return f"macOS {mac_ver}" if mac_ver else "macOS"
+
+        else:
+            return system
+
+    except:
+        return "Unknown"
+# -----------------------------------
 # MEMORY HELPER
 # -----------------------------------
 def _mem_mb():
@@ -161,11 +187,12 @@ def show_admin_panel(user_email):
     except Exception:
         pd_version = "Not available"    
 
-    c1, c2, c3, c4 = st.columns(4)
+    os_info = _get_os_info()
+
+    c1, c2, c3 = st.columns(3)
     c1.metric("Python", sys.version.split()[0])
-    c2.metric("Platform", platform.system())
-    c3.metric("Release:", platform.release())
-    c4.metric("Arch", platform.machine())
+    c2.metric("Platform", os_info)
+    c3.metric("Arch", platform.machine())
 
     c4, c5, c6 = st.columns(3)
     c4.metric("Streamlit Version", st.__version__)
