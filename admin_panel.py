@@ -33,6 +33,23 @@ def _get_os_info():
     except:
         return "Unknown"
 # -----------------------------------
+# ARCHITECTURE INFO HELPER
+# -----------------------------------
+def _get_arch():
+    try:
+        arch = platform.machine().lower()
+
+        if arch in ["amd64", "x86_64"]:
+            return "x86_64"
+
+        elif "arm" in arch or "aarch" in arch:
+            return "ARM64"
+
+        return arch.upper()
+
+    except:
+        return "Unknown"
+# -----------------------------------
 # MEMORY HELPER
 # -----------------------------------
 def _mem_mb():
@@ -192,7 +209,7 @@ def show_admin_panel(user_email):
     c1, c2, c3 = st.columns(3)
     c1.metric("Python", sys.version.split()[0])
     c2.metric("Platform", os_info)
-    c3.metric("Arch", platform.machine())
+    c3.metric("Arch", _get_arch())
 
     c4, c5, c6 = st.columns(3)
     c4.metric("Streamlit Version", st.__version__)
