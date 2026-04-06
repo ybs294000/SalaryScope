@@ -29,6 +29,15 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 
 SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, user authentication, prediction feedback collection, and PDF report generation.
 
+The project follows a structured workflow:
+- Data analysis and model development using Jupyter notebooks
+- Additional visualization through Power BI dashboards
+- Model training and evaluation
+- Integration of trained models into a Streamlit-based web application
+- Storage and feedback collection using Firebase
+
+The focus of the project is to combine machine learning with an interactive application interface, providing both prediction capabilities and supporting insights for better understanding of salary patterns.
+
 ---
 
 ## Live Demo
