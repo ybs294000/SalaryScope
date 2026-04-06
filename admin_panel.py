@@ -82,12 +82,23 @@ def show_admin_panel(user_email):
     # ==============================
     st.subheader("Firebase")
 
-    project_id = st.secrets.get("FIREBASE_PROJECT_ID", "Not set")
+    try:
+        project_id = st.secrets["FIREBASE_SERVICE_ACCOUNT"]["project_id"]
+    except:
+        project_id = "Not set"
 
-    st.metric("Project ID", project_id)
+    api_key_status = "Available" if "FIREBASE_API_KEY" in st.secrets else "Missing"
+
+    c1, c2 = st.columns(2)
+    c1.metric("Project ID", project_id)
+    c2.metric("API Key", api_key_status)
+
+    # Use secrets link
+    firebase_url = st.secrets.get("FIREBASE_CONSOLE_URL")
+    if firebase_url:
+        st.markdown(f"[Open Firebase Console]({firebase_url})")
 
     st.divider()
-
     # ==============================
     # USERS
     # ==============================
