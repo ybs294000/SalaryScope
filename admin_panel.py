@@ -54,7 +54,7 @@ def show_admin_panel(user_email):
     c2.metric("Platform", platform.system())
     c3.metric("Arch", platform.machine())
 
-    c5,c6 = st.columns(2)
+    c5, c6 = st.columns(2)
     c5.metric("Streamlit Version", st.__version__)
     c6.metric("Scikit-learn Version", sklearn.__version__)
     st.divider()
