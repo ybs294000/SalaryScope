@@ -21,13 +21,17 @@ from pdf_utils import (
     app2_generate_bulk_pdf,
     cached_app2_model_analytics_pdf
 )
-from insights_engine import generate_insights_app2, generate_insights_app1, render_recommendations
+from insights_engine import generate_insights_app2, generate_insights_app1
 from negotiation_tips import (
     generate_negotiation_tips_app1,
     generate_negotiation_tips_app2,
     render_negotiation_tips
 )
-
+from recommendations import (
+    generate_recommendations_app1,
+    generate_recommendations_app2,
+    render_recommendations
+)
 from auth import login_ui, register_ui, logout, get_logged_in_user
 from user_profile import show_profile
 from database import init_db, create_prediction_table, save_prediction

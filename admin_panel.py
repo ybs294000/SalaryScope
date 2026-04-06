@@ -1,10 +1,10 @@
 import streamlit as st
 import sys, platform, datetime, gc, os
-from auth import is_admin
+from auth import is_admin, get_logged_in_user
 
 
 # -------------------------------
-# APP MEMORY (SAFE)
+# MEMORY (APP ONLY)
 # -------------------------------
 def get_process_memory():
     try:
@@ -17,14 +17,16 @@ def get_process_memory():
 # -------------------------------
 # ADMIN PANEL
 # -------------------------------
-def show_admin_panel(user_email):
+def show_admin_panel():
 
     if not is_admin():
         st.error("Access denied.")
         return
 
+    user_email = get_logged_in_user()
+
     st.header("Admin")
-    st.caption("System diagnostics and configuration.")
+    st.caption("System diagnostics and configuration (no user data exposed).")
     st.divider()
 
     # =========================
@@ -57,9 +59,9 @@ def show_admin_panel(user_email):
     c1.metric("Project ID", project_id)
     c2.metric("API Key", api_key_status)
 
-    # 🔗 Firebase Console Link
-    if project_id != "Not set":
-        firebase_url = f"https://console.firebase.google.com/project/{project_id}/overview"
+    # Firebase console link (from secrets)
+    firebase_url = st.secrets.get("FIREBASE_CONSOLE_URL")
+    if firebase_url:
         st.markdown(f"[Open Firebase Console]({firebase_url})")
 
     st.divider()
@@ -70,8 +72,8 @@ def show_admin_panel(user_email):
     st.subheader("Authentication")
 
     c1, c2 = st.columns(2)
-    c1.metric("User", user_email)
-    c2.metric("Admin", "Yes" if st.session_state.get("is_admin") else "No")
+    c1.metric("Current User", user_email)
+    c2.metric("Admin Access", "Yes" if st.session_state.get("is_admin") else "No")
 
     expiry = st.session_state.get("_session_expiry")
     if expiry:
@@ -80,14 +82,35 @@ def show_admin_panel(user_email):
     st.divider()
 
     # =========================
-    # MEMORY (APP ONLY)
+    # APP HEALTH
+    # =========================
+    st.subheader("App Health")
+
+    secrets_ok = "FIREBASE_SERVICE_ACCOUNT" in st.secrets
+    api_ok = "FIREBASE_API_KEY" in st.secrets
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Secrets Loaded", "Yes" if secrets_ok else "No")
+    c2.metric("Firebase Auth", "Configured" if api_ok else "Missing")
+    c3.metric("Session Keys", len(st.session_state))
+
+    st.divider()
+
+    # =========================
+    # MEMORY
     # =========================
     st.subheader("App Memory Usage")
 
     mem = get_process_memory()
     if mem >= 0:
-        col1, col2 = st.columns(2)
-        col1.metric("Memory Usage", f"{mem:.1f} MB")
+        col1, col2 = st.columns([1, 1])
+
+        percent = (mem / 2700) * 100
+        col1.metric("Memory Usage", f"{mem:.1f} MB", f"{percent:.1f}% of limit")
+        col1.progress(min(percent / 100, 1.0))
+
+        if mem > 2000:
+            st.warning("High memory usage detected")
 
         if col2.button("Run Garbage Collection"):
             before = mem
@@ -95,10 +118,11 @@ def show_admin_panel(user_email):
             after = get_process_memory()
             st.success(f"Freed {collected} objects")
             st.caption(f"{before:.1f} → {after:.1f} MB")
+
     else:
         st.caption("Install psutil to enable memory tracking")
 
-    st.caption("Note: Streamlit Cloud apps typically have ~2.7 GB memory limit.")
+    st.caption("Streamlit Cloud limit ≈ 2.7 GB")
 
     st.divider()
 
@@ -114,16 +138,21 @@ def show_admin_panel(user_email):
     st.divider()
 
     # =========================
-    # SESSION
+    # SESSION DEBUG (SAFE)
     # =========================
-    st.subheader("Session")
+    with st.expander("Advanced: Session Debug"):
 
-    st.metric("Session Keys", len(st.session_state))
+        st.metric("Total Session Keys", len(st.session_state))
 
-    if st.checkbox("Show session keys"):
-        st.json(list(st.session_state.keys()))
+        # Safe display (avoid UI lag)
+        if len(st.session_state) < 20:
+            if st.checkbox("Show session keys"):
+                st.write(list(st.session_state.keys()))
+        else:
+            st.warning("Large session — showing keys may slow down UI")
+            if st.checkbox("Show anyway"):
+                st.write(list(st.session_state.keys()))
 
-    st.metric(
-        "UTC Time",
-        datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M")
-    )
+    st.divider()
+
+    st.caption(f"Last check: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
