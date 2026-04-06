@@ -5988,12 +5988,8 @@ with tab_objects[4]:
             max_val_a2 = max(y_raw_a2.max(), preds_full_a2.max())
             fig_avp_a2.add_trace(go.Scatter(x=[min_val_a2, max_val_a2], y=[min_val_a2, max_val_a2],
                                              mode="lines", name="Ideal Fit", line=dict(color="#EF4444", width=2)))
-            fig_avp_a2.update_layout(xaxis_title="Actual Salary", yaxis_title="Predicted Salary")
-            _apply_theme(fig_avp_a2, {
-                "title": "Predicted vs Actual Salary",
-                "xaxis_title": "Actual Salary",
-                "yaxis_title": "Predicted Salary"
-            })
+            fig_avp_a2.update_layout(title= "Predicted vs Actual Salary", xaxis_title="Actual Salary", yaxis_title="Predicted Salary")
+            _apply_theme(fig_avp_a2)
             st.plotly_chart(fig_avp_a2, width='stretch')
 
             st.divider()
@@ -6002,13 +5998,9 @@ with tab_objects[4]:
             fig_res_a2.add_trace(go.Scatter(x=preds_full_a2, y=residuals_a2d, mode="markers",
                                              marker=dict(color="#3E7DE0", opacity=0.6)))
             fig_res_a2.add_hline(y=0, line_dash="dash", line_color="#EF4444")
-            fig_res_a2.update_layout(xaxis_title="Predicted Salary",
+            fig_res_a2.update_layout(title="Residuals vs Predicted Values", xaxis_title="Predicted Salary",
                                       yaxis_title="Residual (Actual - Predicted)")
-            _apply_theme(fig_res_a2, {
-                "title": "Residuals vs Predicted Values",
-                "xaxis_title": "Predicted Salary",
-                "yaxis_title": "Residual (Actual - Predicted)"
-            })
+            _apply_theme(fig_res_a2)
             st.plotly_chart(fig_res_a2, width='stretch')
 
             st.divider()
