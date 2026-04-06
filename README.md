@@ -35,11 +35,12 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 
 :link: SalaryScope is deployed on Streamlit Cloud with two versions:
 
+- **Full App (Includes Resume Analysis):**  
+  https://salaryscope-app.streamlit.app/
+
 - **Lite App (Lightweight Version):**  
   https://salaryscope-lite-app.streamlit.app/
 
-- **Full App (Includes Resume NLP):**  
-  https://salaryscope-app.streamlit.app/
 
 ### Notes
 - The full version includes **spaCy-based NLP resume parsing**, which is more resource-intensive.
@@ -90,7 +91,7 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
   - Skills
   - Education Level
   - Country
-- Resume scoring based on experience, education, and skills
+- Basic resume scoring based on experience, education, and skills
 - Uses spaCy NLP + rule-based extraction (regex + phrase matching)
 - Handles unstructured resume text and converts it into structured model-ready input
 - Extracted features are passed to the selected model for prediction
@@ -220,7 +221,8 @@ salaryscope/
 ├── auth.py                              # Firebase Authentication (login, register, session)
 ├── database.py                          # Firestore client, user and prediction functions
 ├── feedback.py                          # Prediction feedback collection (UI + Firestore save)
-├── insights_engine.py                   # Smart insights and recommendations engine
+├── insights_engine.py                   # Insights engine
+├── recommendations.py                   # Recommendations engine
 ├── negotiation_tips.py                  # Salary negotiation tips engine
 ├── pdf_utils.py                         # ReportLab PDF generation for all report types
 ├── user_profile.py                      # User profile tab UI and prediction history
