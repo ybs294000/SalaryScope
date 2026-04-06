@@ -3,7 +3,6 @@ import sys
 import platform
 import datetime
 import gc
-
 from auth import is_admin
 from database import _get_firestore_client
 
@@ -49,6 +48,12 @@ def show_admin_panel(user_email):
     # ==============================
     st.subheader("Platform")
 
+    try:
+        import sklearn
+        sklearn_version = sklearn.__version__
+    except:
+        sklearn_version = "Not available"
+
     c1, c2, c3 = st.columns(3)
     c1.metric("Python", sys.version.split()[0])
     c2.metric("Platform", platform.system())
@@ -56,7 +61,7 @@ def show_admin_panel(user_email):
 
     c5, c6 = st.columns(2)
     c5.metric("Streamlit Version", st.__version__)
-    c6.metric("Scikit-learn Version", sklearn.__version__)
+    c6.metric("Scikit-learn Version", sklearn_version)
     st.divider()
 
     # ==============================
