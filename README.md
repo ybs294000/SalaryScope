@@ -159,6 +159,19 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 - Per-prediction input detail viewer
 - Export prediction history in CSV, XLSX, or JSON
 
+### Admin Panel (Diagnostics & Monitoring)
+
+- Accessible only to authorized users via internal admin check
+- Provides basic system diagnostics including runtime environment and library versions
+- Displays Firebase configuration status (Project ID and API key availability)
+- Allows fetching total registered users from Firestore
+- Includes lightweight feedback analytics with distribution visualization
+- Shows recent feedback entries for quick inspection
+- Provides memory usage monitoring with optional garbage collection
+- Supports manual cache clearing to maintain application performance
+- Includes session state debugging tools for troubleshooting
+
+The admin panel is intentionally minimal and designed for internal monitoring without impacting application performance.
 ---
 
 ## Models
@@ -215,8 +228,8 @@ SalaryScope allows users to predict salaries either manually, via resume upload 
 ```
 salaryscope/
 │
-├── app-lite.py                          # Lightweight Streamlit application
 ├── app_resume.py                        # Main Streamlit application with resume analysis and scenario/what-if analysis
+├── app-lite.py                          # Lightweight Streamlit application
 ├── resume_nlp.py                        # Resume parsing (NLP, regex, feature extraction)
 ├── auth.py                              # Firebase Authentication (login, register, session)
 ├── database.py                          # Firestore client, user and prediction functions
@@ -226,6 +239,7 @@ salaryscope/
 ├── negotiation_tips.py                  # Salary negotiation tips engine
 ├── pdf_utils.py                         # ReportLab PDF generation for all report types
 ├── user_profile.py                      # User profile tab UI and prediction history
+├── admin_panel.py                       # Admin dashboard for basic system diagnostics, usage insights, and monitoring
 │
 ├── model/
 │   ├── rf_model_grid.pkl                # Model 1: Random Forest pipeline + metadata
@@ -460,7 +474,7 @@ feedback/
 ## Author
 
 **Yash Shah**  
-B.Tech Final Year Student  
+B.Tech Final Year Student,  
 Computer Engineering Department, Gandhinagar Institute of Technology, Gandhinagar University 
 - GitHub: [@ybs294000](https://github.com/ybs294000)
 - Email: yashbshah2004@gmail.com
