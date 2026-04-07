@@ -50,6 +50,8 @@ from resume_nlp import (
 )
 from feedback import feedback_ui
 
+from currency_utils import render_currency_converter
+
 from auth import login_ui, register_ui, logout, get_logged_in_user
 from auth import is_admin
 from admin_panel import show_admin_panel
@@ -1758,6 +1760,11 @@ with tab_objects[0]:
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
             st.divider()
 
+            render_currency_converter(
+                usd_amount=prediction,       # or prediction_a2 for App 2
+                location_hint=country,       # or company_location for App 2
+                widget_key="manual_a1",      # use "manual_a2", "resume_a1", "resume_a2" per call-site
+            )
             #st.divider()
             st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
 
@@ -2012,6 +2019,11 @@ with tab_objects[0]:
             #st.caption("Range estimated using variation across individual trees in the XGBoost model.")
             st.divider()
 
+            render_currency_converter(
+                usd_amount=prediction_a2,       # or prediction_a2 for App 2
+                location_hint=company_location,       # or company_location for App 2
+                widget_key="manual_a2",      # use "manual_a2", "resume_a1", "resume_a2" per call-site
+            )
             # =====================================================
             # SMART INSIGHTS (APP 2)
             # =====================================================
