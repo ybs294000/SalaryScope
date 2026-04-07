@@ -347,6 +347,29 @@ pip install -r requirements.txt
 # 5. Run the application
 streamlit run app_resume.py
 ```
+---
+
+## Platform Compatibility
+
+SalaryScope is a cross-platform application and has been tested in multiple environments:
+
+### Local Development & Testing
+- Windows 11 (development environment)
+- Windows 10 (tested)
+- Ubuntu 24.04 LTS (tested in virtual machine)
+- Python 3.13
+
+### Cloud Deployment
+- Deployed on Streamlit Community Cloud
+- Runs on a Linux-based environment (Debian GNU/Linux)
+
+### Key Notes
+- The application runs in a web browser and is independent of the underlying operating system
+- No OS-specific dependencies are required
+- Compatible with modern browsers such as:
+  - Google Chrome (recommended)
+  - Microsoft Edge
+  - Mozilla Firefox
 
 ---
 
