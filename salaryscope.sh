@@ -1,23 +1,13 @@
 #!/bin/bash
 
-echo "Checking Python 3.13..."
-
-if ! command -v python3.13 &> /dev/null
-then
-    echo "Python 3.13 not found. Please install it."
-    exit 1
-fi
-
 if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    python3.13 -m venv venv
+    echo "Virtual environment not found."
+    echo "Please run salaryscope_setup.sh first."
+    exit 1
 fi
 
 echo "Activating virtual environment..."
 source venv/bin/activate
 
-echo "Installing dependencies..."
-pip install -r requirements.txt
-
-echo "Running SalaryScope..."
+echo "Running SalaryScope using Python 3.13 environment..."
 streamlit run app_resume.py
