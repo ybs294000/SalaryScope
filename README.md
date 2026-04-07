@@ -579,4 +579,4 @@ Computer Engineering Department, Gandhinagar Institute of Technology, Gandhinaga
 
 ---
 
-*Built with Streamlit · Powered by Firebase · Deployed on Streamlit Cloud*
+*Built with Streamlit · Powered by Firebase · Deployed on Streamlit Community Cloud*
