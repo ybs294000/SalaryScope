@@ -6,6 +6,28 @@ import urllib.parse
 from datetime import datetime, timedelta
 import requests as http_requests
 
+
+def _safe_request(method, url, **kwargs):
+    try:
+        kwargs.setdefault("timeout", 5)  # prevents hanging
+        response = http_requests.request(method, url, **kwargs)
+        return response.json()
+
+    except http_requests.exceptions.Timeout:
+        return {"error": {"message": "NETWORK_TIMEOUT"}}
+
+    except http_requests.exceptions.ConnectionError:
+        return {"error": {"message": "NO_INTERNET"}}
+
+    except Exception:
+        return {"error": {"message": "NETWORK_ERROR"}}
+
+def _has_internet():
+    try:
+        http_requests.get("https://www.google.com", timeout=2)
+        return True
+    except:
+        return False
 # ---------------------------------------------------
 # GOOGLE OAUTH CALLBACK HANDLER
 # (DISABLED)
@@ -104,12 +126,11 @@ def _firebase_sign_in_email(email: str, password: str) -> dict:
         return {"error": {"message": "AUTH_DISABLED"}}
 
     url = f"{FIREBASE_AUTH_BASE}:signInWithPassword?key={api_key}"
-    resp = http_requests.post(url, json={
+    return _safe_request("POST", url, json={
         "email": email,
         "password": password,
         "returnSecureToken": True
     })
-    return resp.json()
 
 
 def _firebase_sign_up_email(email: str, password: str) -> dict:
@@ -119,12 +140,11 @@ def _firebase_sign_up_email(email: str, password: str) -> dict:
         return {"error": {"message": "AUTH_DISABLED"}}
 
     url = f"{FIREBASE_AUTH_BASE}:signUp?key={api_key}"
-    resp = http_requests.post(url, json={
+    return _safe_request("POST", url, json={
         "email": email,
         "password": password,
         "returnSecureToken": True
     })
-    return resp.json()
 
 
 def _firebase_error_message(response: dict) -> str:
@@ -139,6 +159,9 @@ def _firebase_error_message(response: dict) -> str:
         "INVALID_EMAIL": "Invalid email address.",
         "TOO_MANY_ATTEMPTS_TRY_LATER": "Too many failed attempts. Please try again later.",
         "AUTH_DISABLED": "Authentication is disabled (Firebase not configured).",
+        "NO_INTERNET": "No internet connection. Please check your network.",
+        "NETWORK_TIMEOUT": "Request timed out. Try again.",
+        "NETWORK_ERROR": "Network error. Please try again.",
     }
     return messages.get(raw, raw.replace("_", " ").capitalize())
 
@@ -159,7 +182,8 @@ def _init_session_state():
         st.session_state._firebase_id_token = None
     if "_session_expiry" not in st.session_state:
         st.session_state._session_expiry = None
-
+    if "auth_loading" not in st.session_state:
+        st.session_state.auth_loading = False
 
 def _set_logged_in(email: str, id_token: str):
     _init_session_state()
@@ -255,27 +279,41 @@ def login_ui():
         password_input = st.text_input("Password", type="password", key="login_password")
 
         if st.button("Login", key="login_btn", use_container_width=True):
-            if not email_input or not password_input:
-                st.warning("Please enter your email and password.")
+
+            if st.session_state.auth_loading:
                 return False
 
-            result = _firebase_sign_in_email(email_input, password_input)
+            st.session_state.auth_loading = True
 
-            if "error" in result:
-                st.error(_firebase_error_message(result))
+            if not _has_internet():
+                st.error("No internet connection.")
                 return False
+            try:
+                if not email_input or not password_input:
+                    st.warning("Please enter your email and password.")
+                    return False
 
-            email = result.get("email", email_input)
-            id_token = result.get("idToken", "")
+                result = _firebase_sign_in_email(email_input, password_input)
 
-            _set_logged_in(email, id_token)
+                if "error" in result:
+                    st.error(_firebase_error_message(result))
+                    return False
 
-            from database import ensure_firestore_user
-            ensure_firestore_user(email, email)
+                email = result.get("email", email_input)
+                id_token = result.get("idToken", "")
 
-            st.success("Login successful!")
-            st.rerun()
+                _set_logged_in(email, id_token)
 
+                try:
+                    from database import ensure_firestore_user
+                    ensure_firestore_user(email, email)
+                except Exception:
+                    pass
+
+                st.success("Login successful!")
+                st.rerun()
+            finally:
+                st.session_state.auth_loading = False
     return False
 
 
@@ -307,8 +345,11 @@ def register_ui():
 
         firebase_email = result.get("email", email)
 
-        from database import ensure_firestore_user
-        ensure_firestore_user(firebase_email, firebase_email, display_name=username)
+        try:
+            from database import ensure_firestore_user
+            ensure_firestore_user(firebase_email, firebase_email, display_name=username)
+        except Exception:
+            pass
 
         st.success("Account created! You can now sign in.")
 
