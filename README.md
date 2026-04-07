@@ -50,6 +50,8 @@ The project follows a structured workflow:
 
 The focus of the project is to combine machine learning with an interactive application interface, providing both prediction capabilities and supporting insights for better understanding of salary patterns.
 
+The application runs in a web browser, making it platform-independent and easily accessible.
+
 ## Key Features (Quick Overview)
 
 - Dual machine learning models (Random Forest + XGBoost)
