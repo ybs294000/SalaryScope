@@ -1,5 +1,13 @@
 # SalaryScope — Salary Prediction System using Machine Learning
 
+![Python](https://img.shields.io/badge/Python-3.13-blue)
+![Framework](https://img.shields.io/badge/Framework-Streamlit-red)
+![ML](https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-orange)
+![NLP](https://img.shields.io/badge/NLP-spaCy-green)
+![Database](https://img.shields.io/badge/Database-Firebase-yellow)
+![Deployment](https://img.shields.io/badge/Deployed-Streamlit%20Cloud-brightgreen)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+
 SalaryScope is a machine learning-based web application developed as a Final Year B.Tech Project. It provides salary prediction capabilities through two distinct models, each trained on a different dataset and targeting different use cases. The application is built with Streamlit and deployed on Streamlit Cloud.
 
 ---
