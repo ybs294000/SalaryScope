@@ -1,13 +1,13 @@
 # SalaryScope — Salary Prediction System using Machine Learning
 
-![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
-![Framework](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
-![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-F7931E?logo=scikit-learn&logoColor=white)
-![NLP](https://img.shields.io/badge/NLP-spaCy-09A3D5?logo=spacy&logoColor=white)
-![Database](https://img.shields.io/badge/Database-Firebase-FFCA28?logo=firebase&logoColor=black)
-![Deployment](https://img.shields.io/badge/Deployment-Streamlit%20Cloud-25C2A0?logo=streamlit&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
-![License](https://img.shields.io/badge/License-MIT-blueviolet)
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Framework](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![NLP](https://img.shields.io/badge/NLP-spaCy-09A3D5?logo=spacy&logoColor=white)](https://spacy.io/)
+[![Database](https://img.shields.io/badge/Database-Firebase-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Deployment](https://img.shields.io/badge/Deployment-Streamlit%20Cloud-25C2A0?logo=streamlit&logoColor=white)](https://share.streamlit.io/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](https://github.com/ybs294000/salaryscope)
+[![License](https://img.shields.io/badge/License-MIT-blueviolet)](https://opensource.org/licenses/MIT)
 
 > Machine learning-powered salary prediction system with dual models, NLP-based resume analysis, and interactive analytics.
 
