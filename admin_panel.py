@@ -5,7 +5,7 @@ import datetime
 import gc
 from auth import is_admin
 from database import _get_firestore_client
-
+import os
 # -----------------------------------
 # OS INFO HELPER
 # -----------------------------------
@@ -230,23 +230,31 @@ def show_admin_panel(user_email):
         import spacy
         spacy_version = spacy.__version__
     except Exception:
-        pd_version = "Not available" 
+        spacy_version = "Not available" 
+
+    try:
+        import mlxtend as mlx
+        mlxtend_version = mlx.__version__
+    except Exception:
+        mlxtend_version = "Not available"
 
     os_info = _get_os_info()
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Python", sys.version.split()[0])
     c2.metric("OS", os_info)
     c3.metric("Arch", _get_arch())
+    c4.metric("Process ID", os.getpid())
 
-    c4, c5, c6 = st.columns(3)
-    c4.metric("Streamlit", st.__version__)
-    c5.metric("Scikit-learn", sklearn_version)
-    c6.metric("XGBoost", xgb_version)
+    c5, c6, c7 = st.columns(3)
+    c5.metric("Streamlit", st.__version__)
+    c6.metric("Scikit-learn", sklearn_version)
+    c7.metric("XGBoost", xgb_version)
 
-    c7, c8, _ = st.columns(3)
-    c7.metric("SpaCy", spacy_version)
-    c8.metric("Pandas", pd_version)
+    c8, c9, _ = st.columns(3)
+    c8.metric("SpaCy", spacy_version)
+    c9.metric("Pandas", pd_version)
+
     st.divider()
 
     # ==============================
@@ -315,7 +323,7 @@ def show_admin_panel(user_email):
                 k1, k2, k3, k4 = st.columns(4)
                 k1.metric("Total Feedback", stats["total"])
                 k2.metric("Accuracy", f"{stats['pct_positive']}%", help="Percentage of 'Yes' responses")
-                k3.metric("Avg Rating", stats["avg_star"])
+                k3.metric("Average Rating", stats["avg_star"])
 
                 if stats["median_actual"] is not None:
                     k4.metric("Median Actual Salary", f"${stats['median_actual']:,.0f}")
