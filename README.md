@@ -1,11 +1,11 @@
 # SalaryScope — Salary Prediction System using Machine Learning
 
-![Python](https://img.shields.io/badge/Python-3.13-blue)
-![Framework](https://img.shields.io/badge/Framework-Streamlit-red)
-![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-orange)
-![NLP](https://img.shields.io/badge/NLP-spaCy-green)
-![Database](https://img.shields.io/badge/Database-Firebase-yellow)
-![Deployment](https://img.shields.io/badge/Deployed-Streamlit%20Cloud-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
+![Framework](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-F7931E?logo=scikit-learn&logoColor=white)
+![NLP](https://img.shields.io/badge/NLP-spaCy-09A3D5?logo=spacy&logoColor=white)
+![Database](https://img.shields.io/badge/Database-Firebase-FFCA28?logo=firebase&logoColor=black)
+![Deployment](https://img.shields.io/badge/Deployed-Streamlit%20Cloud-25C2A0?logo=streamlit&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-blueviolet)
 
