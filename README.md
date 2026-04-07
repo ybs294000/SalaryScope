@@ -90,7 +90,9 @@ The focus of the project is to combine machine learning with an interactive appl
 - Negotiation tips and career recommendations
 - Confidence interval estimation based on residual standard deviation — Model 1
 - Downloadable PDF prediction report
-- Prediction feedback collection after each result (accuracy rating, direction, star rating, optional actual salary) — available to all users
+- Prediction feedback collection after each result (accuracy rating, direction, star rating, optional actual salary) 
+- Optional currency conversion with global currency support (toggle-based)
+— available to all users
 
 ### Resume-Based Prediction (NLP)
 - Upload a resume (PDF format)
@@ -105,6 +107,7 @@ The focus of the project is to combine machine learning with an interactive appl
 - Handles unstructured resume text and converts it into structured model-ready input
 - Extracted features are passed to the selected model for prediction
 - Supports both Model 1 and Model 2 pipelines
+- Optional currency conversion for predicted salary output
 
 ### Batch Prediction
 - Upload files in CSV, XLSX, JSON, or SQL format
@@ -167,6 +170,23 @@ The focus of the project is to combine machine learning with an interactive appl
 - Prediction history chart over time
 - Per-prediction input detail viewer
 - Export prediction history in CSV, XLSX, or JSON
+
+### Currency Conversion
+
+- Convert predicted salary (USD) into multiple global currencies
+- Toggle-based UI to enable/disable conversion per prediction
+- Supports 100+ currencies with symbols and proper formatting
+- Automatic default currency selection based on user country input
+- Real-time exchange rates fetched from a public API (no API key required)
+- Smart fallback system:
+  - Uses cached rates for performance
+  - Loads local JSON fallback if offline
+  - Uses built-in approximate rates as last fallback
+- Displays:
+  - Annual salary (converted)
+  - Monthly, weekly, and hourly breakdowns (converted)
+- Option to save exchange rates locally for offline usage
+- Fully non-intrusive — does not modify original USD predictions
 
 ### Admin Panel (Diagnostics & Monitoring)
 
@@ -248,6 +268,7 @@ salaryscope/
 ├── recommendations.py                   # Recommendations engine
 ├── negotiation_tips.py                  # Salary negotiation tips engine
 ├── pdf_utils.py                         # ReportLab PDF generation for all report types
+├── currency_utils.py                    # Currency conversion utility (live rates, fallback system, Streamlit UI)
 ├── user_profile.py                      # User profile tab UI and prediction history
 ├── admin_panel.py                       # Admin dashboard for basic system diagnostics, usage insights, and monitoring
 │
@@ -356,7 +377,9 @@ client_x509_cert_url = "your_cert_url"
 1. Select a model from the dropdown at the top
 2. Navigate to the **Manual Prediction** tab
 3. Fill in the required fields and click **Predict Salary**
-4. View results, insights, and optionally download a PDF report
+4. View results, insights, and optionally:
+   - Convert salary into other currencies
+   - Download a PDF report
 5. Expand the **Share Feedback on This Prediction** section to rate the prediction accuracy — login is not required
 
 ### Resume Prediction
@@ -428,7 +451,7 @@ client_x509_cert_url = "your_cert_url"
 | Deployment | Streamlit Cloud |
 | Language | Python 3.13+ |
 | NLP | spaCy, Regex, PhraseMatcher |
-
+| API Integration | ExchangeRate API (open.er-api.com) |
 ---
 
 ## Authentication & Database
@@ -466,7 +489,7 @@ feedback/
 - Predictions do not account for real-time factors such as market demand, company-specific policies, or economic changes.
 - The confidence interval shown for Model 1 is an approximation based on training residuals and should be interpreted as an estimate rather than an exact range.
 - Feedback submitted anonymously cannot be linked to a specific user session and is stored without any personal identifier.
-
+- Currency conversion uses external exchange rate data and may not reflect real-time market fluctuations or transaction-specific rates.
 ---
 
 ## Future Scope
