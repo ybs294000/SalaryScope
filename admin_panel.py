@@ -202,7 +202,13 @@ def show_admin_panel(user_email):
         import pandas as pd
         pd_version = pd.__version__
     except Exception:
-        pd_version = "Not available"    
+        pd_version = "Not available"   
+
+    try:
+        import spacy
+        spacy_version = spacy.__version__
+    except Exception:
+        pd_version = "Not available" 
 
     os_info = _get_os_info()
 
@@ -218,7 +224,7 @@ def show_admin_panel(user_email):
 
     c7, c8, _ = st.columns(3)
     c7.metric("Pandas", pd_version)
-    c8.metric("Python Build", platform.python_implementation())
+    c8.metric("SpaCy", spacy_version)
     st.divider()
 
     # ==============================

@@ -4501,13 +4501,13 @@ with tab_objects[3]:
                             y=[row["Upper Bound"] - row["Lower Bound"]],
                             base=[row["Lower Bound"]],
                             text=f"${row['Predicted Salary (USD)']:,.0f}",
-                            textposition="inside",
+                            textposition="outside",
                         ))
                     fig_ci_a1.add_trace(go.Scatter(
                         x=res_df_a1["Scenario"],
                         y=res_df_a1["Predicted Salary (USD)"],
                         mode="markers",
-                        marker=dict(color="#F59E0B", size=10, symbol="diamond"),
+                        marker=dict(color="#fef6e4", size=10),
                         name="Point Estimate"
                     ))
                     _apply_theme(fig_ci_a1, {
