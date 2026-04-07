@@ -5,9 +5,11 @@
 ![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-F7931E?logo=scikit-learn&logoColor=white)
 ![NLP](https://img.shields.io/badge/NLP-spaCy-09A3D5?logo=spacy&logoColor=white)
 ![Database](https://img.shields.io/badge/Database-Firebase-FFCA28?logo=firebase&logoColor=black)
-![Deployment](https://img.shields.io/badge/Deployed-Streamlit%20Cloud-25C2A0?logo=streamlit&logoColor=white)
+![Deployment](https://img.shields.io/badge/Deployment-Streamlit%20Cloud-25C2A0?logo=streamlit&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-blueviolet)
+
+> Machine learning-powered salary prediction system with dual models, NLP-based resume analysis, and interactive analytics.
 
 SalaryScope is a machine learning-based web application developed as a Final Year B.Tech Project. It provides salary prediction capabilities through two distinct models, each trained on a different dataset and targeting different use cases. The application is built with Streamlit and deployed on Streamlit Cloud.
 
