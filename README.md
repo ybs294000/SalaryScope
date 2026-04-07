@@ -177,16 +177,25 @@ The focus of the project is to combine machine learning with an interactive appl
 - Toggle-based UI to enable/disable conversion per prediction
 - Supports 100+ currencies with symbols and proper formatting
 - Automatic default currency selection based on user country input
-- Real-time exchange rates fetched from a public API (no API key required)
-- Smart fallback system:
-  - Uses cached rates for performance
-  - Loads local JSON fallback if offline
-  - Uses built-in approximate rates as last fallback
+- Real-time exchange rates fetched from a public API (https://open.er-api.com/) — no API key required
+- Smart caching system:
+  - Exchange rates cached in memory (~60 minutes) to improve performance and reduce API calls
+- Robust fallback mechanism:
+  - Loads local JSON fallback file (`exchange_rates_fallback.json`) if network is unavailable
+  - Uses built-in approximate rates as a last resort
 - Displays:
   - Annual salary (converted)
   - Monthly, weekly, and hourly breakdowns (converted)
+- Streamlit-integrated UI:
+  - Dropdown for currency selection
+  - Expandable interface for a clean user experience
 - Option to save exchange rates locally for offline usage
 - Fully non-intrusive — does not modify original USD predictions
+
+**Notes:**
+- Currency conversion is for informational purposes only
+- Exchange rates may vary slightly depending on source and timing
+- All predictions are generated in USD as the base currency
 
 ### Admin Panel (Diagnostics & Monitoring)
 
