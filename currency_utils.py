@@ -46,98 +46,128 @@ _FALLBACK_FILE_PATH = os.path.join(
 )
 
 # ---------------------------------------------------------------------------
-# Currency metadata: code → (display name, symbol)
+# Currency metadata: code -> (display name, symbol)
+# Symbol values use Unicode escape sequences to stay ASCII-safe in source files.
+#
+# Quick reference for the escapes used below:
+#   \u0024  $     US Dollar / generic dollar sign
+#   \u00a3  £     Pound Sterling
+#   \u00a5  ¥     Yen / Yuan
+#   \u20ac  €     Euro
+#   \u20b9  ₹     Indian Rupee
+#   \u20a9  ₩     Korean Won
+#   \u20b1  ₱     Philippine Peso
+#   \u20ba  ₺     Turkish Lira
+#   \u20bd  ₽     Russian Ruble
+#   \u20aa  ₪     Israeli New Shekel
+#   \u20ab  ₫     Vietnamese Dong
+#   \u20ae  ₮     Mongolian Togrog
+#   \u20ad  ₭     Lao Kip
+#   \u20bf  ₿     (unused — listed for completeness)
+#   \u09f3  ৳     Bangladeshi Taka
+#   \u0e3f  ฿     Thai Baht
+#   \u20b4  ₴     Ukrainian Hryvnia
+#   \u20b8  ₸     Kazakhstani Tenge
+#   \u20bc  ₼     Azerbaijani Manat
+#   \u20be  ₾     Georgian Lari
+#   \u058f  ֏     Armenian Dram
+#   \u20a8  ₨     Pakistani / Sri Lankan Rupee
+#   \u20a6  ₦     Nigerian Naira
+#   \u20a1  \u20a1  Costa Rican Colon  (₡)
+#   \u20b2  ₲     Paraguayan Guarani
+#   \u0192  ƒ     (unused here)
+#   \u060b  ؋     Afghan Afghani
 # ---------------------------------------------------------------------------
 CURRENCY_INFO: dict[str, tuple[str, str]] = {
-    "USD": ("US Dollar", "$"),
-    "EUR": ("Euro", "€"),
-    "GBP": ("British Pound", "£"),
-    "INR": ("Indian Rupee", "₹"),
-    "CAD": ("Canadian Dollar", "CA$"),
-    "AUD": ("Australian Dollar", "A$"),
-    "JPY": ("Japanese Yen", "¥"),
-    "CNY": ("Chinese Yuan", "¥"),
-    "CHF": ("Swiss Franc", "CHF"),
-    "SGD": ("Singapore Dollar", "S$"),
-    "AED": ("UAE Dirham", "AED"),
-    "SAR": ("Saudi Riyal", "SAR"),
-    "MXN": ("Mexican Peso", "MX$"),
-    "BRL": ("Brazilian Real", "R$"),
-    "ZAR": ("South African Rand", "R"),
-    "KRW": ("South Korean Won", "₩"),
-    "HKD": ("Hong Kong Dollar", "HK$"),
-    "SEK": ("Swedish Krona", "SEK"),
-    "NOK": ("Norwegian Krone", "NOK"),
-    "DKK": ("Danish Krone", "DKK"),
-    "PLN": ("Polish Złoty", "PLN"),
-    "TRY": ("Turkish Lira", "₺"),
-    "RUB": ("Russian Ruble", "₽"),
-    "IDR": ("Indonesian Rupiah", "Rp"),
-    "MYR": ("Malaysian Ringgit", "RM"),
-    "THB": ("Thai Baht", "฿"),
-    "PHP": ("Philippine Peso", "₱"),
-    "PKR": ("Pakistani Rupee", "₨"),
-    "NGN": ("Nigerian Naira", "₦"),
-    "EGP": ("Egyptian Pound", "EGP"),
-    "ILS": ("Israeli Shekel", "₪"),
-    "NZD": ("New Zealand Dollar", "NZ$"),
-    "CZK": ("Czech Koruna", "Kč"),
-    "HUF": ("Hungarian Forint", "Ft"),
-    "RON": ("Romanian Leu", "RON"),
-    "HRK": ("Croatian Kuna", "kn"),
-    "BGN": ("Bulgarian Lev", "BGN"),
-    "UAH": ("Ukrainian Hryvnia", "₴"),
-    "CLP": ("Chilean Peso", "CL$"),
-    "COP": ("Colombian Peso", "COP"),
-    "ARS": ("Argentine Peso", "ARS"),
-    "VND": ("Vietnamese Dong", "₫"),
-    "BDT": ("Bangladeshi Taka", "৳"),
-    "LKR": ("Sri Lankan Rupee", "LKR"),
-    "KWD": ("Kuwaiti Dinar", "KD"),
-    "QAR": ("Qatari Riyal", "QR"),
-    "OMR": ("Omani Rial", "OMR"),
-    "BHD": ("Bahraini Dinar", "BD"),
-    "MAD": ("Moroccan Dirham", "MAD"),
-    "DZD": ("Algerian Dinar", "DZD"),
-    "TND": ("Tunisian Dinar", "TND"),
-    "GHS": ("Ghanaian Cedi", "GHS"),
-    "KES": ("Kenyan Shilling", "KES"),
-    "UGX": ("Ugandan Shilling", "UGX"),
-    "TZS": ("Tanzanian Shilling", "TZS"),
-    "CRC": ("Costa Rican Colón", "₡"),
-    "DOP": ("Dominican Peso", "DOP"),
-    "PEN": ("Peruvian Sol", "S/"),
-    "BOB": ("Bolivian Boliviano", "Bs"),
-    "PYG": ("Paraguayan Guaraní", "₲"),
-    "UYU": ("Uruguayan Peso", "UYU"),
-    "UZS": ("Uzbekistani Som", "UZS"),
-    "AMD": ("Armenian Dram", "֏"),
-    "GEL": ("Georgian Lari", "₾"),
-    "AZN": ("Azerbaijani Manat", "₼"),
-    "KZT": ("Kazakhstani Tenge", "₸"),
-    "MKD": ("Macedonian Denar", "MKD"),
-    "RSD": ("Serbian Dinar", "RSD"),
-    "ALL": ("Albanian Lek", "ALL"),
-    "BAM": ("Bosnia-Herzegovina Mark", "KM"),
-    "MDL": ("Moldovan Leu", "MDL"),
-    "MNT": ("Mongolian Tögrög", "₮"),
-    "MMK": ("Myanmar Kyat", "K"),
-    "KHR": ("Cambodian Riel", "KHR"),
-    "LAK": ("Laotian Kip", "₭"),
-    "TWD": ("Taiwan Dollar", "NT$"),
-    "NPR": ("Nepalese Rupee", "NPR"),
-    "AFN": ("Afghan Afghani", "؋"),
-    "IQD": ("Iraqi Dinar", "IQD"),
-    "IRR": ("Iranian Rial", "IRR"),
-    "JOD": ("Jordanian Dinar", "JD"),
-    "LBP": ("Lebanese Pound", "LBP"),
-    "SYP": ("Syrian Pound", "SYP"),
-    "YER": ("Yemeni Rial", "YER"),
-    "LYD": ("Libyan Dinar", "LYD"),
+    "USD": ("US Dollar",                    "\u0024"),
+    "EUR": ("Euro",                         "\u20ac"),
+    "GBP": ("British Pound",               "\u00a3"),
+    "INR": ("Indian Rupee",                "\u20b9"),
+    "CAD": ("Canadian Dollar",             "CA\u0024"),
+    "AUD": ("Australian Dollar",           "A\u0024"),
+    "JPY": ("Japanese Yen",               "\u00a5"),
+    "CNY": ("Chinese Yuan",               "\u00a5"),
+    "CHF": ("Swiss Franc",                "CHF"),
+    "SGD": ("Singapore Dollar",           "S\u0024"),
+    "AED": ("UAE Dirham",                 "AED"),
+    "SAR": ("Saudi Riyal",               "SAR"),
+    "MXN": ("Mexican Peso",              "MX\u0024"),
+    "BRL": ("Brazilian Real",            "R\u0024"),
+    "ZAR": ("South African Rand",        "R"),
+    "KRW": ("South Korean Won",          "\u20a9"),
+    "HKD": ("Hong Kong Dollar",          "HK\u0024"),
+    "SEK": ("Swedish Krona",             "SEK"),
+    "NOK": ("Norwegian Krone",           "NOK"),
+    "DKK": ("Danish Krone",              "DKK"),
+    "PLN": ("Polish Zloty",              "PLN"),
+    "TRY": ("Turkish Lira",              "\u20ba"),
+    "RUB": ("Russian Ruble",             "\u20bd"),
+    "IDR": ("Indonesian Rupiah",         "Rp"),
+    "MYR": ("Malaysian Ringgit",         "RM"),
+    "THB": ("Thai Baht",                 "\u0e3f"),
+    "PHP": ("Philippine Peso",           "\u20b1"),
+    "PKR": ("Pakistani Rupee",           "\u20a8"),
+    "NGN": ("Nigerian Naira",            "\u20a6"),
+    "EGP": ("Egyptian Pound",            "EGP"),
+    "ILS": ("Israeli Shekel",            "\u20aa"),
+    "NZD": ("New Zealand Dollar",        "NZ\u0024"),
+    "CZK": ("Czech Koruna",              "Kc"),
+    "HUF": ("Hungarian Forint",          "Ft"),
+    "RON": ("Romanian Leu",              "RON"),
+    "HRK": ("Croatian Kuna",             "kn"),
+    "BGN": ("Bulgarian Lev",             "BGN"),
+    "UAH": ("Ukrainian Hryvnia",         "\u20b4"),
+    "CLP": ("Chilean Peso",              "CL\u0024"),
+    "COP": ("Colombian Peso",            "COP"),
+    "ARS": ("Argentine Peso",            "ARS"),
+    "VND": ("Vietnamese Dong",           "\u20ab"),
+    "BDT": ("Bangladeshi Taka",          "\u09f3"),
+    "LKR": ("Sri Lankan Rupee",          "LKR"),
+    "KWD": ("Kuwaiti Dinar",             "KD"),
+    "QAR": ("Qatari Riyal",              "QR"),
+    "OMR": ("Omani Rial",               "OMR"),
+    "BHD": ("Bahraini Dinar",            "BD"),
+    "MAD": ("Moroccan Dirham",           "MAD"),
+    "DZD": ("Algerian Dinar",            "DZD"),
+    "TND": ("Tunisian Dinar",            "TND"),
+    "GHS": ("Ghanaian Cedi",             "GHS"),
+    "KES": ("Kenyan Shilling",           "KES"),
+    "UGX": ("Ugandan Shilling",          "UGX"),
+    "TZS": ("Tanzanian Shilling",        "TZS"),
+    "CRC": ("Costa Rican Colon",         "\u20a1"),
+    "DOP": ("Dominican Peso",            "DOP"),
+    "PEN": ("Peruvian Sol",              "S/"),
+    "BOB": ("Bolivian Boliviano",        "Bs"),
+    "PYG": ("Paraguayan Guarani",        "\u20b2"),
+    "UYU": ("Uruguayan Peso",            "UYU"),
+    "UZS": ("Uzbekistani Som",           "UZS"),
+    "AMD": ("Armenian Dram",             "\u058f"),
+    "GEL": ("Georgian Lari",             "\u20be"),
+    "AZN": ("Azerbaijani Manat",         "\u20bc"),
+    "KZT": ("Kazakhstani Tenge",         "\u20b8"),
+    "MKD": ("Macedonian Denar",          "MKD"),
+    "RSD": ("Serbian Dinar",             "RSD"),
+    "ALL": ("Albanian Lek",              "ALL"),
+    "BAM": ("Bosnia-Herzegovina Mark",   "KM"),
+    "MDL": ("Moldovan Leu",              "MDL"),
+    "MNT": ("Mongolian Togrog",          "\u20ae"),
+    "MMK": ("Myanmar Kyat",              "K"),
+    "KHR": ("Cambodian Riel",            "KHR"),
+    "LAK": ("Laotian Kip",               "\u20ad"),
+    "TWD": ("Taiwan Dollar",             "NT\u0024"),
+    "NPR": ("Nepalese Rupee",            "NPR"),
+    "AFN": ("Afghan Afghani",            "\u060b"),
+    "IQD": ("Iraqi Dinar",               "IQD"),
+    "IRR": ("Iranian Rial",              "IRR"),
+    "JOD": ("Jordanian Dinar",           "JD"),
+    "LBP": ("Lebanese Pound",            "LBP"),
+    "SYP": ("Syrian Pound",              "SYP"),
+    "YER": ("Yemeni Rial",               "YER"),
+    "LYD": ("Libyan Dinar",              "LYD"),
 }
 
 # ---------------------------------------------------------------------------
-# Country ISO-2 → default currency code
+# Country ISO-2 -> default currency code
 # (covers all countries in App 1 & App 2 and more)
 # ---------------------------------------------------------------------------
 COUNTRY_TO_CURRENCY: dict[str, str] = {
@@ -158,7 +188,7 @@ COUNTRY_TO_CURRENCY: dict[str, str] = {
     "BS": "BSD",
     "UY": "UYU",
     # Europe
-    "GB": "GBP", "United Kingdom": "GBP",
+    "GB": "GBP", "United Kingdom": "GBP", "UK": "GBP",
     "DE": "EUR", "Germany": "EUR",
     "FR": "EUR", "France": "EUR",
     "ES": "EUR", "Spain": "EUR",
@@ -450,7 +480,7 @@ def currency_dropdown_options() -> list[str]:
     for code in major:
         if code in available:
             info = CURRENCY_INFO.get(code, (code, code))
-            result.append(f"{code} — {info[0]} ({info[1]})")
+            result.append(f"{code} \u2014 {info[0]} ({info[1]})")
             seen.add(code)
 
     others = sorted(
@@ -459,14 +489,14 @@ def currency_dropdown_options() -> list[str]:
     )
     for code in others:
         info = CURRENCY_INFO.get(code, (code, code))
-        result.append(f"{code} — {info[0]} ({info[1]})")
+        result.append(f"{code} \u2014 {info[0]} ({info[1]})")
 
     return result
 
 
 def parse_currency_option(option: str) -> str:
     """Extract the 3-letter code from a dropdown option string."""
-    return option.split(" — ")[0].strip()
+    return option.split(" \u2014 ")[0].strip()
 
 
 # ---------------------------------------------------------------------------
@@ -511,8 +541,8 @@ def render_currency_converter(
     show_breakdown: If True, also shows monthly/weekly/hourly in target currency.
 
     Adds:
-      • A toggle: "Show Currency Conversion"
-      • If toggled on → an expander with dropdown + converted values
+      * A toggle: "Show Currency Conversion"
+      * If toggled on -> an expander with dropdown + converted values
     """
 
     toggle_key = f"{widget_key}_currency_toggle"
@@ -520,7 +550,7 @@ def render_currency_converter(
 
     # --- Toggle ---
     show_conversion = st.toggle(
-        "🌍 Show Currency Conversion",
+        "\U0001f30d Show Currency Conversion",
         key=toggle_key,
         value=False,
     )
@@ -536,21 +566,21 @@ def render_currency_converter(
     options = currency_dropdown_options()
     default_currency = guess_currency(location_hint)
     default_option = next(
-        (o for o in options if o.startswith(default_currency + " — ")),
+        (o for o in options if o.startswith(default_currency + " \u2014 ")),
         options[0]
     )
     default_idx = options.index(default_option) if default_option in options else 0
 
-    with st.expander("💱 Currency Conversion", expanded=True):
+    with st.expander("\U0001f4b1 Currency Conversion", expanded=True):
         # Source status
         if rate_data["source"] == "live":
-            fetched_str = rate_data["fetched_at"].strftime("%Y-%m-%d %H:%M UTC") if rate_data["fetched_at"] else "—"
-            st.caption(f"✅ Live exchange rates — last updated {fetched_str}")
+            fetched_str = rate_data["fetched_at"].strftime("%Y-%m-%d %H:%M UTC") if rate_data["fetched_at"] else "\u2014"
+            st.caption(f"\u2705 Live exchange rates \u2014 last updated {fetched_str}")
         elif rate_data["source"] == "fallback_file":
-            st.warning(f"⚠️ {rate_data['error']}")
+            st.warning(f"\u26a0\ufe0f {rate_data['error']}")
         else:
             st.error(
-                "🔴 **No internet connection and no fallback file found.** "
+                "\U0001f534 **No internet connection and no fallback file found.** "
                 "Showing approximate built-in rates that may be outdated. "
                 f"Details: {rate_data['error']}"
             )
@@ -571,7 +601,7 @@ def render_currency_converter(
 
         # Skip if USD selected (no point converting)
         if target_code == "USD":
-            st.info("Target currency is already USD — no conversion needed.")
+            st.info("Target currency is already USD \u2014 no conversion needed.")
             return
 
         # Conversion
@@ -622,7 +652,7 @@ def render_currency_converter(
         # Save-rates button (for offline use later)
         if rate_data["source"] == "live":
             if st.button(
-                "💾 Save rates for offline use",
+                "\U0001f4be Save rates for offline use",
                 key=f"{widget_key}_save_rates",
                 help=f"Saves current live rates to {_FALLBACK_FILE_PATH}",
             ):

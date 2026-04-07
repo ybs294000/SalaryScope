@@ -2500,6 +2500,11 @@ with tab_objects[1]:
             col_w_a2.metric("Weekly (Approx)", f"${weekly_a2_r:,.2f}")
             col_h_a2.metric("Hourly (Approx, 40hr/week)", f"${hourly_a2_r:,.2f}")
 
+            render_currency_converter(
+                usd_amount=prediction_a2_r,
+                location_hint=data_a2_r["company_location_code_a2"],
+                widget_key="resume_a2",   
+            )
             # --- Smart Insights & Negotiation Tips ---
             st.divider()
             insights_a2_r = generate_insights_app2(
@@ -3040,7 +3045,11 @@ with tab_objects[1]:
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
 
             st.divider()
-
+            render_currency_converter(
+                usd_amount=prediction,
+                location_hint=data["input_details"]["Country"],  # or company_location_code_a2
+                widget_key="resume_a1",   # or "resume_a2"
+            )
             # -------------------------------------------------------
             # SALARY NEGOTIATION TIPS (APP 1 - RESUME)
             # -------------------------------------------------------
