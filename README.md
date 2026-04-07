@@ -24,7 +24,7 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 - [Models](#models)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
-- [Platform Compatability](#platform-compatibility)
+- [Platform Compatibility](#platform-compatibility)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Dataset Information](#dataset-information)
@@ -104,7 +104,7 @@ The focus of the project is to combine machine learning with an interactive appl
 - Downloadable PDF prediction report
 - Prediction feedback collection after each result (accuracy rating, direction, star rating, optional actual salary) 
 - Optional currency conversion with global currency support (toggle-based)
-— available to all users
+- available to all users
 
 ### Resume-Based Prediction (NLP)
 - Upload a resume (PDF format)
