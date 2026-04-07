@@ -569,7 +569,7 @@ feedback/
 
 ## Author
 
-**Yash Shah**  
+**Yash Shah**,  
 B.Tech Final Year Student,  
 Computer Engineering Department, Gandhinagar Institute of Technology, Gandhinagar University 
 - GitHub: [@ybs294000](https://github.com/ybs294000)
