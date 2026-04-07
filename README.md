@@ -1,13 +1,13 @@
 # SalaryScope — Salary Prediction System using Machine Learning
 
-![Python](https://img.shields.io/badge/python-3.13-blue)
-![Framework](https://img.shields.io/badge/framework-streamlit-red)
-![ML](https://img.shields.io/badge/machine%20learning-scikit--learn%20%7C%20xgboost-orange)
-![NLP](https://img.shields.io/badge/nlp-spaCy-green)
-![Database](https://img.shields.io/badge/database-firebase-yellow)
-![Deployment](https://img.shields.io/badge/deployed-streamlit%20cloud-brightgreen)
-![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey)
-![License](https://img.shields.io/badge/license-MIT-blueviolet)
+![Python](https://img.shields.io/badge/Python-3.13-blue)
+![Framework](https://img.shields.io/badge/Framework-Streamlit-red)
+![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-orange)
+![NLP](https://img.shields.io/badge/NLP-spaCy-green)
+![Database](https://img.shields.io/badge/Database-Firebase-yellow)
+![Deployment](https://img.shields.io/badge/Deployed-Streamlit%20Cloud-brightgreen)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![License](https://img.shields.io/badge/License-MIT-blueviolet)
 
 SalaryScope is a machine learning-based web application developed as a Final Year B.Tech Project. It provides salary prediction capabilities through two distinct models, each trained on a different dataset and targeting different use cases. The application is built with Streamlit and deployed on Streamlit Cloud.
 
