@@ -13,7 +13,7 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 - [Models](#models)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
-- [Platform Comptability](#platform-comptatibility)
+- [Platform Compatability](#platform-comptatibility)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Dataset Information](#dataset-information)
