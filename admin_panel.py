@@ -529,10 +529,10 @@ def show_admin_panel(user_email):
         st.metric("Total Session Keys", total_keys)
 
         # Key category breakdown — lightweight, no raw data shown
-        admin_keys    = [k for k in st.session_state if "admin" in k.lower()]
-        scenario_keys = [k for k in st.session_state if "scenario" in k.lower()]
-        bulk_keys     = [k for k in st.session_state if "bulk" in k.lower()]
-        resume_keys   = [k for k in st.session_state if "resume" in k.lower()]
+        admin_keys    = [k for k in st.session_state if k.startswith("admin") or k == "is_admin"]
+        scenario_keys = [k for k in st.session_state if k.startswith("sc_") or "scenario" in k.lower()]
+        bulk_keys     = [k for k in st.session_state if k.startswith("bulk_")]
+        resume_keys   = [k for k in st.session_state if k.startswith("resume_")]
 
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Admin Keys", len(admin_keys))
