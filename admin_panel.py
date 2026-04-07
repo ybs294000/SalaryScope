@@ -131,6 +131,20 @@ def _get_feedback_stats():
         import statistics
         median_actual = round(statistics.median(actual_salaries), 2) if actual_salaries else None
 
+        # ---- Percentages ----
+        pct_somewhat = round(somewhat / total * 100, 1) if total > 0 else 0
+        pct_no = round(no / total * 100, 1) if total > 0 else 0
+
+        dir_total = too_high + about_right + too_low
+        pct_too_high = round(too_high / dir_total * 100, 1) if dir_total > 0 else 0
+        pct_about_right = round(about_right / dir_total * 100, 1) if dir_total > 0 else 0
+        pct_too_low = round(too_low / dir_total * 100, 1) if dir_total > 0 else 0
+
+        pct_actual_salary = (
+            round(len(actual_salaries) / total * 100, 1)
+            if total > 0 else 0
+        )
+
         return {
             "total": total,
             "yes": yes,
@@ -141,6 +155,14 @@ def _get_feedback_stats():
             "too_low": too_low,
             "avg_star": avg_star,
             "pct_positive": pct_positive,
+            "pct_somewhat": pct_somewhat,
+            "pct_no": pct_no,
+
+            "pct_too_high": pct_too_high,
+            "pct_about_right": pct_about_right,
+            "pct_too_low": pct_too_low,
+
+            "pct_actual_salary": pct_actual_salary,
             "model_counts": model_counts,
             "median_actual": median_actual,
             "actual_salary_count": len(actual_salaries),
@@ -218,13 +240,13 @@ def show_admin_panel(user_email):
     c3.metric("Arch", _get_arch())
 
     c4, c5, c6 = st.columns(3)
-    c4.metric("Streamlit Version", st.__version__)
-    c5.metric("Scikit-learn Version", sklearn_version)
+    c4.metric("Streamlit", st.__version__)
+    c5.metric("Scikit-learn", sklearn_version)
     c6.metric("XGBoost", xgb_version)
 
     c7, c8, _ = st.columns(3)
-    c7.metric("Pandas", pd_version)
-    c8.metric("SpaCy", spacy_version)
+    c7.metric("SpaCy", spacy_version)
+    c8.metric("Pandas", pd_version)
     st.divider()
 
     # ==============================
@@ -289,14 +311,26 @@ def show_admin_panel(user_email):
                 # -------------------------
                 # Metrics
                 # -------------------------
-                fd_c1, fd_c2, fd_c3 = st.columns(3)
-                fd_c4, fd_c5 = st.columns(2)
-                fd_c1.metric("Total Feedback", stats["total"])
-                fd_c2.metric("Avg Rating", stats["avg_star"])
-                fd_c3.metric("Positive (Yes)", stats["yes"])
-                fd_c4.metric("Somewhat", stats["somewhat"])
-                fd_c5.metric("Negative (No)", stats["no"])
 
+                k1, k2, k3, k4 = st.columns(4)
+                k1.metric("Total Feedback", stats["total"])
+                k2.metric("Accuracy", f"{stats['pct_positive']}%", help="Percentage of 'Yes' responses")
+                k3.metric("Avg Rating", stats["avg_star"])
+
+                if stats["median_actual"] is not None:
+                    k4.metric("Median Actual Salary", f"${stats['median_actual']:,.0f}")
+                else:
+                    k4.metric("Median Actual Salary", "N/A")
+
+                st.markdown("#### Breakdown")
+
+                b1, b2, b3, b4 = st.columns(4)
+                b1.metric("Yes", f"{stats['pct_positive']}%")
+                b2.metric("Somewhat", f"{stats['pct_somewhat']}%")
+                b3.metric("No", f"{stats['pct_no']}%")
+                b4.metric("Actual Salary Coverage", f"{stats['pct_actual_salary']}%", help="Users who reported actual salary")
+                
+                st.divider()
                 # Main layout: metrics (left) + chart (right)
                 left, right = st.columns([1, 1])
                 with left:
@@ -413,7 +447,7 @@ def show_admin_panel(user_email):
 #                        st.write("Predicted Salary:", f"${salary:,.2f}")
 #                    else:
 #                        st.write("Predicted Salary:", salary)
-    st.divider()
+#    st.divider()
 
     # ==============================
     # RECENT ACTIVITY
@@ -495,7 +529,7 @@ def show_admin_panel(user_email):
         st.metric("Total Session Keys", total_keys)
 
         # Key category breakdown — lightweight, no raw data shown
-        admin_keys    = [k for k in st.session_state if k.startswith("admin_")]
+        admin_keys    = [k for k in st.session_state if "admin" in k.lower()]
         scenario_keys = [k for k in st.session_state if "scenario" in k.lower()]
         bulk_keys     = [k for k in st.session_state if "bulk" in k.lower()]
         resume_keys   = [k for k in st.session_state if "resume" in k.lower()]
