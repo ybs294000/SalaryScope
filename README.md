@@ -50,6 +50,15 @@ The project follows a structured workflow:
 
 The focus of the project is to combine machine learning with an interactive application interface, providing both prediction capabilities and supporting insights for better understanding of salary patterns.
 
+## Key Features (Quick Overview)
+
+- Dual machine learning models (Random Forest + XGBoost)
+- Resume-based salary prediction using NLP (spaCy)
+- Scenario analysis and sensitivity simulation
+- Batch prediction (up to 50,000 records)
+- Real-time currency conversion with fallback system
+- Model analytics and performance visualization
+- Firebase-based authentication and feedback system
 ---
 
 ## Live Demo
