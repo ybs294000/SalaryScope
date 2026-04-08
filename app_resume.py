@@ -1391,8 +1391,8 @@ with header_right:
 # MODEL SWITCHER
 # ==================================================
 MODEL_OPTIONS = [
-    "Model 1 — Random Forest (General Salary)",
-    "Model 2 — XGBoost (Data Science Salary)"
+    "Model 1 — General Salary (Random Forest)",
+    "Model 2 — Data Science Salary (XGBoost)"
 ]
 
 selected_model = st.selectbox(
