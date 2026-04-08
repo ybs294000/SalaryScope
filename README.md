@@ -60,7 +60,7 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 
 ## Overview
 
-SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, user authentication, prediction feedback collection, and PDF report generation.
+SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, basic tax estimation, and cost-of-living adjusted salary insights, user authentication, prediction feedback collection, and PDF report generation.
 
 The project follows a structured workflow:
 - Data analysis and model development using Jupyter notebooks
@@ -69,7 +69,7 @@ The project follows a structured workflow:
 - Integration of trained models into a Streamlit-based web application
 - Storage and feedback collection using Firebase
 
-The focus of the project is to combine machine learning with an interactive application interface, providing both prediction capabilities and supporting insights for better understanding of salary patterns.
+The focus of the project is to combine machine learning with an interactive application interface, providing both prediction capabilities and supporting insights for better understanding of salary patterns. The system also includes basic financial context tools such as post-tax estimation and cost-of-living adjustment to improve real-world interpretability of predictions.
 
 The application runs in a web browser, making it platform-independent and easily accessible.
 
@@ -82,6 +82,8 @@ The application runs in a web browser, making it platform-independent and easily
 - Real-time currency conversion with fallback system
 - Model analytics and performance visualization
 - Firebase-based authentication and feedback system
+- Basic post-tax salary estimation with country-specific effective rates
+- Basic cost-of-living (COL) adjustment for contextual salary comparison
 ---
 
 ## Live Demo
@@ -240,6 +242,41 @@ The application runs in a web browser, making it platform-independent and easily
 - Currency conversion is for informational purposes only
 - Exchange rates may vary slightly depending on source and timing
 - All predictions are generated in USD as the base currency
+
+### Post-Tax Salary Estimation
+
+- Estimate post-tax salary based on country-specific effective tax rates
+- Supports progressive tax brackets for major countries
+- Automatic country detection from input (with manual override option)
+- Custom tax rate input for personalized estimation
+- Displays:
+  - Estimated tax amount
+  - Net annual salary
+  - Monthly, weekly, and hourly breakdowns (post-tax)
+- Optional integration with currency conversion:
+  - View post-tax salary in selected currency
+- Toggle-based UI to enable or disable tax adjustment
+- Fully non-intrusive — does not modify original gross prediction
+
+**Notes:**
+- Tax calculations are approximate and intended for planning purposes only
+- Does not include detailed deductions, exemptions, or local taxes
+
+### Cost of Living Adjustment (COL)
+
+- Adjust predicted salary based on relative cost of living across countries
+- Provides context-aware salary comparison rather than raw numerical values
+- Helps users understand real purchasing power in different regions
+- Uses approximate COL indices derived from public datasets
+- Displays:
+  - Adjusted salary value
+  - Relative affordability comparison
+- Toggle-based UI for optional activation
+- Works independently or alongside currency and tax adjustments
+
+**Notes:**
+- COL values are approximate and may vary by city, lifestyle, and time
+- Intended for comparison and insight, not exact financial planning
 
 ### Admin Panel (Diagnostics & Monitoring)
 
@@ -455,6 +492,9 @@ client_x509_cert_url = "your_cert_url"
 3. Fill in the required fields and click **Predict Salary**
 4. View results, insights, and optionally:
    - Convert salary into other currencies
+   - Optionally:
+      - Enable post-tax salary estimation
+      - Apply cost-of-living adjustment for better comparison across regions
    - Download a PDF report
 5. Expand the **Share Feedback on This Prediction** section to rate the prediction accuracy — login is not required
 
@@ -566,6 +606,9 @@ feedback/
 - The confidence interval shown for Model 1 is an approximation based on training residuals and should be interpreted as an estimate rather than an exact range.
 - Feedback submitted anonymously cannot be linked to a specific user session and is stored without any personal identifier.
 - Currency conversion uses external exchange rate data and may not reflect real-time market fluctuations or transaction-specific rates.
+- Tax estimation uses approximate effective rates and does not model detailed national tax rules.
+- Cost-of-living adjustments are based on generalized indices and may not reflect individual lifestyle differences.
+- Combined currency, tax, and COL adjustments are intended for comparative insight, not exact financial planning.
 ---
 
 ## Future Scope
