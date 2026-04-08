@@ -449,12 +449,12 @@ def render_col_adjuster(
     with st.expander("Cost-of-Living (Purchasing Power) Adjustment", expanded=True):
 
         st.caption(
-            "**What is this?** This tool adjusts your salary for purchasing power. "
+            ":material/info: **What is this?** This tool adjusts your salary for purchasing power. "
             "A salary of $100,000 USD goes much further in a low-CoL country than a high-CoL one. "
             "The index is US = 100 (baseline). Lower index = cheaper living = higher real value."
         )
         st.caption(
-            "\u26a0\ufe0f  CoL data is built-in (2023/24 estimates). "
+            ":material/warning:  CoL data is built-in (2023/24 estimates). "
             "Use custom overrides for city-level or more current data."
         )
 

@@ -579,12 +579,12 @@ def render_currency_converter(
         # Source status
         if rate_data["source"] == "live":
             fetched_str = rate_data["fetched_at"].strftime("%Y-%m-%d %H:%M UTC") if rate_data["fetched_at"] else "—"
-            st.caption(f"✅ Live exchange rates — last updated {fetched_str}")
+            st.caption(f":material/check: Live exchange rates — last updated {fetched_str}")
         elif rate_data["source"] == "fallback_file":
-            st.warning(f"⚠️ {rate_data['error']}")
+            st.warning(f"material/warning: {rate_data['error']}")
         else:
             st.error(
-                "🔴 **No internet connection and no fallback file found.** "
+                ":material/stop_circle: **No internet connection and no fallback file found.** "
                 "Showing approximate built-in rates that may be outdated. "
                 f"Details: {rate_data['error']}"
             )
