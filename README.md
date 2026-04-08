@@ -54,6 +54,7 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 - [Limitations](#limitations)
 - [Future Scope](#future-scope)
 - [References](#references)
+- [License](#license)
 - [Author](#author)
 
 ---
@@ -633,6 +634,15 @@ feedback/
 
 ---
 
+## License
+
+This project is licensed under the MIT License — a permissive open-source license allowing reuse with attribution.
+
+You are free to use, modify, and distribute this software with proper attribution.
+
+See the [LICENSE](LICENSE) file for more details.
+
+---
 ## Author
 
 **Yash Shah**,  
