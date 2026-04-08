@@ -888,17 +888,17 @@ def render_tax_adjuster(
                 )
 
         with col_info2:
-            if saved_rate_for_country is not None:
-                st.success(
-                    f"A saved custom rate for **{country_key}** was found: "
-                    f"**{saved_rate_for_country * 100:.1f}%**\n\n"
-                    "Enable 'Use custom rate' below to apply it."
-                )
-            else:
-                st.markdown(
-                    "**No saved custom rate for this country.**\n\n"
-                    "You can enter one below and save it for future sessions."
-                )
+        #    if saved_rate_for_country is not None:
+        #        st.success(
+        #            f"A saved custom rate for **{country_key}** was found: "
+        #            f"**{saved_rate_for_country * 100:.1f}%**\n\n"
+        #            "Enable 'Use custom rate' below to apply it."
+        #        )
+        #    else:
+        #        st.markdown(
+        #            "**No saved custom rate for this country.**\n\n"
+        #            "You can enter one below and save it for future sessions."
+        #        )
 
         # --- Custom rate toggle ---
         use_custom = st.toggle(
