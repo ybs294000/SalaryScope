@@ -554,7 +554,7 @@ def render_currency_converter(
 
     # --- Toggle ---
     show_conversion = st.toggle(
-        "🌍 Show Currency Conversion",
+        ":material/public: Show Currency Conversion",
         key=toggle_key,
         value=False,
     )
@@ -575,7 +575,7 @@ def render_currency_converter(
     )
     default_idx = options.index(default_option) if default_option in options else 0
 
-    with st.expander("💱 Currency Conversion", expanded=True):
+    with st.expander(":material/currency_exchange: Currency Conversion", expanded=True):
         # Source status
         if rate_data["source"] == "live":
             fetched_str = rate_data["fetched_at"].strftime("%Y-%m-%d %H:%M UTC") if rate_data["fetched_at"] else "—"
@@ -656,7 +656,7 @@ def render_currency_converter(
         # Save-rates button (for offline use later)
         if rate_data["source"] == "live":
             if st.button(
-                "💾 Save rates for offline use",
+                ":material/save: Save rates for offline use",
                 key=f"{widget_key}_save_rates",
                 help=f"Saves current live rates to {_FALLBACK_FILE_PATH}",
             ):

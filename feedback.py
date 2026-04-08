@@ -82,7 +82,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
     # prediction with a different salary is run.
     submitted_key = f"_feedback_submitted_{model_used}_{int(predicted_salary)}"
 
-    with st.expander(f"{chr(0x1F4DD)} Share Feedback on This Prediction", expanded=False):
+    with st.expander(f":material/feedback: Share Feedback on This Prediction", expanded=False):
         if st.session_state.get(submitted_key):
             st.success("Thank you for your feedback!")
             return

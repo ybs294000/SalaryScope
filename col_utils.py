@@ -435,7 +435,7 @@ def render_col_adjuster(
     custom_cmp_slider = f"{widget_key}_cmp_idx_slider"
 
     show_col = st.toggle(
-        "\U0001f3e0 Show Cost-of-Living Adjustment",
+        ":material/home: Show Cost-of-Living Adjustment",
         key=toggle_key,
         value=False,
     )

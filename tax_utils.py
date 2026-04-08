@@ -845,9 +845,8 @@ def render_tax_adjuster(
     slider_key = f"{widget_key}_rate_slider"
     file_load_key = f"{widget_key}_load_file"
 
-    st.markdown("**:material/percent: Show Tax Adjustment**")
     show_tax = st.toggle(
-        "\U0001f4b8 Show Tax Adjustment",
+        ":material/percent: Show Tax Adjustment",
         key=toggle_key,
         value=False,
     )
@@ -865,7 +864,7 @@ def render_tax_adjuster(
     with st.expander("Tax Estimation", expanded=True):
 
         st.caption(
-            "\u26a0\ufe0f **Disclaimer:** Tax estimates are approximate and for planning only. "
+            ":material/warning: **Disclaimer:** Tax estimates are approximate and for planning only. "
             "Actual tax depends on deductions, filing status, local taxes, and other factors. "
             "This is not financial or legal advice."
         )
