@@ -6496,6 +6496,10 @@ with tab_objects[about_index]:
     - Google Drive public link upload
     - PDF report generation (manual + resume analysis + bulk + scenario analysis + model analytics)
     - Prediction feedback collection (accuracy rating, direction, star rating, optional actual salary)
+    - Currency conversion support (100+ currencies) with live exchange rates
+    - Basic post-tax salary estimation based on country-level tax systems
+    - Cost-of-living adjustment for cross-country salary comparison
+    - Real-world salary interpretation using combined financial adjustments
             """)
 
         with col_ab2:
@@ -6525,6 +6529,10 @@ with tab_objects[about_index]:
     - Google Drive public link upload
     - PDF report generation (manual + resume analysis + bulk + scenario analysis + model analytics)
     - Prediction feedback collection (accuracy rating, direction, star rating, optional actual salary)
+    - Currency conversion support (100+ currencies) with live exchange rates
+    - Basic post-tax salary estimation based on country-level tax systems
+    - Cost-of-living adjustment for cross-country salary comparison
+    - Real-world salary interpretation using combined financial adjustments
             """)
 
         st.divider()
@@ -6541,8 +6549,21 @@ with tab_objects[about_index]:
     - Extracted fields are fully editable before prediction
     - Salary prediction using the same models as manual prediction
     - Results include annual salary, salary level, career stage, association pattern insight, confidence interval, negotiation tips, and career recommendations
+    - Supports currency conversion, basic tax estimation, and cost-of-living adjustment for extracted profiles
+    - Provides basic real-world salary interpretation beyond raw model predictions
         """)
 
+        st.divider()
+
+        st.markdown("### Salary Adjustment & Global Insights")
+        st.markdown("""
+        - Basic currency conversion using live exchange rates with fallback support
+        - Basic tax estimation using country-level effective tax models
+        - Cost-of-living adjustment using global indices (US = 100 baseline)
+        - Enables realistic salary comparison across countries using purchasing power (PPP)
+        - Modular design — can be applied independently or combined
+        """)
+        
         st.divider()
 
         st.markdown("### Prediction Feedback")
