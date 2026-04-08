@@ -6445,15 +6445,10 @@ with tab_objects[about_index]:
     st.markdown(
         "SalaryScope is a web application that predicts salary based on factors like "
         "education, experience, job title, and location. "
-        "It uses machine learning models to provide estimated salaries along with some basic insights. "
-
-        "Beyond prediction, the system enhances results with basic real-world adjustments such as "
-        "currency conversion, tax estimation, and cost-of-living comparison, helping users "
-        "understand the approximate value of a salary across different regions. "
-
-        "The application supports manual input, resume-based prediction, batch prediction, "
-        "and scenario analysis, making it useful for students and job seekers to get a general idea "
-        "of salary expectations."
+        "It uses machine learning models to give an estimated salary along with some basic insights. "
+        "The application supports manual input, resume-based prediction, and batch prediction. "
+        "It is designed to help students and job seekers get a general idea of salary expectations. "
+        "It also includes basic post-tax estimation and cost-of-living adjustments for better real-world context."
     )
     
     with st.expander("Features & Modules"):
