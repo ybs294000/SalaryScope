@@ -1285,7 +1285,7 @@ for key in [
 ]:
     if key not in st.session_state:
         if key == "active_model":
-            st.session_state[key] = "Model 1 — Random Forest (General Salary)"
+            st.session_state[key] = "Model 1 — General Salary (Random Forest)"
         elif key == "manual_pdf_ready":
             st.session_state[key] = False
         else:

@@ -259,7 +259,7 @@ The admin panel is intentionally minimal and designed for internal monitoring wi
 
 ## Models
 
-### Model 1 — Random Forest (General Salary)
+### Model 1 — General Salary (Random Forest)
 
 | Component | Details |
 |---|---|
@@ -286,7 +286,7 @@ The admin panel is intentionally minimal and designed for internal monitoring wi
 
 ---
 
-### Model 2 — XGBoost (Data Science Salary)
+### Model 2 — Data Science Salary (XGBoost)
 
 | Component | Details |
 |---|---|
