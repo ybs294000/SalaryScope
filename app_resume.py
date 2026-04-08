@@ -50,7 +50,9 @@ from resume_nlp import (
 )
 from feedback import feedback_ui
 
-from currency_utils import render_currency_converter
+from currency_utils import render_currency_converter, get_active_currency, get_active_rates
+from tax_utils import render_tax_adjuster
+from col_utils import render_col_adjuster
 
 from auth import login_ui, register_ui, logout, get_logged_in_user
 from auth import is_admin
@@ -1760,12 +1762,14 @@ with tab_objects[0]:
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
             st.divider()
 
-            render_currency_converter(
-                usd_amount=prediction,       # or prediction_a2 for App 2
-                location_hint=country,       # or company_location for App 2
-                widget_key="manual_a1",      # use "manual_a2", "resume_a1", "resume_a2" per call-site
-            )
-            #st.divider()
+            render_currency_converter(usd_amount=prediction, location_hint=country, widget_key="manual_a1")
+            active_currency = get_active_currency("manual_a1")
+            active_rates    = get_active_rates()
+            render_tax_adjuster(gross_usd=prediction, location_hint=country, widget_key="manual_a1_tax",
+                                converted_currency=active_currency, rates=active_rates)
+            render_col_adjuster(gross_usd=prediction, work_country=country, widget_key="manual_a1_col")
+
+            st.divider()
             st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
 
             negotiation_tips_a1 = generate_negotiation_tips_app1(
@@ -2017,13 +2021,20 @@ with tab_objects[0]:
             #col_low2.metric("Lower Estimate", f"${lower_bound_a2:,.2f}")
             #col_high2.metric("Upper Estimate", f"${upper_bound_a2:,.2f}")
             #st.caption("Range estimated using variation across individual trees in the XGBoost model.")
-            st.divider()
+            #st.divider()
 
-            render_currency_converter(
-                usd_amount=prediction_a2,       # or prediction_a2 for App 2
-                location_hint=company_location,       # or company_location for App 2
-                widget_key="manual_a2",      # use "manual_a2", "resume_a1", "resume_a2" per call-site
-            )
+            render_currency_converter(usd_amount=prediction_a2, location_hint=company_location, widget_key="manual_a2")
+            active_currency_a2 = get_active_currency("manual_a2")
+            active_rates_a2    = get_active_rates()
+            render_tax_adjuster(gross_usd=prediction_a2, location_hint=company_location, widget_key="manual_a2_tax",
+                                converted_currency=active_currency_a2, rates=active_rates_a2)
+            render_col_adjuster(gross_usd=prediction_a2, work_country=company_location, widget_key="manual_a2_col")
+           # render_currency_converter(
+           #     usd_amount=prediction_a2,       # or prediction_a2 for App 2
+           #     location_hint=company_location,       # or company_location for App 2
+           #     widget_key="manual_a2",      # use "manual_a2", "resume_a1", "resume_a2" per call-site
+           # )
+
             # =====================================================
             # SMART INSIGHTS (APP 2)
             # =====================================================
@@ -2500,11 +2511,18 @@ with tab_objects[1]:
             col_w_a2.metric("Weekly (Approx)", f"${weekly_a2_r:,.2f}")
             col_h_a2.metric("Hourly (Approx, 40hr/week)", f"${hourly_a2_r:,.2f}")
 
-            render_currency_converter(
-                usd_amount=prediction_a2_r,
-                location_hint=data_a2_r["company_location_code_a2"],
-                widget_key="resume_a2",   
-            )
+            #render_currency_converter(
+            #    usd_amount=prediction_a2_r,
+            #    location_hint=data_a2_r["company_location_code_a2"],
+            #    widget_key="resume_a2",   
+            #)
+            render_currency_converter(usd_amount=prediction_a2_r, location_hint=data_a2_r["company_location_code_a2"], widget_key="resume_a2")
+            active_currency_a2_r = get_active_currency("resume_a2")
+            active_rates_a2_r    = get_active_rates()
+            render_tax_adjuster(gross_usd=prediction_a2_r, location_hint=data_a2_r["company_location_code_a2"], widget_key="resume_a2_tax",
+                                converted_currency=active_currency_a2_r, rates=active_rates_a2_r)
+            render_col_adjuster(gross_usd=prediction_a2_r, work_country=data_a2_r["company_location_code_a2"], widget_key="resume_a2_col")
+
             # --- Smart Insights & Negotiation Tips ---
             st.divider()
             insights_a2_r = generate_insights_app2(
@@ -3045,11 +3063,18 @@ with tab_objects[1]:
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
 
             st.divider()
-            render_currency_converter(
-                usd_amount=prediction,
-                location_hint=data["input_details"]["Country"],  # or company_location_code_a2
-                widget_key="resume_a1",   # or "resume_a2"
-            )
+          
+          #  render_currency_converter(
+          #      usd_amount=prediction,
+          #      location_hint=data["input_details"]["Country"],  # or company_location_code_a2
+          #      widget_key="resume_a1",   # or "resume_a2"
+          #  )
+            render_currency_converter(usd_amount=prediction, location_hint=data["input_details"]["Country"], widget_key="resume_a1")
+            active_currency_a1_r = get_active_currency("resume_a1")
+            active_rates_a1_r    = get_active_rates()
+            render_tax_adjuster(gross_usd=prediction, location_hint=data["input_details"]["Country"], widget_key="resume_a1_tax",
+                                converted_currency=active_currency_a1_r, rates=active_rates_a1_r)
+            render_col_adjuster(gross_usd=prediction, work_country=data["input_details"]["Country"], widget_key="resume_a1_col")
             # -------------------------------------------------------
             # SALARY NEGOTIATION TIPS (APP 1 - RESUME)
             # -------------------------------------------------------

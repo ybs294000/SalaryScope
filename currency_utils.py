@@ -46,6 +46,9 @@ _FALLBACK_FILE_PATH = os.path.join(
 )
 
 # ---------------------------------------------------------------------------
+# Currency metadata: code → (display name, symbol)
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Currency metadata: code -> (display name, symbol)
 # Symbol values use Unicode escape sequences to stay ASCII-safe in source files.
 #
@@ -166,8 +169,9 @@ CURRENCY_INFO: dict[str, tuple[str, str]] = {
     "LYD": ("Libyan Dinar",              "LYD"),
 }
 
+
 # ---------------------------------------------------------------------------
-# Country ISO-2 -> default currency code
+# Country ISO-2 → default currency code
 # (covers all countries in App 1 & App 2 and more)
 # ---------------------------------------------------------------------------
 COUNTRY_TO_CURRENCY: dict[str, str] = {
@@ -480,7 +484,7 @@ def currency_dropdown_options() -> list[str]:
     for code in major:
         if code in available:
             info = CURRENCY_INFO.get(code, (code, code))
-            result.append(f"{code} \u2014 {info[0]} ({info[1]})")
+            result.append(f"{code} — {info[0]} ({info[1]})")
             seen.add(code)
 
     others = sorted(
@@ -489,14 +493,14 @@ def currency_dropdown_options() -> list[str]:
     )
     for code in others:
         info = CURRENCY_INFO.get(code, (code, code))
-        result.append(f"{code} \u2014 {info[0]} ({info[1]})")
+        result.append(f"{code} — {info[0]} ({info[1]})")
 
     return result
 
 
 def parse_currency_option(option: str) -> str:
     """Extract the 3-letter code from a dropdown option string."""
-    return option.split(" \u2014 ")[0].strip()
+    return option.split(" — ")[0].strip()
 
 
 # ---------------------------------------------------------------------------
@@ -541,8 +545,8 @@ def render_currency_converter(
     show_breakdown: If True, also shows monthly/weekly/hourly in target currency.
 
     Adds:
-      * A toggle: "Show Currency Conversion"
-      * If toggled on -> an expander with dropdown + converted values
+      • A toggle: "Show Currency Conversion"
+      • If toggled on → an expander with dropdown + converted values
     """
 
     toggle_key = f"{widget_key}_currency_toggle"
@@ -550,7 +554,7 @@ def render_currency_converter(
 
     # --- Toggle ---
     show_conversion = st.toggle(
-        "\U0001f30d Show Currency Conversion",
+        "🌍 Show Currency Conversion",
         key=toggle_key,
         value=False,
     )
@@ -566,21 +570,21 @@ def render_currency_converter(
     options = currency_dropdown_options()
     default_currency = guess_currency(location_hint)
     default_option = next(
-        (o for o in options if o.startswith(default_currency + " \u2014 ")),
+        (o for o in options if o.startswith(default_currency + " — ")),
         options[0]
     )
     default_idx = options.index(default_option) if default_option in options else 0
 
-    with st.expander("\U0001f4b1 Currency Conversion", expanded=True):
+    with st.expander("💱 Currency Conversion", expanded=True):
         # Source status
         if rate_data["source"] == "live":
-            fetched_str = rate_data["fetched_at"].strftime("%Y-%m-%d %H:%M UTC") if rate_data["fetched_at"] else "\u2014"
-            st.caption(f"\u2705 Live exchange rates \u2014 last updated {fetched_str}")
+            fetched_str = rate_data["fetched_at"].strftime("%Y-%m-%d %H:%M UTC") if rate_data["fetched_at"] else "—"
+            st.caption(f"✅ Live exchange rates — last updated {fetched_str}")
         elif rate_data["source"] == "fallback_file":
-            st.warning(f"\u26a0\ufe0f {rate_data['error']}")
+            st.warning(f"⚠️ {rate_data['error']}")
         else:
             st.error(
-                "\U0001f534 **No internet connection and no fallback file found.** "
+                "🔴 **No internet connection and no fallback file found.** "
                 "Showing approximate built-in rates that may be outdated. "
                 f"Details: {rate_data['error']}"
             )
@@ -601,7 +605,7 @@ def render_currency_converter(
 
         # Skip if USD selected (no point converting)
         if target_code == "USD":
-            st.info("Target currency is already USD \u2014 no conversion needed.")
+            st.info("Target currency is already USD — no conversion needed.")
             return
 
         # Conversion
@@ -652,7 +656,7 @@ def render_currency_converter(
         # Save-rates button (for offline use later)
         if rate_data["source"] == "live":
             if st.button(
-                "\U0001f4be Save rates for offline use",
+                "💾 Save rates for offline use",
                 key=f"{widget_key}_save_rates",
                 help=f"Saves current live rates to {_FALLBACK_FILE_PATH}",
             ):
@@ -695,3 +699,155 @@ def get_rate_info() -> dict:
     Useful for Tab 3/4 to show rate source in analytics notes.
     """
     return get_exchange_rates()
+
+
+def get_converted_amount(
+    usd_amount: float,
+    target_currency: str,
+) -> tuple[float, float]:
+    """
+    Lightweight helper: convert usd_amount to target_currency.
+
+    Returns:
+        (converted_amount, fx_rate_used)
+
+    This is the primary reusable bridge for tax_utils and col_utils
+    when they need to display values in a non-USD currency.
+    Always safe to call — falls back gracefully if rates unavailable.
+    """
+    rate_data = get_exchange_rates()
+    rates = rate_data["rates"]
+    code = target_currency.upper()
+    rate = rates.get(code, 1.0)
+    return usd_amount * rate, rate
+
+
+def get_active_currency(widget_key: str) -> Optional[str]:
+    """
+    Returns the currently selected target currency code for a given widget_key,
+    as set by render_currency_converter().
+
+    Returns None if the currency toggle is off or widget not rendered yet.
+    Useful for tax_utils / col_utils to know which currency is active
+    without needing to re-render the selector.
+
+    Example:
+        currency = get_active_currency("manual_a1")
+        if currency:
+            render_tax_adjuster(..., converted_currency=currency)
+    """
+    toggle_key = f"{widget_key}_currency_toggle"
+    dropdown_key = f"{widget_key}_currency_dropdown"
+
+    toggle_on = st.session_state.get(toggle_key, False)
+    if not toggle_on:
+        return None
+
+    raw = st.session_state.get(dropdown_key)
+    if not raw:
+        return None
+
+    code = parse_currency_option(str(raw))
+    return code if code != "USD" else None
+
+
+def get_active_rates() -> Optional[dict[str, float]]:
+    """
+    Returns the current rates dict if rates are loaded (live, file, or hardcoded).
+    Returns None only if the cache is completely empty (edge case on first call).
+
+    Useful for passing to tax_utils.render_tax_adjuster(rates=...) to avoid
+    a redundant second fetch.
+    """
+    rate_data = get_exchange_rates()
+    return rate_data.get("rates")
+
+
+def get_post_adjustment_salary(
+    gross_usd: float,
+    location_hint: Optional[str] = None,
+    target_currency: Optional[str] = None,
+    apply_tax: bool = False,
+    apply_col: bool = False,
+    compare_country: Optional[str] = "US",
+) -> dict:
+    """
+    All-in-one reusable calculation bridge for Tab 3 / Tab 4 analytics.
+
+    Optionally applies currency conversion, tax estimation, and/or
+    cost-of-living adjustment to a gross USD salary — in a single call,
+    with no Streamlit UI dependencies (pure math, no imports of st).
+
+    Parameters
+    ----------
+    gross_usd       : Annual gross salary in USD.
+    location_hint   : Country name or ISO-2 (used for tax + CoL + currency guess).
+    target_currency : ISO-3 currency code. If None, guesses from location_hint.
+    apply_tax       : If True, computes post-tax net using tax_utils.
+    apply_col       : If True, computes PPP-adjusted value using col_utils.
+    compare_country : Reference country for CoL comparison (default "US").
+
+    Returns
+    -------
+    dict with keys (only present if the corresponding flag is True):
+      gross_usd            : original gross
+      fx_rate              : exchange rate used (1.0 if no conversion)
+      target_currency      : currency code used
+      gross_converted      : gross in target_currency
+      tax_rate             : effective tax rate (if apply_tax)
+      net_usd              : post-tax USD (if apply_tax)
+      net_converted        : post-tax in target_currency (if apply_tax + conversion)
+      work_col_index       : CoL index of work country (if apply_col)
+      compare_col_index    : CoL index of compare_country (if apply_col)
+      ppp_equivalent_usd   : PPP-adjusted in compare_country (if apply_col)
+      ppp_net_usd          : PPP-adjusted post-tax (if apply_tax + apply_col)
+    """
+    result: dict = {"gross_usd": gross_usd}
+
+    # --- Currency conversion ---
+    if target_currency is None:
+        target_currency = guess_currency(location_hint)
+    result["target_currency"] = target_currency
+
+    rates = get_active_rates() or {}
+    fx = rates.get(target_currency.upper(), 1.0)
+    result["fx_rate"] = fx
+    result["gross_converted"] = gross_usd * fx
+
+    # --- Tax ---
+    net_usd = gross_usd
+    if apply_tax:
+        try:
+            from tax_utils import compute_post_tax
+            tax_result = compute_post_tax(gross_usd, location_hint)
+            result["tax_rate"] = tax_result["tax_rate"]
+            result["tax_amount_usd"] = tax_result["tax_amount_usd"]
+            result["net_usd"] = tax_result["net_usd"]
+            result["net_monthly_usd"] = tax_result["net_monthly_usd"]
+            result["net_converted"] = tax_result["net_usd"] * fx
+            net_usd = tax_result["net_usd"]
+        except ImportError:
+            result["tax_rate"] = None
+            result["net_usd"] = gross_usd
+            result["net_converted"] = gross_usd * fx
+
+    # --- CoL ---
+    if apply_col:
+        try:
+            from col_utils import compute_col_adjusted
+            col_result = compute_col_adjusted(
+                gross_usd=gross_usd,
+                work_country=location_hint,
+                compare_country=compare_country,
+            )
+            result["work_col_index"] = col_result["work_col_index"]
+            result["compare_col_index"] = col_result["compare_col_index"]
+            result["ppp_equivalent_usd"] = col_result["ppp_equivalent_usd"]
+            result["adjustment_factor"] = col_result["adjustment_factor"]
+            if apply_tax:
+                result["ppp_net_usd"] = net_usd * col_result["adjustment_factor"]
+        except ImportError:
+            result["work_col_index"] = None
+            result["ppp_equivalent_usd"] = None
+
+    return result
