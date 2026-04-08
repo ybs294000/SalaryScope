@@ -873,21 +873,21 @@ def render_tax_adjuster(
         built_in_rate, built_in_source, _ = get_effective_rate(gross_usd, location_hint)
         built_in_pct = round(built_in_rate * 100, 1)
 
-        col_info1, col_info2 = st.columns(2)
-        with col_info1:
-            if location_hint and location_hint not in ("Other", ""):
-                st.info(
-                    f"**Country detected:** {location_hint}\n\n"
-                    f"**Estimated effective rate:** {built_in_pct}%\n\n"
-                    f"_{_SOURCE_NOTES.get(built_in_source, '')}_"
-                )
-            else:
-                st.info(
-                    "No country detected. Using generic 25% rate.\n\n"
-                    "Use the custom rate below for accuracy."
-                )
+        #col_info1, col_info2 = st.columns(2)
+        #with col_info1:
+        if location_hint and location_hint not in ("Other", ""):
+            st.info(
+                f"**Country detected:** {location_hint}\n\n"
+                f"**Estimated effective rate:** {built_in_pct}%\n\n"
+                f"_{_SOURCE_NOTES.get(built_in_source, '')}_"
+            )
+        else:
+            st.info(
+                "No country detected. Using generic 25% rate.\n\n"
+                "Use the custom rate below for accuracy."
+            )
 
-        with col_info2:
+        #with col_info2:
         #    if saved_rate_for_country is not None:
         #        st.success(
         #            f"A saved custom rate for **{country_key}** was found: "
