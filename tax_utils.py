@@ -845,6 +845,7 @@ def render_tax_adjuster(
     slider_key = f"{widget_key}_rate_slider"
     file_load_key = f"{widget_key}_load_file"
 
+    st.markdown("**:material/percent: Show Tax Adjustment**")
     show_tax = st.toggle(
         "\U0001f4b8 Show Tax Adjustment",
         key=toggle_key,
