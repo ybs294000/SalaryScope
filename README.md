@@ -359,6 +359,8 @@ salaryscope/
 ├── negotiation_tips.py                  # Salary negotiation tips engine
 ├── pdf_utils.py                         # ReportLab PDF generation for all report types
 ├── currency_utils.py                    # Currency conversion utility (live rates, fallback system, Streamlit UI)
+├── tax_utils.py                         # Basic tax estimation utility (country-based effective rates, Streamlit UI)
+├── col_utils.py                         # Basic cost-of-living adjustment utility (relative salary normalization)
 ├── user_profile.py                      # User profile tab UI and prediction history
 ├── admin_panel.py                       # Admin dashboard for basic system diagnostics, usage insights, and monitoring
 │
