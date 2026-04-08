@@ -1,18 +1,33 @@
 # SalaryScope — Salary Prediction System using Machine Learning
 
 <p align="center">
+  <a href="https://www.python.org/" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/Python-3.13-3178C6?style=for-the-badge&logo=python&logoColor=white&labelColor=2D3748" alt="Python 3.13" />
+  </a>
+  <a href="https://streamlit.io/" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/Framework-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white&labelColor=2D3748" alt="Framework: Streamlit" />
+  </a>
+  <a href="https://scikit-learn.org/" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white&labelColor=2D3748" alt="Machine Learning: Scikit-learn and XGBoost" />
+  </a>
+  <a href="https://spacy.io/" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/NLP-spaCy-09A3D5?style=for-the-badge&logo=spacy&logoColor=white&labelColor=2D3748" alt="NLP: spaCy" />
+  </a>
+  <a href="https://firebase.google.com/" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/Database-Firebase-000000?style=for-the-badge&logo=firebase&logoColor=white&labelColor=2D3748" alt="Database: Firebase" />
+  </a>
+</p>
 
-[![Python](https://img.shields.io/badge/Python-3.13-3178C6?style=for-the-badge&logo=python&logoColor=white&labelColor=2D3748)](https://www.python.org/)
-[![Framework](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white&labelColor=2D3748)](https://streamlit.io/)
-[![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Scikit--Learn%20%7C%20XGBoost-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white&labelColor=2D3748)](https://scikit-learn.org/)
-
-[![NLP](https://img.shields.io/badge/NLP-spaCy-09A3D5?style=for-the-badge&logo=spacy&logoColor=white&labelColor=2D3748)](https://spacy.io/)
-[![Database](https://img.shields.io/badge/Database-Firebase-000000?style=for-the-badge&logo=firebase&logoColor=white&labelColor=2D3748)](https://firebase.google.com/)
-
-[![Deployment](https://img.shields.io/badge/Deployment-Streamlit%20Cloud-1E9E82?style=flat-square&logo=streamlit&logoColor=white&labelColor=2D3748)](https://share.streamlit.io/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-2C3E50?style=flat-square&labelColor=2D3748)](https://github.com/ybs294000/salaryscope)
-[![License](https://img.shields.io/badge/License-MIT-6C5CE7?style=flat-square&labelColor=2D3748)](https://opensource.org/licenses/MIT)
-
+<p align="center">
+  <a href="https://share.streamlit.io/" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/Deployment-Streamlit%20Cloud-1E9E82?style=flat-square&logo=streamlit&logoColor=white&labelColor=2D3748" alt="Deployment: Streamlit Cloud" />
+  </a>
+  <a href="https://github.com/ybs294000/salaryscope" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-2C3E50?style=flat-square&labelColor=2D3748" alt="Platform: Windows, Linux, macOS" />
+  </a>
+  <a href="https://opensource.org/licenses/MIT" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/License-MIT-6C5CE7?style=flat-square&labelColor=2D3748" alt="License: MIT" />
+  </a>
 </p>
 
 > Machine learning-powered salary prediction system with dual models, NLP-based resume analysis, and interactive analytics.
