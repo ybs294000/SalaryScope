@@ -2021,7 +2021,7 @@ with tab_objects[0]:
             #col_low2.metric("Lower Estimate", f"${lower_bound_a2:,.2f}")
             #col_high2.metric("Upper Estimate", f"${upper_bound_a2:,.2f}")
             #st.caption("Range estimated using variation across individual trees in the XGBoost model.")
-            #st.divider()
+            st.divider()
 
             render_currency_converter(usd_amount=prediction_a2, location_hint=company_location, widget_key="manual_a2")
             active_currency_a2 = get_active_currency("manual_a2")
@@ -2516,6 +2516,7 @@ with tab_objects[1]:
             #    location_hint=data_a2_r["company_location_code_a2"],
             #    widget_key="resume_a2",   
             #)
+            st.divider()
             render_currency_converter(usd_amount=prediction_a2_r, location_hint=data_a2_r["company_location_code_a2"], widget_key="resume_a2")
             active_currency_a2_r = get_active_currency("resume_a2")
             active_rates_a2_r    = get_active_rates()
@@ -3063,7 +3064,7 @@ with tab_objects[1]:
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
 
             st.divider()
-          
+         # 
           #  render_currency_converter(
           #      usd_amount=prediction,
           #      location_hint=data["input_details"]["Country"],  # or company_location_code_a2
