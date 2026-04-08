@@ -6454,7 +6454,7 @@ with tab_objects[about_index]:
         col_ab1, col_ab2 = st.columns(2)
 
         with col_ab1:
-            st.markdown("### Model 1 — Random Forest (General Salary)")
+            st.markdown("### Model 1 — General Salary (Random Forest)")
             st.markdown("""
     **Dataset:** General salary dataset (`Salary.csv`)
 
@@ -6499,7 +6499,7 @@ with tab_objects[about_index]:
             """)
 
         with col_ab2:
-            st.markdown("### Model 2 — XGBoost (Data Science Salary)")
+            st.markdown("### Model 2 — Data Science Salary (XGBoost)")
             st.markdown("""
     **Dataset:** Data science salary dataset (`ds_salaries.csv`)
 
