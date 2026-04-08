@@ -494,11 +494,10 @@ client_x509_cert_url = "your_cert_url"
 2. Navigate to the **Manual Prediction** tab
 3. Fill in the required fields and click **Predict Salary**
 4. View results, insights, and optionally:
-   - Convert salary into other currencies
-   - Optionally:
-      - Enable post-tax salary estimation
-      - Apply cost-of-living adjustment for better comparison across regions
-   - Download a PDF report
+  - Convert salary into other currencies
+  - Enable post-tax salary estimation
+  - Apply cost-of-living adjustment for better comparison across regions
+  - Download a PDF report
 5. Expand the **Share Feedback on This Prediction** section to rate the prediction accuracy — login is not required
 
 ### Resume Prediction
