@@ -6710,6 +6710,8 @@ with tab_objects[about_index]:
 - Scroll down to view salary level, career stage, pattern insight, negotiation tips, and recommendations.
 - Click **Prepare PDF Report** to generate a downloadable summary, then click **Download** to save it.
 - To share feedback on the prediction, expand the **Share Feedback on This Prediction** section at the bottom, fill in the fields, and click **Submit Feedback**. Login is not required.
+- Optionally enable currency conversion, tax adjustment, and cost-of-living comparison to better understand real-world salary value.
+- These adjustments are optional and intended for approximate comparison only.
 
 **Resume Analysis**
 - Switch to Model 1 using the model selector.
@@ -6718,6 +6720,7 @@ with tab_objects[about_index]:
 - Review and edit the detected fields if needed.
 - Click **Predict Salary from Resume** to get results.
 - Click **Prepare PDF Report** to generate a downloadable summary, then click **Download** to save it.
+- After prediction, you can apply currency conversion, tax estimation, and cost-of-living adjustment for a more realistic interpretation of the predicted salary.
 
 **Batch Prediction**
 - Download the sample file from the left column to understand the required format.
