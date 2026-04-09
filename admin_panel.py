@@ -814,19 +814,21 @@ def _build_system_plots(
                 gridcolor=_BORDER,
             ),
             yaxis=dict(
-                title="RSS (MB)",
+                title=dict(
+                    text="RSS (MB)",
+                    font=dict(color=_BLUE)
+                ),
                 tickfont=dict(color=_BLUE, size=10),
                 gridcolor=_BORDER,
-                titlefont=dict(color=_BLUE),
             ),
             yaxis2=dict(
-                title="% Used",
+                title=dict(
+                    text="% Used",
+                    font=dict(color=_GREEN)
+                ),
                 overlaying="y",
                 side="right",
                 tickfont=dict(color=_GREEN, size=10),
-                titlefont=dict(color=_GREEN),
-                range=[0, 100],
-                showgrid=False,
             ),
             legend=dict(
                 bgcolor=_BG,
