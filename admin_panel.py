@@ -529,6 +529,7 @@ def _build_system_plots(
 
     _BG       = "#141A22"
     _BG_INNER = "#1B2230"
+    _BG_INPUT   = "#1B2230"
     _BORDER   = "#283142"
     _TEXT     = "#E6EAF0"
     _MUTED    = "#9CA6B5"
@@ -537,6 +538,11 @@ def _build_system_plots(
     _AMBER    = "#F59E0B"
     _RED      = "#EF4444"
     _PURPLE   = "#A78BFA"
+
+    _SAFE   = "#22C55E"   # success
+    _WARN   = "#F59E0B"   # warning
+    _DANGER = "#EF4444"   # error
+    _PRIMARY = "#3E7DE0"  # app primary
 
     _BASE = dict(
         paper_bgcolor=_BG,
@@ -563,6 +569,15 @@ def _build_system_plots(
     col_g1, col_g2, col_g3 = st.columns(3)
 
     with col_g1:
+        rss_pct = (rss_mb / ram_total) * 100
+
+        if rss_pct < 50:
+            bar_color = _SAFE
+        elif rss_pct < 80:
+            bar_color = _WARN
+        else:
+            bar_color = _DANGER
+
         fig_rss = go.Figure(go.Indicator(
             mode="gauge+number",
             value=round(rss_mb, 1),
@@ -572,7 +587,7 @@ def _build_system_plots(
             ),
             number=dict(
                 suffix=" MB",
-                font=dict(color=_BLUE, size=22)
+                font=dict(color=bar_color, size=22)
             ),
             gauge=dict(
                 axis=dict(
@@ -580,16 +595,16 @@ def _build_system_plots(
                     tickfont=dict(color=_MUTED, size=10),
                     tickcolor=_BORDER,
                 ),
-                bar=dict(color=_BLUE, thickness=0.3),
-                bgcolor=_BG_INNER,
+                bar=dict(color=bar_color, thickness=0.3),
+                bgcolor=_BG_INPUT,
                 bordercolor=_BORDER,
                 steps=[
-                    dict(range=[0, ram_total * 0.5], color="#1B2A3A"),
+                    dict(range=[0, ram_total * 0.5], color="#1E2A3A"),
                     dict(range=[ram_total * 0.5, ram_total * 0.8], color="#2A2215"),
                     dict(range=[ram_total * 0.8, max(ram_total, rss_mb * 2)], color="#2A1515"),
                 ],
                 threshold=dict(
-                    line=dict(color=_AMBER, width=2),
+                    line=dict(color=_DANGER, width=2),
                     thickness=0.75,
                     value=ram_total * 0.8,
                 ),
@@ -597,18 +612,26 @@ def _build_system_plots(
         ))
         fig_rss.update_layout(height=220, **_BASE)
         st.plotly_chart(fig_rss, width='stretch')
+
         process_pct = (rss_mb / ram_total) * 100
         st.caption(f"Process uses {process_pct:.2f}% of system RAM")
 
     with col_g2:
+        if ram_used_pct < 60:
+            ram_color = _SAFE
+        elif ram_used_pct < 80:
+            ram_color = _WARN
+        else:
+            ram_color = _DANGER
+
         fig_ram = go.Figure(go.Indicator(
             mode="gauge+number",
             value=ram_used_pct,
             title=dict(text="System RAM Used (%)", font=dict(color=_MUTED, size=13)),
-            number=dict(suffix="%", font=dict(color=_GREEN if ram_used_pct < 70 else _RED, size=22)),
+            number=dict(suffix="%", font=dict(color=ram_color, size=22)),
             gauge=dict(
                 axis=dict(range=[0, 100], tickfont=dict(color=_MUTED, size=10), tickcolor=_BORDER),
-                bar=dict(color=_GREEN if ram_used_pct < 70 else _RED, thickness=0.3),
+                bar=dict(color=ram_color, thickness=0.3),
                 bgcolor=_BG_INNER,
                 bordercolor=_BORDER,
                 steps=[
@@ -628,14 +651,23 @@ def _build_system_plots(
 
     with col_g3:
         disk_pct = sys_snap.get("disk_pct", 0)
+
+        if disk_pct < 60:
+            disk_color = _SAFE
+        elif disk_pct < 80:
+            disk_color = _WARN
+        else:
+            disk_color = _DANGER
+
+        disk_pct = sys_snap.get("disk_pct", 0)
         fig_disk = go.Figure(go.Indicator(
             mode="gauge+number",
             value=disk_pct,
             title=dict(text="Disk Used (%)", font=dict(color=_MUTED, size=13)),
-            number=dict(suffix="%", font=dict(color=_AMBER if disk_pct > 70 else _GREEN, size=22)),
+            number=dict(suffix="%", font=dict(color=disk_color, size=22)),
             gauge=dict(
                 axis=dict(range=[0, 100], tickfont=dict(color=_MUTED, size=10), tickcolor=_BORDER),
-                bar=dict(color=_AMBER if disk_pct > 70 else _GREEN, thickness=0.3),
+                bar=dict(color=disk_color, thickness=0.3),
                 bgcolor=_BG_INNER,
                 bordercolor=_BORDER,
                 steps=[
