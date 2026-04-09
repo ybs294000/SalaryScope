@@ -827,7 +827,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
         if st.button(
             "Submit Feedback",
             key=f"fb_submit_{model_used}_{salary_key}",
-            use_container_width=True,
+            width='stretch',
             type="primary"
         ):
             username = st.session_state.get("username") or "anonymous"
