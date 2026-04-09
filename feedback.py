@@ -11,9 +11,9 @@ Completely separate from the predictions/ collection.
 ROLLBACK NOTE
 -------------
 The extended data collection block is isolated between the markers:
-    # ── EXTENDED DATA BLOCK START ──
+    # -- EXTENDED DATA BLOCK START --
     ...
-    # ── EXTENDED DATA BLOCK END ──
+    # -- EXTENDED DATA BLOCK END --
 
 To roll back to the original form, delete everything between and including
 those two markers in feedback_ui(), and remove the `extended` parameter
@@ -49,9 +49,9 @@ def save_feedback(
     direction: str,              # "Too High" | "About Right" | "Too Low"
     actual_salary: float | None,
     star_rating: int,            # 1–5
-    # ── EXTENDED DATA BLOCK START — remove this parameter to roll back ──
+    # -- EXTENDED DATA BLOCK START - remove this parameter to roll back --
     extended: dict | None = None,
-    # ── EXTENDED DATA BLOCK END ──
+    # -- EXTENDED DATA BLOCK END --
 ):
     """
     Write one feedback document to Firestore.
@@ -75,18 +75,18 @@ def save_feedback(
         "created_at": datetime.utcnow().isoformat(),
     }
 
-    # ── EXTENDED DATA BLOCK START — remove this block to roll back ──
+    # -- EXTENDED DATA BLOCK START -- remove this block to roll back --
     if extended:
         record["extended_data"] = extended
-    # ── EXTENDED DATA BLOCK END ──
+    # -- EXTENDED DATA BLOCK END --
 
     db.collection("feedback").add(record)
 
 
 # ------------------------------------------------------------------
-# EXTENDED DATA COLLECTOR  (standalone helper — easy to remove)
+# EXTENDED DATA COLLECTOR  (standalone helper -- easy to remove)
 # ------------------------------------------------------------------
-# ── EXTENDED DATA BLOCK START ──
+# -- EXTENDED DATA BLOCK START --
 
 # Skill options grouped by domain — used in both models' forms.
 # Kept as a module-level constant so it is defined once and easy to edit.
@@ -475,7 +475,7 @@ def _collect_extended_data(model_used: str, salary_key: str) -> dict | None:
 
         return collected
 
-# ── EXTENDED DATA BLOCK END ──
+# -- EXTENDED DATA BLOCK END --
 
 
 # ------------------------------------------------------------------
@@ -560,7 +560,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
         )
         actual_salary = float(actual_salary_raw) if actual_salary_raw > 0 else None
 
-        # ── EXTENDED DATA BLOCK START ──
+        # -- EXTENDED DATA BLOCK START --
         # Collect optional enrichment data in a nested expander.
         # To roll back: delete the next two lines and the `extended=extended`
         # argument in the save_feedback() call below.
@@ -586,9 +586,9 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
                     direction=direction,
                     actual_salary=actual_salary,
                     star_rating=star_rating,
-                    # ── EXTENDED DATA BLOCK START — remove to roll back ──
+                    # -- EXTENDED DATA BLOCK START -- remove to roll back --
                     extended=extended,
-                    # ── EXTENDED DATA BLOCK END ──
+                    # -- EXTENDED DATA BLOCK END --
                 )
                 st.session_state[submitted_key] = True
                 st.success("Thank you for your feedback!")
