@@ -586,19 +586,19 @@ def render_col_adjuster(
         elif adj_factor < 1.0:
             pct_diff = (1.0 - adj_factor) * 100
             interpretation = (
-                f"Your salary has **{pct_diff:.0f}% less** purchasing power in {cmp_code} "
-                f"(CoL {cmp_idx_used:.0f}) than in your work country (CoL {work_idx_used:.0f}). "
-                f"You would need ~${ppp:,.0f} there to maintain the same lifestyle."
+                f"{cmp_code} has ~{pct_diff:.0f}% lower cost of living than your work country "
+                f"(CoL {work_idx_used:.0f}). "
+                f"You would need only ~${ppp:,.0f} there to maintain the same lifestyle."
             )
-            color = "#EF4444"
+            color = "#22C55E"
         else:
             pct_diff = (adj_factor - 1.0) * 100
             interpretation = (
-                f"Your salary has **{pct_diff:.0f}% more** purchasing power in {cmp_code} "
-                f"(CoL {cmp_idx_used:.0f}) than your work country (CoL {work_idx_used:.0f}). "
-                f"Only ~${ppp:,.0f} there gives you the same lifestyle."
+                f"{cmp_code} has ~{pct_diff:.0f}% higher cost of living than your work country "
+                f"(CoL {work_idx_used:.0f}). "
+                f"You would need ~${ppp:,.0f} there to maintain the same lifestyle."
             )
-            color = "#22C55E"
+            color = "#EF4444"
 
         st.markdown(
             f"""
