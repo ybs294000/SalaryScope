@@ -705,21 +705,21 @@ def show_admin_panel(user_email):
                     e1.metric("Implementation", esnap.get("python_impl", "—"))
                     e2.metric("Default Encoding", esnap.get("encoding", "—"))
 
-                    st.text(f"Full version : {esnap.get('python_full', '—')}")
-                    st.text(f"Executable   : {esnap.get('executable', '—')}")
-                    st.text(f"Prefix       : {esnap.get('prefix', '—')}")
-                    st.text(f"Working dir  : {esnap.get('cwd', '—')}")
-                    st.text(f"Hostname     : {esnap.get('node', '—')}")
-                    st.text(f"Platform     : {esnap.get('platform_full', '—')}")
+                    st.text(f"Full version: {esnap.get('python_full', '—')}")
+                    st.text(f"Executable: {esnap.get('executable', '—')}")
+                    st.text(f"Prefix: {esnap.get('prefix', '—')}")
+                    st.text(f"Working dir: {esnap.get('cwd', '—')}")
+                    st.text(f"Hostname: {esnap.get('node', '—')}")
+                    st.text(f"Platform: {esnap.get('platform_full', '—')}")
 
                     # Limits
                     st.markdown("**Runtime Limits**")
-                    l1, l2 = st.columns(2)
-                    l1.metric("Recursion Limit", esnap.get("recursion_limit", "—"))
-                    l2.metric(
-                        "Thread Stack",
-                        f"{esnap['thread_stack_kb']} KB" if "thread_stack_kb" in esnap else "—"
-                    )
+                    l1, _ = st.columns(2)
+                    st.metric("Recursion Limit", esnap.get("recursion_limit", "—"))
+                    #l2.metric(
+                    #    "Thread Stack",
+                    #    f"{esnap['thread_stack_kb']} KB" if "thread_stack_kb" in esnap else "—"
+                    #)
 
                     if "rlimit_fd_soft" in esnap:
                         st.markdown("**OS Resource Limits (POSIX)**")
