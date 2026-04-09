@@ -195,27 +195,7 @@ def _get_recent_feedback(limit=5):
 # DETAILED LOCAL ANALYTICS
 # ===================================
 # =============================================================================
-# LOCAL DIAGNOSTICS — admin_panel.py INSERT
-# =============================================================================
-# INSERTION POINT:
-#   Find the block near the bottom of show_admin_panel() that reads:
-#
-#       st.divider()
-#       st.subheader("Memory & Cache")
-#
-#   Insert the ENTIRE block below BEFORE that line.
-#   Do not remove or move the existing Memory & Cache section.
-# =============================================================================
-#
-# Also add these two helper functions ABOVE show_admin_panel() in admin_panel.py,
-# alongside the existing helpers like _mem_mb(), _get_os_info(), etc.
-# The helper functions are in PART A.
-# The insertion block for inside show_admin_panel() is in PART B.
-# =============================================================================
-
-
-# =============================================================================
-# PART A — Helper functions (add above show_admin_panel, with existing helpers)
+# Helper functions (above show_admin_panel, with existing helpers)
 # =============================================================================
 
 def _is_local() -> bool:
