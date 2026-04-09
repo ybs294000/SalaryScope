@@ -445,7 +445,7 @@ def _get_installed_packages_subset() -> list[dict]:
         "streamlit", "pandas", "numpy", "scikit-learn", "xgboost",
         "joblib", "plotly", "requests", "firebase-admin", "google-cloud-firestore",
         "spacy", "mlxtend", "pdfminer.six", "reportlab", "openpyxl",
-        "psutil", "distro", "python-docx", "pillow",
+        "psutil", "distro", "pillow",
     ]
     result = []
     try:
@@ -516,20 +516,23 @@ def show_admin_panel(user_email):
 
     os_info = _get_os_info()
 
+
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Python", sys.version.split()[0])
+    deployment_label = _get_deployment_label()
+    c1.metric("Deployment Platform",deployment_label)
     c2.metric("OS", os_info)
     c3.metric("Arch", _get_arch())
     c4.metric("Process ID", os.getpid())
 
-    c5, c6, c7 = st.columns(3)
-    c5.metric("Streamlit", st.__version__)
-    c6.metric("Scikit-learn", sklearn_version)
-    c7.metric("XGBoost", xgb_version)
+    c6, c7, c8 = st.columns(3)
+    c6.metric("Python", sys.version.split()[0])
+    c7.metric("Streamlit", st.__version__)
+    c8.metric("Scikit-learn", sklearn_version)
 
-    c8, c9, _ = st.columns(3)
-    c8.metric("SpaCy", spacy_version)
-    c9.metric("Pandas", pd_version)
+    c9, c10, c11 = st.columns(3)
+    c9.metric("XGBoost", xgb_version)
+    c10.metric("SpaCy", spacy_version)
+    c11.metric("Pandas", pd_version)
 
 
     # ==============================
