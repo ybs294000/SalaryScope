@@ -531,13 +531,12 @@ def show_admin_panel(user_email):
     c8.metric("SpaCy", spacy_version)
     c9.metric("Pandas", pd_version)
 
-    st.divider()
 
     # ==============================
     # LOCAL DIAGNOSTICS
     # ==============================
     if _is_local():
-
+        st.divider()
         st.subheader("Local Diagnostics")
         st.caption(
             "Extended system diagnostics available because this instance is running locally. "
