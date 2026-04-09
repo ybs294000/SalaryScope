@@ -628,7 +628,7 @@ def render_col_adjuster(
             unsafe_allow_html=True,
         )
 
-        st.markdown(f"\U0001f4ac {interpretation}")
+        st.markdown(f":material/info: {interpretation}")
 
         # Summary metrics
         col_m1, col_m2, col_m3 = st.columns(3)

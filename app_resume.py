@@ -6058,11 +6058,12 @@ with tab_objects[4]:
                                          title="Distribution of Residuals",
                                          labels={"x": "Residual"}, color_discrete_sequence=["#A78BFA"])
             fig_rdist_a2.update_traces(marker_line_color="#1B2230", marker_line_width=0.8)
-            _apply_theme(fig_rdist_a2, {
-                "title": "Distribution of Residuals",
-                "xaxis_title": "Residual",
-                "yaxis_title": "Count"
-            })
+            fig_rdist_a2.update_layout(
+                title= "Distribution of Residuals",
+                xaxis_title= "Residual",
+                yaxis_title= "Count"
+            )
+            _apply_theme(fig_rdist_a2)
             st.plotly_chart(fig_rdist_a2, width='stretch')
 
             st.divider()
@@ -6450,7 +6451,7 @@ with tab_objects[about_index]:
         "It is designed to help students and job seekers get a general idea of salary expectations. "
         "It also includes basic post-tax estimation and cost-of-living adjustments for better real-world context."
     )
-    
+
     with st.expander("Features & Modules"):
 
         col_ab1, col_ab2 = st.columns(2)
