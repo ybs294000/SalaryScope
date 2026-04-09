@@ -566,8 +566,14 @@ def _build_system_plots(
         fig_rss = go.Figure(go.Indicator(
             mode="gauge+number",
             value=round(rss_mb, 1),
-            title=dict(text="Process RSS (MB)", font=dict(color=_MUTED, size=13)),
-            number=dict(suffix=" MB", font=dict(color=_BLUE, size=22)),
+            title=dict(
+                text="Process Memory (MB)",
+                font=dict(color=_MUTED, size=13)
+            ),
+            number=dict(
+                suffix=" MB",
+                font=dict(color=_BLUE, size=22)
+            ),
             gauge=dict(
                 axis=dict(
                     range=[0, max(ram_total, rss_mb * 2)],
@@ -591,6 +597,8 @@ def _build_system_plots(
         ))
         fig_rss.update_layout(height=220, **_BASE)
         st.plotly_chart(fig_rss, width='stretch')
+        process_pct = (rss_mb / ram_total) * 100
+        st.caption(f"Process uses {process_pct:.2f}% of system RAM")
 
     with col_g2:
         fig_ram = go.Figure(go.Indicator(
