@@ -188,6 +188,12 @@ User → Streamlit UI → Processing Layer → ML/NLP Models → Results
 - Saves to Firestore `feedback/` collection, separate from predictions
 - Available to both logged-in and anonymous users
 
+#### 3.3.8 Admin Module
+
+- Accessible only to authorized users
+- Provides system diagnostics and feedback analytics
+- Allows viewing recent feedback and system status
+
 ---
 
 ## 4. Functional Requirements
@@ -212,6 +218,7 @@ Users shall input:
 System shall predict salary and display:
 
 - Salary estimate
+- Estimated confidence range
 - Career stage
 - Recommendations
 
@@ -378,7 +385,7 @@ predictions/{username}/records
 feedback/{auto-id}
 ```
 
-Feedback documents store: username, model_used, input_data, predicted_salary, accuracy_rating, direction, star_rating, actual_salary, created_at.
+Feedback documents store: username, model_used, input_data, predicted_salary, accuracy_rating, direction, star_rating, actual_salary, created_at, extended_data (optional).
 
 ---
 
@@ -389,3 +396,4 @@ Feedback documents store: username, model_used, input_data, predicted_salary, ac
 - Resume parsing depends on formatting
 - Market trends are not dynamically updated
 - Feedback submitted anonymously cannot be linked to a specific user session and carries no personal identifier
+- Model predictions do not include real-time market updates or dynamic retraining
