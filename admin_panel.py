@@ -913,8 +913,8 @@ def show_admin_panel(user_email):
     # ==============================
     # SYSTEM
     # ==============================
-    st.subheader("System")
-
+    st.subheader(":material/settings: System")
+ 
     try:
         import sklearn
         sklearn_version = sklearn.__version__
@@ -969,7 +969,7 @@ def show_admin_panel(user_email):
     # ==============================
     if _is_local():
         st.divider()
-        st.subheader("Local Diagnostics")
+        st.subheader(":material/build: Local Diagnostics")
         st.caption(
             "Extended system diagnostics available because this instance is running locally. "
             "These sections are hidden on remote deployments to avoid exposing environment details."
@@ -977,7 +977,7 @@ def show_admin_panel(user_email):
 
         # ---------- PROCESS METRICS ----------
         show_process = st.toggle(
-            "Show Process Metrics",
+            ":material/memory: Show Process Metrics",
             key="diag_process_toggle",
             value=False,
         )
@@ -1063,7 +1063,7 @@ def show_admin_panel(user_email):
 
         # ---------- SYSTEM RESOURCES ----------
         show_system = st.toggle(
-            "Show System Resources",
+            ":material/storage: Show System Resources",
             key="diag_system_toggle",
             value=False,
         )
@@ -1159,7 +1159,7 @@ def show_admin_panel(user_email):
         # ---------- SYSTEM PLOTS ----------
         # << SYSTEM PLOTS BLOCK START — remove toggle + inner block to roll back >>
         show_plots = st.toggle(
-            "Show System Visualisations",
+            ":material/monitoring: Show System Visualisations",
             key="diag_plots_toggle",
             value=False,
         )
@@ -1180,7 +1180,7 @@ def show_admin_panel(user_email):
 
         # ---------- PYTHON ENVIRONMENT ----------
         show_env = st.toggle(
-            "Show Python Environment",
+            ":material/code: Show Python Environment",
             key="diag_env_toggle",
             value=False,
         )
@@ -1255,7 +1255,7 @@ def show_admin_panel(user_email):
 
         # ---------- INSTALLED PACKAGES ----------
         show_pkgs = st.toggle(
-            "Show Installed Packages",
+            ":material/inventory_2: Show Installed Packages",
             key="diag_pkgs_toggle",
             value=False,
         )
@@ -1288,7 +1288,7 @@ def show_admin_panel(user_email):
     # FIREBASE
     # ==============================
     st.divider()
-    st.subheader("Firebase")
+    st.subheader(":material/cloud: Firebase")
 
     try:
         project_id = st.secrets["FIREBASE_SERVICE_ACCOUNT"]["project_id"]
@@ -1312,7 +1312,7 @@ def show_admin_panel(user_email):
     # ==============================
     # USERS
     # ==============================
-    st.subheader("Users")
+    st.subheader(":material/group: Users")
 
     if st.button("Count Users"):
         with st.spinner("Counting users..."):
@@ -1327,7 +1327,7 @@ def show_admin_panel(user_email):
     # ==============================
     # FEEDBACK ANALYTICS
     # ==============================
-    st.subheader("Feedback Analytics")
+    st.subheader(":material/analytics: Feedback Analytics")
 
     if st.button("Load Feedback Analytics", key="feedback_btn"):
         with st.spinner("Loading feedback data..."):
@@ -1448,7 +1448,7 @@ def show_admin_panel(user_email):
     # ==============================
     # RECENT ACTIVITY
     # ==============================
-    st.subheader("Recent Activity")
+    st.subheader(":material/history: Recent Activity")
 
     if st.button("Show Recent Feedback", key="recent_btn"):
         with st.spinner("Fetching recent feedback…"):
@@ -1488,7 +1488,7 @@ def show_admin_panel(user_email):
     # ==============================
     # MEMORY & CACHE
     # ==============================
-    st.subheader("Memory & Cache")
+    st.subheader(":material/memory: Memory & Cache")
 
     mem = _mem_mb()
 
@@ -1516,8 +1516,8 @@ def show_admin_panel(user_email):
     # SESSION
     # ==============================
     st.divider()
-    st.subheader("Session")
-    with st.expander("Advanced: Session Debug"):
+    st.subheader(":material/key: Session State")
+    with st.expander("Session Keys & State Info"):
 
         total_keys = len(st.session_state)
         st.metric("Total Session Keys", total_keys)
