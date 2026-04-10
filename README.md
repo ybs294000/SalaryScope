@@ -184,7 +184,6 @@ The application runs in a web browser, making it platform-independent and easily
 - Export scenario results in CSV, XLSX, or JSON format
 
 ### Prediction Feedback
-### Prediction Feedback
 
 - Available in the Manual Prediction tab for both models
 - Appears as a collapsible expander after a prediction result is generated
