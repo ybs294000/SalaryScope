@@ -32,7 +32,7 @@ At the very top of the page, you will see a dropdown labeled **Select Prediction
 
 | Model | Best For | Algorithm |
 |---|---|---|
-| **Model 1 — General Salary** | Any industry: finance, engineering, healthcare, management, etc. | Random Forest |
+| **Model 1 — General Salary** | Any industry: finance, engineering, management, etc. | Random Forest |
 | **Model 2 — Data Science Salary** | Data science, ML, AI, data engineering, BI, analytics roles | XGBoost |
 
 Your model selection applies across all tabs. You can switch models at any time.
