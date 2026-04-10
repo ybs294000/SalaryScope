@@ -8,31 +8,6 @@ Provides:
 Firestore path:  feedback/{auto-id}
 Completely separate from the predictions/ collection.
 
-ROLLBACK GUIDE
---------------
-Three independent rollback layers. Each is marked with matching comment pairs.
-
-  Layer 3 — ORIGINAL FORM (accuracy, direction, stars, actual salary)
-    The unchanged original code. Never remove this.
-
-  Layer 1 — EXTENDED DATA (general enrichment fields)
-    Markers: # << EXTENDED DATA BLOCK START / END >>
-    To remove entirely:
-      - Delete the `extended` parameter from save_feedback() (marked).
-      - Delete the `if extended: record[...] = extended` block (marked).
-      - Delete _collect_extended_data() and all module-level _*_OPTIONS constants.
-      - Delete the `extended = _collect_extended_data(...)` line in feedback_ui().
-      - Delete the `extended=extended` kwarg in the save_feedback() call.
-
-  Layer 2 — CROSS-DATASET BRIDGE FIELDS (DS1 <-> DS2)
-    Markers: # << CROSS-DATASET BLOCK START / END >>
-    To remove Layer 2 while keeping Layer 1:
-      - Delete _collect_cross_dataset_fields() and its constants
-        (_EDUCATION_LABELS, _EMPLOYMENT_TYPE_OPTIONS, _REMOTE_RATIO_OPTIONS,
-         _COMPANY_SIZE_OPTIONS, _ISO2_COUNTRIES, _is_app1_model, _is_app2_model).
-      - Delete the single call line inside _collect_extended_data() (marked).
-    Layer 1 remains fully intact.
-
 COMBINED DATASET SCHEMA (what ends up in Firestore)
 ----------------------------------------------------
 Core record (always present — unchanged from original):
@@ -121,7 +96,7 @@ def save_feedback(
 
 # ==================================================================
 # OPTION LISTS  (module-level so they are defined once)
-# << EXTENDED DATA BLOCK START — remove all constants to roll back Layer 1 >>
+# << EXTENDED DATA BLOCK START >>
 # ==================================================================
 
 _SKILL_OPTIONS = [
@@ -249,7 +224,7 @@ _OFFER_TYPE_OPTIONS = [
 
 # ==================================================================
 # CROSS-DATASET BRIDGE CONSTANTS & HELPERS
-# << CROSS-DATASET BLOCK START — remove to roll back Layer 2 only >>
+# << CROSS-DATASET BLOCK START >>
 # ==================================================================
 
 # DS1 education integer encoding  (mirrors app.py exactly)
@@ -341,7 +316,7 @@ def _collect_cross_dataset_fields(
     combined-dataset exports require no transformation.
     """
 
-    # ── DS1 FIELDS for App2 users ──────────────────────────────────
+    # -- DS1 FIELDS for App2 users ------------------------------------
     if _is_app2_model(model_used):
 
         st.divider()
@@ -402,7 +377,7 @@ def _collect_cross_dataset_fields(
             if gender_sel not in ("(skip)", "Prefer not to say"):
                 collected["gender"] = gender_sel
 
-    # ── DS2 FIELDS for App1 users ──────────────────────────────────
+    # -- DS2 FIELDS for App1 users ---------------------------------
     elif _is_app1_model(model_used):
 
         st.divider()
@@ -472,7 +447,7 @@ def _collect_cross_dataset_fields(
 
 # ==================================================================
 # EXTENDED DATA COLLECTOR
-# << EXTENDED DATA BLOCK START — delete this function to roll back Layer 1 >>
+# << EXTENDED DATA BLOCK START >>
 # ==================================================================
 
 def _collect_extended_data(model_used: str, salary_key: str) -> dict | None:
@@ -742,7 +717,7 @@ def _collect_extended_data(model_used: str, salary_key: str) -> dict | None:
 
 
 # ------------------------------------------------------------------
-# FEEDBACK UI  (original structure preserved entirely)
+# FEEDBACK UI  
 # ------------------------------------------------------------------
 
 def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
@@ -819,7 +794,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
         )
         actual_salary = float(actual_salary_raw) if actual_salary_raw > 0 else None
 
-        # << EXTENDED DATA BLOCK START — remove this line to roll back Layer 1 >>
+        # << EXTENDED DATA BLOCK START >>
         extended = _collect_extended_data(model_used, salary_key)
         # << EXTENDED DATA BLOCK END >>
 
@@ -842,7 +817,7 @@ def feedback_ui(predicted_salary: float, model_used: str, input_data: dict):
                     direction=direction,
                     actual_salary=actual_salary,
                     star_rating=star_rating,
-                    # << EXTENDED DATA BLOCK START — remove kwarg to roll back Layer 1 >>
+                    # << EXTENDED DATA BLOCK START >>
                     extended=extended,
                     # << EXTENDED DATA BLOCK END >>
                 )
