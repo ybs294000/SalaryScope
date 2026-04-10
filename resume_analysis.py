@@ -926,7 +926,7 @@ def extract_country_iso_a2(text: str, allowed_iso_codes_a2: List[str]) -> Tuple[
 
     # Try spaCy NER first for GPE/LOC entities
     try:
-        from resume_nlp import load_spacy_model
+        from resume_analysis import load_spacy_model
         nlp = load_spacy_model()
         doc = nlp(text[:5000])  # limit for speed
         for ent in doc.ents:
@@ -967,7 +967,7 @@ def extract_skills_a2(text: str) -> List[str]:
     Returns sorted list of skill strings.
     """
     try:
-        from resume_nlp import extract_skills
+        from resume_analysis import extract_skills
         return extract_skills(text)
     except Exception:
         return []
@@ -981,7 +981,7 @@ def extract_skills_a2(text: str) -> List[str]:
 def extract_experience_years_a2(text: str) -> float:
     """Extract numeric years of experience from resume text."""
     try:
-        from resume_nlp import extract_experience_years
+        from resume_analysis import extract_experience_years
         return extract_experience_years(text)
     except Exception:
         return 0.0
@@ -1130,7 +1130,7 @@ def extract_resume_features_a2(
 
     Returns a dict with keys matching App 2 model inputs plus metadata.
     """
-    from resume_nlp import preprocess_resume_text
+    from resume_analysis import preprocess_resume_text
 
     text = preprocess_resume_text(raw_text)
 
