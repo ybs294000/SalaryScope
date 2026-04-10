@@ -94,7 +94,7 @@ Section 2 provides an overall description of the system, its context, and its us
 SalaryScope is a standalone web application developed as a Final Year B.Tech project. It integrates pre-trained machine learning models, a Firebase backend for authentication and storage, and a Streamlit frontend into a unified, browser-accessible system. It is not a component of a larger existing system.
 
 The application is deployed in two variants:
-- **Full App** (`app_resume.py`): Includes all features including spaCy-based NLP resume analysis.
+- **Full App** (`app_resume.py`): Includes all features including spaCy-based resume analysis.
 - **Lite App** (`app-lite.py`): A lightweight version without the resume analysis module, suited for resource-constrained deployment environments.
 
 ### 2.2 Product Functions
@@ -131,7 +131,7 @@ At a high level, SalaryScope provides the following core capabilities:
 ### 2.5 Design and Implementation Constraints
 
 - The application is limited by Streamlit Community Cloud free-tier memory and CPU constraints.
-- The NLP-based resume module (spaCy) is resource-intensive and is deployed separately from the lite version.
+- The Hybrid(SpaCy+Regex) NLP-based resume module (spaCy) is resource-intensive and is deployed separately from the lite version.
 - All ML models are pre-trained and loaded at runtime as `.pkl` files; real-time training is not supported.
 - Firebase credentials must be provided via `.streamlit/secrets.toml` and must never be committed to version control.
 - Session state is per-browser and non-persistent across sessions by design.
@@ -429,7 +429,7 @@ At a high level, SalaryScope provides the following core capabilities:
 
 ### 4.6 Maintainability
 
-**NFR-MT-01**: Each logical subsystem (resume NLP, currency utils, tax utils, COL utils, PDF generation, auth, feedback, recommendations, negotiation tips, insights engine, admin panel, user profile) shall reside in a separate Python module.
+**NFR-MT-01**: Each logical subsystem (resume analysis, currency utils, tax utils, COL utils, PDF generation, auth, feedback, recommendations, negotiation tips, insights engine, admin panel, user profile) shall reside in a separate Python module.
 
 **NFR-MT-02**: Pre-trained models shall be stored as `.pkl` files and loaded at startup, allowing model updates without changes to application code.
 
