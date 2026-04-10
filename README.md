@@ -180,9 +180,11 @@ The application runs in a web browser, making it platform-independent and easily
 - Export scenario results in CSV, XLSX, or JSON format
 
 ### Prediction Feedback
+### Prediction Feedback
+
 - Available in the Manual Prediction tab for both models
 - Appears as a collapsible expander after a prediction result is generated
-- Structured feedback fields — no free-text input:
+- Structured feedback fields:
   - Accuracy rating: Yes / Somewhat / No
   - Direction: Too High / About Right / Too Low
   - Star rating: 1–5
@@ -191,6 +193,29 @@ The application runs in a web browser, making it platform-independent and easily
 - Prediction inputs and predicted salary are stored alongside feedback for traceability
 - Stored in Firestore under a dedicated `feedback/` collection, separate from prediction history
 - One submission per prediction result per session
+
+#### Enhanced Feedback Collection (Model Improvement Layer)
+
+- Optional extended feedback form to capture richer real-world data
+- Cross-dataset feature bridging:
+  - For Data Science model (XGBoost):
+    - Collects missing general features (age, education, seniority, gender)
+  - For General model (Random Forest):
+    - Collects missing DS-specific features (employment type, remote ratio, company size, company location)
+- Enables creation of a unified combined dataset for future model training
+- Additional optional inputs:
+  - Compensation structure (base salary, total compensation, bonuses, equity)
+  - Skills and certifications
+  - Industry and company characteristics
+  - Role context (team size, direct reports, tenure)
+  - Work conditions (hours, city tier, work authorisation)
+- Optional contextual notes (free-text, capped length)
+- All extended data is stored under an `extended_data` field in Firestore
+
+**Purpose:**
+- Improve model accuracy over time using real user data
+- Bridge gaps between heterogeneous datasets
+- Capture real-world salary complexity beyond training datasets
 
 ### Model Analytics
 - Performance metrics: R², MAE, RMSE
@@ -282,16 +307,36 @@ The application runs in a web browser, making it platform-independent and easily
 ### Admin Panel (Diagnostics & Monitoring)
 
 - Accessible only to authorized users via internal admin check
-- Provides basic system diagnostics including runtime environment and library versions
-- Displays Firebase configuration status (Project ID and API key availability)
-- Allows fetching total registered users from Firestore
-- Includes lightweight feedback analytics with distribution visualization
-- Shows recent feedback entries for quick inspection
-- Provides memory usage monitoring with optional garbage collection
-- Supports manual cache clearing to maintain application performance
-- Includes session state debugging tools for troubleshooting
 
-The admin panel is intentionally minimal and designed for internal monitoring without impacting application performance.
+**System Information**
+- OS, architecture, Python and library versions
+- Deployment environment (Local vs Streamlit Cloud)
+
+**Firebase Monitoring**
+- Project configuration status
+- User count retrieval
+
+**Feedback Analytics**
+- Total feedback, accuracy distribution, and average rating
+- Prediction direction trends
+- Model-wise feedback comparison
+- Median actual salary (if available)
+
+**Recent Activity**
+- View latest feedback entries with prediction details
+
+**Performance & Debugging**
+- RAM usage monitoring
+- Manual garbage collection and cache clearing
+- Session state inspection
+
+**Local-Only Diagnostics**
+- Process and system metrics (CPU, memory, disk, network)
+- Python environment details
+- Installed package checks
+- Snapshot-based system visualisation
+
+The admin panel is lightweight, on-demand, and designed for monitoring without affecting application performance.
 
 ---
 
@@ -597,6 +642,45 @@ feedback/
     accuracy_rating, direction, actual_salary, star_rating, created_at,
     extended_data (optional nested object)
 ```
+
+---
+
+---
+
+## Data Collection Strategy (Feedback-Driven Learning)
+
+SalaryScope includes a feedback-driven data collection layer designed to improve future model performance over time.
+
+### Key Concepts
+
+- Combines model predictions with real-world user feedback
+- Collects optional structured and contextual salary data
+- Bridges differences between multiple datasets used in the system
+- Builds a continuously improving dataset without relying solely on external sources
+
+### What Gets Collected
+
+- Prediction accuracy and user rating
+- Actual or expected salary (optional)
+- Extended structured data (if provided):
+  - Compensation structure (base, bonus, equity)
+  - Skills and certifications
+  - Industry and company context
+  - Role-level details (team size, reports, tenure)
+  - Work conditions (hours, location type, visa status)
+
+### Benefits
+
+- Enables future model retraining with real-world data
+- Improves generalisation beyond static datasets
+- Captures real compensation complexity
+- Reduces dataset bias and improves reliability
+
+### Design Approach
+
+- Fully optional data collection (non-intrusive)
+- No impact on prediction workflow if skipped
+- Stored separately in Firestore for clean data pipelines
 
 ---
 
