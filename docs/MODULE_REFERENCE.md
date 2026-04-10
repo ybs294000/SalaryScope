@@ -50,7 +50,7 @@ Extracts all text content from an uploaded PDF file using `pdfplumber`.
 
 ---
 
-### `extract_resume_features(text: str) -> dict`
+### `extract_resume_features(raw_text: str, allowed_job_titles: list[str], allowed_countries: list[str]) -> dict`
 
 Extracts structured professional features from raw resume text for **Model 1** (General Salary).
 
@@ -71,7 +71,7 @@ Extracts structured professional features from raw resume text for **Model 1** (
 
 ---
 
-### `extract_resume_features_a2(text: str) -> dict`
+### `extract_resume_features_a2(raw_text: str, allowed_job_titles_a2: list[str], allowed_iso_codes_a2: list[str]) -> dict`
 
 Extracts features from resume text for **Model 2** (Data Science Salary).
 
