@@ -12,14 +12,14 @@ Source: [Kaggle — Salary by Job Title and Country](https://www.kaggle.com/data
 
 | Column Name | Data Type | Range / Values | Description |
 |---|---|---|---|
-| `Age` | Integer | 18–65 | Age of the individual in years |
-| `Years of Experience` | Float | 0.0–40.0 | Total professional work experience in years |
+| `Age` | Integer | 21–62 | Age of the individual in years |
+| `Years of Experience` | Float | 0.0–34.0 | Total professional work experience in years |
 | `Education Level` | Integer (encoded) | 0, 1, 2, 3 | Education level: 0=High School, 1=Bachelor's, 2=Master's, 3=PhD |
 | `Senior` | Integer (binary) | 0, 1 | 1 if the position is a senior-level role, 0 otherwise |
-| `Gender` | String (categorical) | Male, Female, Other | Self-reported gender |
+| `Gender` | String (categorical) | Male, Female | Self-reported gender |
 | `Job Title` | String (categorical) | 100+ distinct roles | Professional role/designation (e.g., Software Engineer, Data Analyst) |
 | `Country` | String (categorical) | 50+ countries | Country of employment |
-| `Salary` | Float | ~$20,000–$250,000 | Annual gross salary in USD (**target variable**) |
+| `Salary` | Float | ~$25,000–$250,000 | Annual gross salary in USD (**target variable**) |
 
 ### Preprocessing Applied
 
@@ -46,7 +46,7 @@ Source: [Kaggle — Data Science Salaries 2023](https://www.kaggle.com/datasets/
 | `remote_ratio` | Integer | 0, 50, 100 | Percentage of work done remotely: 0=Onsite, 50=Hybrid, 100=Remote |
 | `company_location` | String (ISO code) | ~50 country codes | ISO country code of the company's primary location |
 | `company_size` | String (categorical) | S, M, L | Company size: S=Small (<50), M=Medium (50–250), L=Large (>250) |
-| `salary_in_usd` | Float | ~$10,000–$600,000 | Annual gross salary in USD (**target variable**) |
+| `salary_in_usd` | Float | ~$5132–$450,000 | Annual gross salary in USD (**target variable**) |
 
 ### Preprocessing Applied
 
