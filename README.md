@@ -23,7 +23,7 @@
     <img src="https://img.shields.io/badge/Deployment-Streamlit%20Cloud-1E9E82?style=flat-square&logo=streamlit&logoColor=white&labelColor=2D3748" alt="Deployment: Streamlit Cloud" />
   </a>
   <a>
-    <img src="https://img.shields.io/badge/Platform-Web%20%7C%20-2C3E50?style=flat-square&labelColor=2D3748" alt="Platform: Web" />
+    <img src="https://img.shields.io/badge/Platform-Web-2C3E50?style=flat-square&labelColor=2D3748" alt="Platform: Web" />
   </a>
   <a>
     <img src="https://img.shields.io/badge/License-MIT-6C5CE7?style=flat-square&labelColor=2D3748" alt="License: MIT" />
