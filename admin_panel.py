@@ -906,7 +906,7 @@ def show_admin_panel(user_email):
         st.error("Access denied.")
         return
 
-    st.header("Admin")
+    st.header(":material/admin_panel_settings: Admin")
     st.caption("System diagnostics and monitoring. All data is fetched on demand to minimise database reads.")
     st.divider()
 
