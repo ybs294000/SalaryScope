@@ -2,6 +2,9 @@
 
 <p align="center">
   <a>
+    <img src="https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version 1.0.0" />
+  </a>
+  <a>
     <img src="https://img.shields.io/badge/Python-3.13-3178C6?style=for-the-badge&logo=python&logoColor=white&labelColor=2D3748" alt="Python 3.13" />
   </a>
   <a>
