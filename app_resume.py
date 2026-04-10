@@ -6446,7 +6446,7 @@ if "Admin" in tabs:
 # ==================================================
 about_index = tabs.index("About")
 with tab_objects[about_index]:
-    st.markdown("## About SalaryScope")
+    st.markdown("## :material/info: About SalaryScope")
 
     st.markdown(
         "SalaryScope is a web application that predicts salary based on factors like "
@@ -6457,7 +6457,7 @@ with tab_objects[about_index]:
         "It also includes basic post-tax estimation and cost-of-living adjustments for better real-world context."
     )
 
-    with st.expander("Features & Modules"):
+    with st.expander(":material/widgets: Features & Modules"):
 
         col_ab1, col_ab2 = st.columns(2)
 
@@ -6661,7 +6661,7 @@ with tab_objects[about_index]:
     - bcrypt (password hashing utility)
         """)
 
-    with st.expander("Tab Guide"):
+    with st.expander(":material/menu_book: Tab Guide"):
         st.markdown("""
 **Manual Prediction**
 - Enter your profile details and click Predict Salary to get an instant salary estimate.
@@ -6706,7 +6706,7 @@ with tab_objects[about_index]:
 - Contains the Tab Guide, Usage Instructions, and Limitations for reference.
         """)
 
-    with st.expander("Usage Instructions"):
+    with st.expander(":material/help: Usage Instructions"):
         st.markdown("""
 **Getting Started**
 - Select a prediction model from the dropdown at the top: Model 1 (Random Forest) for general salary prediction, or Model 2 (XGBoost) for data science roles.
@@ -6755,7 +6755,7 @@ with tab_objects[about_index]:
 - Select the correct file format from the dropdown after pasting the link.
         """)
 
-    with st.expander("Limitations"):
+    with st.expander(":material/warning: Limitations"):
         st.markdown("""
     - The models are trained on limited datasets, so predictions may not always match real-world salaries.
     - Some job roles, countries, or inputs may not be fully covered in the dataset.
