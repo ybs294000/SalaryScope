@@ -90,13 +90,13 @@ Precomputed from the Model 1 dataset after feature transformation and discretiza
 | `support` | Float | Joint frequency of antecedents and consequents |
 | `confidence` | Float | Conditional probability of consequent given antecedent |
 | `lift` | Float | Strength of association compared to independence |
+| `representativity` | Float | Measure of how representative the rule is within the dataset |
 | `leverage` | Float | Difference between observed and expected support |
 | `conviction` | Float | Measure of implication strength |
+| `zhangs_metric` | Float | Correlation-based metric for rule interestingness |
 | `jaccard` | Float | Similarity between antecedent and consequent sets |
 | `certainty` | Float | Certainty factor of the rule |
 | `kulczynski` | Float | Average of forward and backward confidence |
-| `representativity` | Float | Measure of how representative the rule is within the dataset |
-| `zhangs_metric` | Float | Correlation-based metric for rule interestingness |
 
 ---
 
