@@ -70,7 +70,7 @@ The project follows a structured workflow:
 - Integration of trained models into a Streamlit-based web application
 - Storage and feedback collection using Firebase
 
-The focus of the project is to combine machine learning with an interactive application interface, providing both prediction capabilities and supporting insights for better understanding of salary patterns. The system also includes basic financial context tools such as post-tax estimation and cost-of-living adjustment to improve real-world interpretability of predictions.
+The focus of the project is to combine machine learning with an interactive application interface, providing both prediction capabilities and supporting insights for better understanding of salary patterns. The system also includes basic financial context tools such as post-tax estimation and cost-of-living adjustment to improve real-world interpretability of predictions. The system also incorporates a feedback-driven learning layer to progressively improve model performance using real-world user data.
 
 The application runs in a web browser, making it platform-independent and easily accessible.
 
