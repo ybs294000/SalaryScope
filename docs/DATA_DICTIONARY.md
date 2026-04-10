@@ -18,7 +18,7 @@ Source: [Kaggle — Salary by Job Title and Country](https://www.kaggle.com/data
 | `Senior` | Integer (binary) | 0, 1 | 1 if the position is a senior-level role, 0 otherwise |
 | `Gender` | String (categorical) | Male, Female | Self-reported gender |
 | `Job Title` | String (categorical) | 100+ distinct roles | Professional role/designation (e.g., Software Engineer, Data Analyst) |
-| `Country` | String (categorical) | 50+ countries | Country of employment |
+| `Country` | String (categorical) | 5 countries | Country of employment |
 | `Salary` | Float | ~$25,000–$250,000 | Annual gross salary in USD (**target variable**) |
 
 ### Preprocessing Applied
