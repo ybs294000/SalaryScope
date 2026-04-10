@@ -2135,7 +2135,7 @@ with tab_objects[0]:
 # ==================================================
 with tab_objects[1]:
 
-    st.header("Resume Analysis")
+    st.header(":material/description: Resume Analysis")
     st.caption(
         "Upload a resume PDF to automatically extract structured features using NLP. "
         "The extracted fields can be reviewed and edited before salary prediction."
@@ -3236,7 +3236,8 @@ with tab_objects[1]:
 # TAB 3: BULK SCANNER
 # ==================================================
 with tab_objects[2]:
-
+    st.header(":material/batch_prediction: Batch Prediction")
+    st.caption("Upload multiple records to generate salary predictions and analytics in one run.")
     with st.expander("File Format & Input Guide"):
         if IS_APP1:
             st.markdown("""
@@ -4329,7 +4330,7 @@ Your file must contain exactly these columns with these exact names:
 with tab_objects[3]:
 
     def render_scenario_tab():
-        st.header("Scenario Analysis & What-If Simulation")
+        st.header(":material/schema: Scenario Analysis & What-If Simulation")
         st.caption(
             "Build and compare multiple salary prediction scenarios side by side. "
             "Adjust parameters, run all scenarios at once, and explore how changes "
@@ -5273,7 +5274,7 @@ with tab_objects[4]:
 
     @st.fragment
     def render_model_analytics_tab():
-        st.header("Model Analytics & Performance Evaluation")
+        st.header(":material/analytics: Model Analytics & Performance Evaluation")
 
         # -------------------------------------------------------
         # APP 1 — Model Analytics
@@ -6153,7 +6154,7 @@ with tab_objects[5]:
 
     @st.fragment
     def render_data_insights_tab():
-        st.header("Dataset Insights & Exploratory Analysis")
+        st.header(":material/insights: Dataset Insights & Exploratory Analysis")
 
         # -------------------------------------------------------
         # APP 1 — Data Insights
