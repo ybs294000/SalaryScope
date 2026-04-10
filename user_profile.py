@@ -8,7 +8,7 @@ from io import BytesIO
 
 
 def show_profile():
-    st.header("User Profile")
+    st.header(":material/account_circle: User Profile")
 
     username = get_logged_in_user()
 
@@ -61,7 +61,7 @@ def show_profile():
     # -----------------------------
     # Dashboard Metrics
     # -----------------------------
-    st.subheader("Prediction Summary")
+    st.subheader(":material/insights: Prediction Summary")
 
     total_predictions = len(df)
     avg_salary = df["Predicted Salary"].mean()
@@ -78,7 +78,7 @@ def show_profile():
     # -----------------------------
     # Prediction History Chart
     # -----------------------------
-    st.subheader("Prediction History Chart")
+    st.subheader(":material/show_chart: Prediction History Chart")
     df_chart = df.tail(500)
     fig = px.scatter(
         df_chart,
@@ -143,7 +143,7 @@ def show_profile():
     # -----------------------------
     # Prediction History Table
     # -----------------------------
-    st.subheader("Prediction History")
+    st.subheader(":material/history: Prediction History")
 
     df_display = df.copy()
 
@@ -166,7 +166,7 @@ def show_profile():
     # -----------------------------
     # View Prediction Inputs
     # -----------------------------
-    st.subheader("View Prediction Inputs")
+    st.subheader(":material/list: View Prediction Inputs")
 
     selection = st.selectbox(
         "Select a prediction",
@@ -191,7 +191,7 @@ def show_profile():
     # -----------------------------
     # Export Prediction History
     # -----------------------------
-    st.subheader("Export Prediction History")
+    st.subheader(":material/download: Export Prediction History")
 
     export_format = st.selectbox(
         "Select export format",
