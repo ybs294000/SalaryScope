@@ -594,7 +594,8 @@ predictions/
 feedback/
   {auto-id}/
     username, model_used, input_data, predicted_salary,
-    accuracy_rating, direction, actual_salary, star_rating, created_at
+    accuracy_rating, direction, actual_salary, star_rating, created_at,
+    extended_data (optional nested object)
 ```
 
 ---
