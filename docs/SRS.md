@@ -188,7 +188,7 @@ At a high level, SalaryScope provides the following core capabilities:
 
 **FR-RP-01**: The system shall allow the user to upload a PDF resume file.
 
-**FR-RP-02**: Upon clicking "Extract Resume Features", the system shall use NLP (spaCy + regex) to automatically extract the following fields from the uploaded resume:
+**FR-RP-02**: Upon clicking "Extract Resume Features", The system shall use a hybrid extraction approach combining spaCy-based entity recognition and phrase matching with rule-based methods (regex and keyword matching) to extract the following fields from the uploaded resume:
 - Job Title
 - Years of Experience
 - Skills
