@@ -692,7 +692,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 
 - The models are trained on publicly available datasets and may not fully reflect current real-world salary trends.
 - Model predictions depend on patterns present in the training data and may not generalize well to unseen roles or regions.
-- Resume analysis uses rule-based NLP and may not accurately extract information from complex or heavily formatted resumes.
+- Resume analysis uses a hybrid approach combining lightweight NLP (spaCy) and rule-based extraction, which may not accurately handle complex or heavily formatted resumes.
 - Predictions do not account for real-time factors such as market demand, company-specific policies, or economic changes.
 - The confidence interval shown for Model 1 is an approximation based on training residuals and should be interpreted as an estimate rather than an exact range.
 - Feedback submitted anonymously cannot be linked to a specific user session and is stored without any personal identifier.
