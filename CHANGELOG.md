@@ -44,7 +44,7 @@ The format is based on Keep a Changelog, and this project loosely follows Semant
 ## [0.3.0] - 2026-03-09
 
 ### Added
-
+* Resume Analysis using SpaCy, Regex and phrase-matching 
 * Batch prediction functionality for large datasets
 * About sections for user guidance
 * Model Analytics tab (performance metrics and evaluation plots)
