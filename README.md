@@ -154,7 +154,7 @@ The application runs in a web browser, making it platform-independent and easily
   - Education Level
   - Country
 - Basic resume scoring based on experience, education, and skills
-- Uses spaCy NLP + rule-based extraction (regex + phrase matching)
+- Uses a hybrid approach combining spaCy (lightweight NLP for entity recognition and phrase matching) with rule-based extraction (regex and keyword matching)
 - Handles unstructured resume text and converts it into structured model-ready input
 - Extracted features are passed to the selected model for prediction
 - Supports both Model 1 and Model 2 pipelines
