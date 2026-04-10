@@ -41,7 +41,7 @@ This Software Requirements Specification (SRS) document describes the complete f
 SalaryScope is a browser-based web application that allows users to predict annual salaries based on professional profile data. The system provides:
 
 - Two distinct ML-based salary prediction models targeting different professional domains
-- Hybrid resume parsing using spaCy (NER + phrase matching) and rule-based extraction (regex, keyword matching)
+- Hybrid resume parsing using spaCy (lightweight NLP for entity recognition and phrase matching) combined with rule-based extraction techniques (regex and keyword matching)
 - Batch prediction for large datasets
 - Scenario analysis and sensitivity simulation
 - Financial context tools (currency conversion, tax estimation, cost-of-living adjustment)
