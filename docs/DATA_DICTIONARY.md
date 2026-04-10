@@ -3,7 +3,7 @@
 > **Version 1.0 · April 2026**  
 > Definitions of all data fields used across datasets, models, Firestore collections, and the application interface.
 > All datasets used in this project are preprocessed and cleaned versions of publicly available datasets. Modifications include duplicate removal, feature selection, categorical normalization, and removal of non-informative attributes.
-
+> Resume feature extraction uses a combination of spaCy-based entity recognition, phrase matching, and rule-based methods (regex and keyword matching).
 ---
 
 ## 1. Model 1 Training Dataset — `Salary_Streamlit_App.csv`
