@@ -207,6 +207,8 @@ At a high level, SalaryScope provides the following core capabilities:
 
 **FR-RP-08**: Resume Analysis shall be available for both Model 1 and Model 2.
 
+> Note: The NLP component is limited to lightweight processing using spaCy (NER and phrase matching). The system does not use deep learning-based language models or transformer architectures for resume parsing
+
 ---
 
 ### 3.4 Batch Prediction

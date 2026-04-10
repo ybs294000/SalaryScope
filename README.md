@@ -34,7 +34,7 @@
   </a>
 </p>
 
-> Machine learning-powered salary prediction system with dual models, NLP-based resume analysis, and interactive analytics.
+> Machine learning-powered salary prediction system with dual models, hybrid resume analysis (spaCy + rule-based extraction), and interactive analytics.
 
 SalaryScope is a machine learning-based web application developed as a Final Year B.Tech Project. It provides salary prediction capabilities through two distinct models, each trained on a different dataset and targeting different use cases. The application is built with Streamlit and deployed on Streamlit Cloud.
 
@@ -65,7 +65,7 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 
 ## Overview
 
-SalaryScope allows users to predict salaries either manually, via resume upload (NLP-based extraction), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, basic tax estimation, and cost-of-living adjusted salary insights, user authentication, prediction feedback collection, and PDF report generation.
+SalaryScope allows users to predict salaries either manually, via resume upload (hybrid extraction using spaCy and rule-based techniques), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, basic tax estimation, and cost-of-living adjusted salary insights, user authentication, prediction feedback collection, and PDF report generation.
 
 The project follows a structured workflow:
 - Data analysis and model development using Jupyter notebooks
