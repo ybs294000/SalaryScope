@@ -646,7 +646,7 @@ See the [LICENSE](LICENSE) file for more details.
 
 **Yash Shah**,  
 B.Tech Final Year Student,  
-Computer Engineering Department, (Placeholder) Institute of Technology, (Placeholder) University 
+Computer Engineering Department, Gandhinagar Institute of Technology, Gandhinagar University 
 - GitHub: [@ybs294000](https://github.com/ybs294000)
 - Email: yashbshah2004@gmail.com
 
