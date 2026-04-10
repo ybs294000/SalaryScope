@@ -17,7 +17,7 @@ Source: [Kaggle — Salary by Job Title and Country](https://www.kaggle.com/data
 | `Education Level` | Integer (encoded) | 0, 1, 2, 3 | Education level: 0=High School, 1=Bachelor's, 2=Master's, 3=PhD |
 | `Senior` | Integer (binary) | 0, 1 | 1 if the position is a senior-level role, 0 otherwise |
 | `Gender` | String (categorical) | Male, Female | Self-reported gender |
-| `Job Title` | String (categorical) | 100+ distinct roles | Professional role/designation (e.g., Software Engineer, Data Analyst) |
+| `Job Title` | String (categorical) | 128 distinct roles | Professional role/designation (e.g., Software Engineer, Data Analyst) |
 | `Country` | String (categorical) | 5 countries | Country of employment |
 | `Salary` | Float | ~$25,000–$250,000 | Annual gross salary in USD (**target variable**) |
 
@@ -41,10 +41,10 @@ Source: [Kaggle — Data Science Salaries 2023](https://www.kaggle.com/datasets/
 |---|---|---|---|
 | `experience_level` | String (categorical) | EN, MI, SE, EX | Experience level: EN=Entry, MI=Mid, SE=Senior, EX=Executive |
 | `employment_type` | String (categorical) | FT, PT, CT, FL | Employment type: FT=Full-time, PT=Part-time, CT=Contract, FL=Freelance |
-| `job_title` | String (categorical) | 100+ distinct titles | Data science or AI/ML role title |
-| `employee_residence` | String (ISO code) | ~70 country codes | ISO 3166-1 alpha-2 country code of employee's residence |
+| `job_title` | String (categorical) | 93 distinct titles | Data science or AI/ML role title |
+| `employee_residence` | String (ISO code) | 78 country codes | ISO 3166-1 alpha-2 country code of employee's residence |
 | `remote_ratio` | Integer | 0, 50, 100 | Percentage of work done remotely: 0=Onsite, 50=Hybrid, 100=Remote |
-| `company_location` | String (ISO code) | ~50 country codes | ISO country code of the company's primary location |
+| `company_location` | String (ISO code) | 72 country codes | ISO country code of the company's primary location |
 | `company_size` | String (categorical) | S, M, L | Company size: S=Small (<50), M=Medium (50–250), L=Large (>250) |
 | `salary_in_usd` | Float | ~$5132–$450,000 | Annual gross salary in USD (**target variable**) |
 
