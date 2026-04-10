@@ -143,7 +143,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Downloadable PDF prediction report
 - Prediction feedback collection after each result (accuracy rating, direction, star rating, optional actual salary) 
 - Optional currency conversion with global currency support (toggle-based)
-- available to all users
+- Available to all users
 
 ### Resume-Based Prediction (NLP)
 - Upload a resume (PDF format)
