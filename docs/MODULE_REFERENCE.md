@@ -33,7 +33,7 @@ SalaryScope is composed of a main Streamlit application (`app_resume.py`) and a 
 
 ## `resume_analysis.py`
 
-Handles NLP-based feature extraction from PDF resume text and resume scoring.
+Handles resume feature extraction using spaCy (NER + PhraseMatcher) combined with rule-based methods (regex and keyword matching).
 
 ---
 
@@ -46,7 +46,7 @@ Extracts all text content from an uploaded PDF file using `pdfplumber`.
 
 **Returns**: A single string containing all extracted text, with page breaks normalized.
 
-**Raises**: Returns an empty string if no text can be extracted (e.g., scanned image PDF).
+**Behavior**: Returns an empty string if no text can be extracted.
 
 ---
 
@@ -92,7 +92,7 @@ Extracts features from resume text for **Model 2** (Data Science Salary).
 
 ---
 
-### `calculate_resume_score(features: dict) -> float`
+### `calculate_resume_score(features: dict) -> dict`
 
 Computes a resume quality score (0–100) for Model 1 features.
 
@@ -108,7 +108,7 @@ Computes a resume quality score (0–100) for Model 1 features.
 
 ---
 
-### `calculate_resume_score_a2(features: dict) -> float`
+### `calculate_resume_score_a2(features: dict) -> dict`
 
 Computes a resume quality score for Model 2 features.
 
