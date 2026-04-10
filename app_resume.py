@@ -1363,6 +1363,10 @@ with header_right:
         display_username = st.session_state.get("username", "User")
         first_letter = display_username[0].upper()
 
+        is_user_admin = is_admin()
+
+        avatar_color = "#E05252" if is_user_admin else "#4F8EF7"
+
         st.markdown(
             f"""
             <div style="text-align:right; padding-top:10px;">
@@ -1371,7 +1375,7 @@ with header_right:
                     width:28px;
                     height:28px;
                     border-radius:50%;
-                    background:#4F8EF7;
+                    background:{avatar_color};
                     color:white;
                     text-align:center;
                     line-height:28px;
