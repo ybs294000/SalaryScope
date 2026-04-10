@@ -42,7 +42,7 @@ def show_profile():
     )
 
     # --------------------------------
-    # Datetime handling (SAFE)
+    # Datetime handling
     # --------------------------------
     df["DateTime"] = pd.to_datetime(df["Date"], errors="coerce")
     df = df.dropna(subset=["DateTime"])
