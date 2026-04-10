@@ -15,7 +15,7 @@ SalaryScope is composed of a main Streamlit application (`app_resume.py`) and a 
 
 | Module | File | Purpose |
 |---|---|---|
-| [Resume NLP](#resume_nlppy) | `resume_nlp.py` | NLP-based resume parsing and scoring |
+| [Resume NLP](#resume_analysispy) | `resume_analysis.py` SpaCy+Regex-based resume parsing and scoring |
 | [Authentication](#authpy) | `auth.py` | Firebase Authentication (login, register, session) |
 | [Database](#databasepy) | `database.py` | Firestore read/write operations |
 | [Feedback](#feedbackpy) | `feedback.py` | Prediction feedback UI and storage |
@@ -31,7 +31,7 @@ SalaryScope is composed of a main Streamlit application (`app_resume.py`) and a 
 
 ---
 
-## `resume_nlp.py`
+## `resume_analysis.py`
 
 Handles NLP-based feature extraction from PDF resume text and resume scoring.
 

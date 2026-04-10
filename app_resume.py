@@ -38,7 +38,7 @@ from negotiation_tips import (
     generate_negotiation_tips_app2,
     render_negotiation_tips
 )
-from resume_nlp import (
+from resume_analysis import (
     extract_text_from_pdf,
     extract_resume_features,
     calculate_resume_score,

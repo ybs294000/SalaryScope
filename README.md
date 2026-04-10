@@ -400,7 +400,7 @@ salaryscope/
 │
 ├── app_resume.py                        # Main Streamlit application with resume analysis and scenario/what-if analysis
 ├── app-lite.py                          # Lightweight Streamlit application
-├── resume_nlp.py                        # Resume parsing (NLP, regex, feature extraction)
+├── resume_analysis.py                   # Resume parsing (SpaCy, regex, feature extraction)
 ├── auth.py                              # Firebase Authentication (login, register, session)
 ├── database.py                          # Firestore client, user and prediction functions
 ├── feedback.py                          # Prediction feedback collection (UI + Firestore save)

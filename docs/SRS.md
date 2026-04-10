@@ -41,7 +41,7 @@ This Software Requirements Specification (SRS) document describes the complete f
 SalaryScope is a browser-based web application that allows users to predict annual salaries based on professional profile data. The system provides:
 
 - Two distinct ML-based salary prediction models targeting different professional domains
-- NLP-driven resume parsing and automatic salary estimation
+- Hybrid resume parsing using spaCy (NER + phrase matching) and rule-based extraction (regex, keyword matching)
 - Batch prediction for large datasets
 - Scenario analysis and sensitivity simulation
 - Financial context tools (currency conversion, tax estimation, cost-of-living adjustment)
@@ -78,8 +78,8 @@ The system is deployed on Streamlit Community Cloud and does not require any loc
 - XGBoost Documentation: https://xgboost.readthedocs.io
 - Firebase Documentation: https://firebase.google.com/docs
 - SHAP Documentation: https://shap.readthedocs.io
-- Kaggle — [Salary by Job Title and Country Dataset](https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country)
-- Kaggle — [Data Science Salaries 2023 Dataset](https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country)
+- Kaggle — Salary by Job Title and Country Dataset
+- Kaggle — Data Science Salaries 2023 Dataset
 
 ### 1.5 Overview
 
@@ -365,7 +365,7 @@ At a high level, SalaryScope provides the following core capabilities:
 
 ### 3.12 Admin Panel
 
-**FR-AP-01**: The admin panel shall be accessible only to users whose accounts have admin privileges (verified via internal admin check).
+**FR-AP-01**: The admin panel shall be accessible only to users whose email matches the configured `ADMIN_EMAIL` secret (verified via the `is_admin()` function at render time).
 
 **FR-AP-02**: The admin panel shall display system information: OS, architecture, Python version, and deployment environment.
 
@@ -526,20 +526,20 @@ No direct hardware interfaces. The application is web-based and interacts with t
 
 ```
 users/
-  {email}/
-    username, email, display_name, created_at, auth_provider
+  {username (email)}/
+    username, email, display_name, created_at, auth_provider ("firebase")
 
 predictions/
-  {email}/
+  {username (email)}/
     records/
       {auto-id}/
-        model_used, input_data, predicted_salary, created_at
+        model_used, input_data (JSON string), predicted_salary, created_at
 
 feedback/
   {auto-id}/
     username, model_used, input_data, predicted_salary,
     accuracy_rating, direction, actual_salary, star_rating, created_at,
-    extended_data (optional)
+    extended_data (optional nested map)
 ```
 
 ### 8.2 Model Summary
@@ -548,7 +548,7 @@ feedback/
 |---|---|---|
 | Dataset | `Salary.csv` | `ds_salaries.csv` |
 | Algorithm | Random Forest Regressor | XGBoost Regressor |
-| Target | Annual Salary (USD) | log1p(salary_in_usd) |
+| Target | Annual Salary (USD) | log1p(salary_in_usd after 1%–99% clipping) |
 | Test R² | ~0.964 | ~0.595 (log scale) |
 | MAE | ~$4,927 | ~$35,913 |
 | Additional Models | HistGBClassifier, KMeans, Apriori | SHAP analysis |
