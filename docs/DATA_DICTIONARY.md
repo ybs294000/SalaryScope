@@ -2,6 +2,7 @@
 
 > **Version 1.0 · April 2026**  
 > Definitions of all data fields used across datasets, models, Firestore collections, and the application interface.
+> All datasets used in this project are preprocessed and cleaned versions of publicly available datasets. Modifications include duplicate removal, feature selection, and categorical normalization.
 
 ---
 
@@ -22,9 +23,13 @@ Source: [Kaggle — Salary by Job Title and Country](https://www.kaggle.com/data
 
 ### Preprocessing Applied
 
-- Categorical columns (`Gender`, `Job Title`, `Country`) are encoded using `OrdinalEncoder` within the sklearn Pipeline.
-- Numerical columns (`Age`, `Years of Experience`) are scaled using `StandardScaler`.
-- Rows with null values in any column are dropped during preprocessing.
+- Data preprocessing is implemented using a `ColumnTransformer` pipeline.
+- Numerical features are passed directly (no scaling) for tree-based models such as Random Forest.
+- A separate preprocessing pipeline with `StandardScaler` is defined for non-tree models, but not used in the final Random Forest model.
+- Categorical features (`Gender`, `Job Title`, `Country`) are encoded using `OneHotEncoder` with `handle_unknown="ignore"` to safely process unseen categories.
+- The dataset was verified to contain no missing values, so no imputation or removal was required.
+- Duplicate records were removed, and certain non-essential columns (e.g., `Race`) were excluded prior to training.
+- Minor inconsistencies in categorical values (e.g., job titles) were standardized to ensure consistent encoding.
 
 ---
 
@@ -45,32 +50,53 @@ Source: [Kaggle — Data Science Salaries 2023](https://www.kaggle.com/datasets/
 
 ### Preprocessing Applied
 
-- Target variable is log-transformed: `log1p(salary_in_usd)` during training; inverse-transformed with `expm1()` at prediction time.
-- All categorical columns encoded using `OrdinalEncoder`.
-- Engineered features added before encoding (see below).
+- Data preprocessing is performed using a `ColumnTransformer`, where categorical features are encoded using `OneHotEncoder` with `handle_unknown="ignore"` and numerical features are passed through without scaling.
+- The model is trained using XGBoost, a tree-based gradient boosting algorithm that does not require feature scaling.
+- The target variable (`salary_in_usd`) is clipped between the 1st and 99th percentiles to reduce the impact of extreme outliers.
+- The clipped target is transformed using `log1p` during training.
+- Predictions are converted back to original scale using `expm1()` during inference.
+- Duplicate records are removed, and non-informative columns (e.g., `work_year`) are excluded before training.
 
 ### Engineered Features (Model 2)
 
-| Feature Name | Derivation | Description |
+Feature engineering is applied to the `job_title` field to extract structured information:
+
+| Feature Name | Type | Description |
 |---|---|---|
-| `job_seniority_score` | Keyword extraction from `job_title` | Numeric score: Junior=1, Mid=2, Senior=3, Lead=4, Principal/Staff=5, Head/Director=6 |
-| `job_domain` | Keyword classification from `job_title` | Categorical domain: ML_AI, Data_Engineering, Data_Science, BI_Analytics, Management, Other |
-| `is_management` | Keyword flag from `job_title` | 1 if title contains management/director/head/VP keywords, 0 otherwise |
-| `exp_remote_interaction` | `experience_level_encoded × remote_ratio` | Interaction feature capturing combined effect of seniority and remote work |
+| `title_is_junior` | Integer (0/1) | 1 if job title indicates entry-level (e.g., intern, junior), else 0 |
+| `title_is_senior` | Integer (0/1) | 1 if job title indicates senior-level (e.g., senior, lead, principal), else 0 |
+| `title_is_exec` | Integer (0/1) | 1 if job title indicates executive roles (e.g., director, VP, chief), else 0 |
+| `title_is_mgmt` | Integer (0/1) | 1 if job title indicates management responsibility, else 0 |
+| `title_domain` | Categorical | Derived domain category (analytics, data_eng, scientist, ml_ai, other) |
+| `exp_x_domain` | String (categorical) | Interaction feature combining experience level and job domain |
+
+### Notes
+
+- Job titles are normalized using regex-based text preprocessing before feature extraction.
+- Keyword-based matching is used to derive seniority and domain indicators.
 
 ---
 
 ## 3. Association Rules Dataset — `association_rules.csv`
 
-Precomputed from the Model 1 training dataset using the Apriori algorithm (MLxtend).
+Precomputed from the Model 1 dataset after feature transformation and discretization (e.g., salary categories, experience categories) using the Apriori algorithm (MLxtend).
 
 | Column Name | Data Type | Description |
 |---|---|---|
-| `antecedents` | Frozenset (string) | Set of input attribute values forming the rule's left-hand side |
-| `consequents` | Frozenset (string) | Set of attribute values forming the rule's right-hand side |
-| `support` | Float (0–1) | Proportion of records containing both antecedents and consequents |
-| `confidence` | Float (0–1) | Proportion of records with antecedents that also have consequents |
-| `lift` | Float | Ratio of observed confidence to expected confidence under independence |
+| `antecedents` | String (set-like) | Input attribute combinations forming rule LHS |
+| `consequents` | String (set-like) | Output attribute combinations forming rule RHS |
+| `antecedent support` | Float | Frequency of antecedent occurrence |
+| `consequent support` | Float | Frequency of consequent occurrence |
+| `support` | Float | Joint frequency of antecedents and consequents |
+| `confidence` | Float | Conditional probability of consequent given antecedent |
+| `lift` | Float | Strength of association compared to independence |
+| `leverage` | Float | Difference between observed and expected support |
+| `conviction` | Float | Measure of implication strength |
+| `jaccard` | Float | Similarity between antecedent and consequent sets |
+| `certainty` | Float | Certainty factor of the rule |
+| `kulczynski` | Float | Average of forward and backward confidence |
+| `representativity` | Float | Measure of how representative the rule is within the dataset |
+| `zhangs_metric` | Float | Correlation-based metric for rule interestingness |
 
 ---
 
@@ -107,24 +133,24 @@ Precomputed from the Model 1 training dataset using the Apriori algorithm (MLxte
 
 ## 5. Firestore Data Definitions
 
-### `users/{email}/`
+### `users/{username (email)}/`
 
 | Field | Type | Description |
 |---|---|---|
 | `username` | String | User-chosen display name |
 | `email` | String | User's email address (also the document ID) |
 | `display_name` | String | Full name entered at registration |
-| `created_at` | Timestamp | Account creation datetime (UTC) |
-| `auth_provider` | String | Always `"email"` for this application |
+| `created_at` | String (ISO UTC) | Account creation datetime, stored as `datetime.utcnow().isoformat()` |
+| `auth_provider` | String | Always `"firebase"` for this application |
 
-### `predictions/{email}/records/{auto_id}/`
+### `predictions/{username (email)}/records/{auto_id}/`
 
 | Field | Type | Description |
 |---|---|---|
 | `model_used` | String | `"Model 1"` or `"Model 2"` |
-| `input_data` | Map | All input fields used for the prediction (varies by model) |
+| `input_data` | String (JSON) | All input fields used for the prediction, serialized via `json.dumps()` |
 | `predicted_salary` | Float | Annual salary prediction in USD |
-| `created_at` | Timestamp | Prediction datetime (UTC) |
+| `created_at` | String (ISO UTC) | Prediction datetime, stored as `datetime.utcnow().isoformat()` |
 
 ### `feedback/{auto_id}/`
 
@@ -132,13 +158,13 @@ Precomputed from the Model 1 training dataset using the Apriori algorithm (MLxte
 |---|---|---|---|
 | `username` | String | No | Username or `"anonymous"` |
 | `model_used` | String | No | `"Model 1"` or `"Model 2"` |
-| `input_data` | Map | No | Input features from the prediction |
+| `input_data` | Map / JSON String | No | Input features from the prediction |
 | `predicted_salary` | Float | No | Predicted salary from the same prediction |
 | `accuracy_rating` | String | No | `"Yes"`, `"Somewhat"`, or `"No"` |
 | `direction` | String | No | `"Too High"`, `"About Right"`, or `"Too Low"` |
 | `actual_salary` | Float | Yes | User-provided actual or expected salary in USD |
 | `star_rating` | Integer | No | 1–5 |
-| `created_at` | Timestamp | No | Submission datetime (UTC) |
+| `created_at` | String (ISO UTC) | No | Submission datetime |
 | `extended_data` | Map | Yes | Optional structured extended feedback (see below) |
 
 ### `feedback/{auto_id}/extended_data/` (Optional Nested Map)
