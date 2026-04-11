@@ -197,14 +197,14 @@ def _card(value_str: str, label: str, color: str = "#F59E0B") -> str:
     )
 
 
-def _deduction_row(label: str, amount: float, gross: float, color: str = "#EF4444") -> str:
+def _deduction_row(label: str, amount: float, gross: float, fmt_func, color: str = "#EF4444") -> str:
     rate = amount / gross * 100 if gross > 0 else 0
     return (
         f"<div style='display:flex;justify-content:space-between;"
         f"padding:5px 0;border-bottom:1px solid #283142;'>"
         f"<span style='color:#9CA6B5;font-size:13px;'>{label}</span>"
         f"<span style='color:{color};font-size:13px;'>"
-        f"{_fmt(amount)} ({rate:.1f}%)</span>"
+        f"{fmt_func(amount)} ({rate:.1f}%)</span>"
         f"</div>"
     )
 
@@ -547,7 +547,7 @@ def render_takehome_adjuster(
 
         for label, amount in result["deduction_breakdown"]:
             st.markdown(
-                _deduction_row(label, amount, gross_usd),
+                _deduction_row(label, amount, gross_usd, _loc),
                 unsafe_allow_html=True,
             )
 
@@ -558,7 +558,7 @@ def render_takehome_adjuster(
             f"<span style='color:#9CA6B5;font-size:13px;font-weight:600;'>"
             f"Total Deductions</span>"
             f"<span style='color:#EF4444;font-size:13px;font-weight:600;'>"
-            f"{_fmt(result['total_deductions'])} "
+            f"{_loc(result['total_deductions'])}"
             f"({result['total_deductions'] / gross_usd * 100:.1f}%)</span>"
             f"</div>",
             unsafe_allow_html=True,
