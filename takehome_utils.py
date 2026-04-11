@@ -524,8 +524,9 @@ def render_takehome_adjuster(
         )
 
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Gross Annual", _loc(result["gross_usd"]),
-                  delta=_fmt(result["gross_usd"]) if use_local else None, delta_color="off")
+        #c1.metric("Gross Annual", _loc(result["gross_usd"]),
+        #          delta=_fmt(result["gross_usd"]) if use_local else None, delta_color="off")
+        c1.metric("Gross Annual", _loc(result["gross_usd"])
         c2.metric(
             f"Net Monthly ({cur_code})" if use_local else "Net Monthly",
             _loc(result["net_monthly"]),
