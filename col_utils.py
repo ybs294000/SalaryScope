@@ -575,7 +575,7 @@ def render_col_adjuster(
                 </div>
                 <div style='color:#6B7585; font-size:12px; margin-top:6px;'>
                     Adjustment factor: {adj_factor:.3f}x
-                    (Work CoL: {work_idx_used:.0f} \u2192 {cmp_code} CoL: {cmp_idx_used:.0f})
+                    (Work CoL: {work_idx_used:.0f} \u2192 {get_country_name(cmp_code)} CoL: {cmp_idx_used:.0f})
                 </div>
             </div>
             """,
