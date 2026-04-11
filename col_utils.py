@@ -42,6 +42,7 @@ from typing import Optional
 
 import streamlit as st
 
+from country_utils import get_country_name, resolve_iso2
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -200,49 +201,7 @@ _COL_INDEX: dict[str, float] = {
     # ── Japan / Pacific already above ──
 }
 
-# Name/alias → ISO key
-_COL_ALIASES: dict[str, str] = {
-    "USA": "US", "United States": "US",
-    "UK": "GB", "United Kingdom": "GB",
-    "Germany": "DE", "France": "FR", "India": "IN",
-    "Canada": "CA", "Australia": "AU", "Singapore": "SG",
-    "Netherlands": "NL", "Sweden": "SE", "Norway": "NO",
-    "Denmark": "DK", "Switzerland": "CH", "Japan": "JP",
-    "China": "CN", "South Korea": "KR", "Brazil": "BR",
-    "Mexico": "MX", "Spain": "ES", "Italy": "IT",
-    "Portugal": "PT", "Ireland": "IE", "Poland": "PL",
-    "United Arab Emirates": "AE", "UAE": "AE",
-    "Saudi Arabia": "SA", "Kuwait": "KW",
-    "Qatar": "QA", "Bahrain": "BH",
-    "Israel": "IL", "Turkey": "TR", "Russia": "RU",
-    "Ukraine": "UA", "Pakistan": "PK", "Nigeria": "NG",
-    "South Africa": "ZA", "Egypt": "EG", "Greece": "GR",
-    "Czech Republic": "CZ", "Hungary": "HU", "Romania": "RO",
-    "Belgium": "BE", "Austria": "AT", "New Zealand": "NZ",
-    "Malaysia": "MY", "Indonesia": "ID", "Thailand": "TH",
-    "Philippines": "PH", "Vietnam": "VN", "Argentina": "AR",
-    "Colombia": "CO", "Chile": "CL", "Luxembourg": "LU",
-    "Hong Kong": "HK", "Kenya": "KE", "Ghana": "GH",
-    "Morocco": "MA", "Slovenia": "SI", "Finland": "FI",
-    "Croatia": "HR", "Bulgaria": "BG", "Serbia": "RS",
-    "Albania": "AL", "North Macedonia": "MK",
-    "Moldova": "MD", "Armenia": "AM", "Georgia": "GE",
-    "Azerbaijan": "AZ", "Kazakhstan": "KZ", "Uzbekistan": "UZ",
-    "Latvia": "LV", "Lithuania": "LT", "Estonia": "EE",
-    "Slovakia": "SK", "Cyprus": "CY", "Malta": "MT",
-    "Peru": "PE", "Bolivia": "BO", "Uruguay": "UY",
-    "Costa Rica": "CR", "Ecuador": "EC", "Panama": "PA",
-    "Vietnam": "VN", "Mongolia": "MN", "Myanmar": "MM",
-    "Cambodia": "KH", "Laos": "LA", "Nepal": "NP",
-    "Sri Lanka": "LK", "Bangladesh": "BD", "Afghanistan": "AF",
-    "Iraq": "IQ", "Iran": "IR", "Jordan": "JO",
-    "Lebanon": "LB", "Oman": "OM",
-    "Ethiopia": "ET", "Tanzania": "TZ", "Uganda": "UG",
-    "Algeria": "DZ", "Tunisia": "TN",
-    "Taiwan": "TW", "Hong Kong": "HK",
-    "Puerto Rico": "PR", "American Samoa": "AS",
-    "Bosnia and Herzegovina": "BA", "Bosnia": "BA",
-}
+# Alias/name resolution is delegated to country_utils.resolve_iso2.
 
 _GENERIC_COL = 50.0  # fallback for unknown countries
 
@@ -252,21 +211,21 @@ _GENERIC_COL = 50.0  # fallback for unknown countries
 # ---------------------------------------------------------------------------
 
 def _resolve_col_key(location_hint: Optional[str]) -> Optional[str]:
+    """
+    Return the _COL_INDEX key for a location hint, or None if not found.
+    Delegates name/alias resolution to country_utils.resolve_iso2 so that a
+    single source of truth covers all three utility modules.
+    """
     if not location_hint:
         return None
     key = str(location_hint).strip()
+    # Direct hit (already an ISO-2 key in our index)
     if key in _COL_INDEX:
         return key
-    alias = _COL_ALIASES.get(key)
-    if alias:
-        return alias
-    key_lower = key.lower()
-    for k in _COL_INDEX:
-        if k.lower() == key_lower:
-            return k
-    for k, v in _COL_ALIASES.items():
-        if k.lower() == key_lower:
-            return v
+    # Delegate to country_utils for alias/name -> ISO-2 resolution
+    iso2 = resolve_iso2(key)
+    if iso2 and iso2 in _COL_INDEX:
+        return iso2
     return None
 
 
@@ -382,17 +341,12 @@ def save_custom_col_file(overrides: dict, filepath: Optional[str] = None) -> boo
 def col_country_options() -> list[str]:
     """
     Returns sorted list of country display strings for Streamlit dropdowns.
-    Format: 'US — United States (index: 100.0)'
+    Format: 'US -- United States (CoL: 100)'
+    Country names are resolved via country_utils.get_country_name().
     """
-    # Build reverse alias map for display names
-    rev = {}
-    for name, iso in _COL_ALIASES.items():
-        if iso not in rev:
-            rev[iso] = name
-
     result = []
     for iso, idx in sorted(_COL_INDEX.items(), key=lambda x: x[0]):
-        label = rev.get(iso, iso)
+        label = get_country_name(iso)
         result.append(f"{iso} \u2014 {label} (CoL: {idx:.0f})")
 
     return result
@@ -467,7 +421,7 @@ def render_col_adjuster(
 
             if work_country and work_country not in ("Other", ""):
                 st.info(
-                    f"**Salary earned in:** {work_country}\n\n"
+                    f"**Salary earned in:** {get_country_name(work_country)}\n\n"
                     f"**CoL index:** {work_built_in:.0f} / 100\n\n"
                     f"_Source: {work_src}_"
                 )
@@ -531,7 +485,7 @@ def render_col_adjuster(
             cmp_built_in, cmp_src = get_col_index(cmp_code, custom_overrides=saved_overrides)
 
             st.info(
-                f"**Comparison country:** {cmp_code}\n\n"
+                f"**Comparison country:** {get_country_name(cmp_code)}\n\n"
                 f"**CoL index:** {cmp_built_in:.0f} / 100\n\n"
                 f"_Source: {cmp_src}_"
             )
@@ -586,7 +540,7 @@ def render_col_adjuster(
         elif adj_factor < 1.0:
             pct_diff = (1.0 - adj_factor) * 100
             interpretation = (
-                f"{cmp_code} has ~{pct_diff:.0f}% lower cost of living than your work country "
+                f"{get_country_name(cmp_code)} has ~{pct_diff:.0f}% lower cost of living than your work country "
                 f"(CoL {work_idx_used:.0f}). "
                 f"You would need only ~${ppp:,.0f} there to maintain the same lifestyle."
             )
@@ -594,7 +548,7 @@ def render_col_adjuster(
         else:
             pct_diff = (adj_factor - 1.0) * 100
             interpretation = (
-                f"{cmp_code} has ~{pct_diff:.0f}% higher cost of living than your work country "
+                f"{get_country_name(cmp_code)} has ~{pct_diff:.0f}% higher cost of living than your work country "
                 f"(CoL {work_idx_used:.0f}). "
                 f"You would need ~${ppp:,.0f} there to maintain the same lifestyle."
             )
@@ -613,7 +567,7 @@ def render_col_adjuster(
             '>
                 <div style='color:#9CA6B5; font-size:12px; font-weight:600;
                             letter-spacing:0.5px; margin-bottom:6px;'>
-                    PPP-EQUIVALENT SALARY IN {cmp_code} (USD)
+                    PPP-EQUIVALENT SALARY IN {get_country_name(cmp_code)} (USD)
                 </div>
                 <div style='color:{color}; font-size:34px; font-weight:700;
                             letter-spacing:-1px;'>
@@ -633,7 +587,7 @@ def render_col_adjuster(
         # Summary metrics
         col_m1, col_m2, col_m3 = st.columns(3)
         col_m1.metric("Your Gross (USD)", f"${gross_usd:,.0f}")
-        col_m2.metric(f"PPP Equiv. in {cmp_code}", f"${ppp:,.0f}")
+        col_m2.metric(f"PPP Equiv. in {get_country_name(cmp_code)}", f"${ppp:,.0f}")
         col_m3.metric("Adjustment Factor", f"{adj_factor:.3f}x")
 
         # Also show post-tax PPP if net_usd provided

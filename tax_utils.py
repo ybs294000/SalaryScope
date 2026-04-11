@@ -45,6 +45,7 @@ from typing import Optional
 
 import streamlit as st
 
+from country_utils import get_country_name, resolve_iso2
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -553,31 +554,8 @@ _TAX_BRACKETS: dict[str, list[tuple[float, float]]] = {
     ],
 }
 
-# Aliases: map additional ISO / name keys to the canonical key above
-_COUNTRY_TAX_ALIASES: dict[str, str] = {
-    "USA": "US", "United States": "US",
-    "United Kingdom": "GB", "UK": "GB",
-    "Germany": "DE", "France": "FR", "India": "IN",
-    "Canada": "CA", "Australia": "AU", "Singapore": "SG",
-    "Netherlands": "NL", "Sweden": "SE", "Norway": "NO",
-    "Denmark": "DK", "Switzerland": "CH", "Japan": "JP",
-    "China": "CN", "South Korea": "KR", "Brazil": "BR",
-    "Mexico": "MX", "Spain": "ES", "Italy": "IT",
-    "Portugal": "PT", "Ireland": "IE", "Poland": "PL",
-    "United Arab Emirates": "AE", "UAE": "AE",
-    "Saudi Arabia": "SA", "Kuwait": "KW",
-    "Qatar": "QA", "Bahrain": "BH",
-    "Israel": "IL", "Turkey": "TR", "Russia": "RU",
-    "Ukraine": "UA", "Pakistan": "PK", "Nigeria": "NG",
-    "South Africa": "ZA", "Egypt": "EG", "Greece": "GR",
-    "Czech Republic": "CZ", "Hungary": "HU", "Romania": "RO",
-    "Belgium": "BE", "Austria": "AT", "New Zealand": "NZ",
-    "Malaysia": "MY", "Indonesia": "ID", "Thailand": "TH",
-    "Philippines": "PH", "Vietnam": "VN", "Argentina": "AR",
-    "Colombia": "CO", "Chile": "CL", "Luxembourg": "LU",
-    "Hong Kong": "HK", "Kenya": "KE", "Ghana": "GH",
-    "Morocco": "MA", "Slovenia": "SI",
-}
+# Name/alias resolution is handled by country_utils.resolve_iso2().
+# The local alias dict has been removed; all lookups go through that function.
 
 # Extra flat-rate defaults for countries not individually listed
 _FLAT_RATE_DEFAULTS: dict[str, float] = {
@@ -620,24 +598,25 @@ _GENERIC_RATE = 0.25
 # ---------------------------------------------------------------------------
 
 def _resolve_country_key(location_hint: Optional[str]) -> Optional[str]:
-    """Map any country name/alias/ISO to the canonical bracket key."""
+    """
+    Map any country name, alias, or ISO-2 code to the canonical bracket key.
+    Delegates name/alias resolution to country_utils.resolve_iso2(); falls back
+    to a direct dict lookup for any key already present in _TAX_BRACKETS or
+    _FLAT_RATE_DEFAULTS.
+    """
     if not location_hint:
         return None
-    key = str(location_hint).strip()
-    if key in _TAX_BRACKETS:
-        return key
-    alias = _COUNTRY_TAX_ALIASES.get(key)
-    if alias:
-        return alias
-    # Case-insensitive
-    key_lower = key.lower()
-    for k in _TAX_BRACKETS:
-        if k.lower() == key_lower:
-            return k
-    for k, v in _COUNTRY_TAX_ALIASES.items():
-        if k.lower() == key_lower:
-            return v
-    return None
+    # Full alias + CLDR coverage via country_utils
+    iso = resolve_iso2(location_hint)
+    if iso:
+        if iso in _TAX_BRACKETS or iso in _FLAT_RATE_DEFAULTS:
+            return iso
+    # Direct key match as a last resort
+    direct = str(location_hint).strip().upper()
+    if direct in _TAX_BRACKETS or direct in _FLAT_RATE_DEFAULTS:
+        return direct
+    # Return the resolved ISO even if not in our tables (caller handles generic)
+    return iso or None
 
 
 def get_effective_rate(
@@ -686,11 +665,9 @@ def get_effective_rate(
     # Flat default
     if country_key and country_key in _FLAT_RATE_DEFAULTS:
         return _FLAT_RATE_DEFAULTS[country_key], "flat_default", country_key
-    # Try aliases for flat
-    raw_key = str(location_hint).strip() if location_hint else ""
-    alias_key = _COUNTRY_TAX_ALIASES.get(raw_key)
-    if alias_key and alias_key in _FLAT_RATE_DEFAULTS:
-        return _FLAT_RATE_DEFAULTS[alias_key], "flat_default", alias_key
+    # resolve_iso2 is already called inside _resolve_country_key, so if
+    # country_key is set it is the canonical ISO-2.  No further alias lookup
+    # is needed here.
 
     return _GENERIC_RATE, "generic", country_key or ""
 
@@ -876,8 +853,10 @@ def render_tax_adjuster(
         #col_info1, col_info2 = st.columns(2)
         #with col_info1:
         if location_hint and location_hint not in ("Other", ""):
+            display_country = get_country_name(country_key) if country_key else (location_hint or "Unknown")
+
             st.info(
-                f"**Country detected:** {location_hint}\n\n"
+                f"**Country detected:** {display_country}\n\n"
                 f"**Estimated effective rate:** {built_in_pct}%\n\n"
                 f"_{_SOURCE_NOTES.get(built_in_source, '')}_"
             )

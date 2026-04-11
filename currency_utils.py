@@ -29,6 +29,8 @@ from typing import Optional
 import requests
 import streamlit as st
 
+from country_utils import resolve_iso2
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -176,107 +178,55 @@ CURRENCY_INFO: dict[str, tuple[str, str]] = {
 # ---------------------------------------------------------------------------
 COUNTRY_TO_CURRENCY: dict[str, str] = {
     # Americas
-    "US": "USD", "USA": "USD", "United States": "USD",
-    "CA": "CAD", "Canada": "CAD",
-    "MX": "MXN", "Mexico": "MXN",
-    "BR": "BRL", "Brazil": "BRL",
-    "AR": "ARS", "Argentina": "ARS",
-    "CL": "CLP", "Chile": "CLP",
-    "CO": "COP", "Colombia": "COP",
-    "PE": "PEN", "Peru": "PEN",
-    "BO": "BOB", "Bolivia": "BOB",
-    "CR": "CRC", "Costa Rica": "CRC",
-    "DO": "DOP",
-    "HN": "HNL",
-    "PR": "USD",
-    "BS": "BSD",
-    "UY": "UYU",
+    "US": "USD", "CA": "CAD", "MX": "MXN",
+    "BR": "BRL", "AR": "ARS", "CL": "CLP",
+    "CO": "COP", "PE": "PEN", "BO": "BOB",
+    "CR": "CRC", "DO": "DOP", "HN": "HNL",
+    "PR": "USD", "BS": "BSD", "UY": "UYU",
+    "PA": "PAB", "GT": "GTQ", "SV": "USD",
+    "NI": "NIO", "CU": "CUP", "EC": "USD",
+    "VE": "VES", "PY": "PYG",
     # Europe
-    "GB": "GBP", "United Kingdom": "GBP", "UK": "GBP",
-    "DE": "EUR", "Germany": "EUR",
-    "FR": "EUR", "France": "EUR",
-    "ES": "EUR", "Spain": "EUR",
-    "IT": "EUR", "Italy": "EUR",
-    "PT": "EUR", "Portugal": "EUR",
-    "NL": "EUR", "Netherlands": "EUR",
-    "BE": "EUR", "Belgium": "EUR",
-    "AT": "EUR", "Austria": "EUR",
-    "IE": "EUR", "Ireland": "EUR",
-    "GR": "EUR", "Greece": "EUR",
-    "FI": "EUR", "Finland": "EUR",
-    "LU": "EUR", "Luxembourg": "EUR",
-    "SI": "EUR", "Slovenia": "EUR",
-    "MT": "EUR", "Malta": "EUR",
-    "CY": "EUR", "Cyprus": "EUR",
-    "EE": "EUR", "Estonia": "EUR",
-    "LV": "EUR", "Latvia": "EUR",
-    "LT": "EUR", "Lithuania": "EUR",
-    "SK": "EUR", "Slovakia": "EUR",
-    "CH": "CHF", "Switzerland": "CHF",
-    "SE": "SEK", "Sweden": "SEK",
-    "NO": "NOK", "Norway": "NOK",
-    "DK": "DKK", "Denmark": "DKK",
-    "PL": "PLN", "Poland": "PLN",
-    "CZ": "CZK", "Czech Republic": "CZK",
-    "HU": "HUF", "Hungary": "HUF",
-    "RO": "RON", "Romania": "RON",
-    "HR": "EUR", "Croatia": "EUR",
-    "BG": "BGN", "Bulgaria": "BGN",
-    "UA": "UAH", "Ukraine": "UAH",
-    "RU": "RUB", "Russia": "RUB",
-    "TR": "TRY", "Turkey": "TRY",
-    "RS": "RSD", "Serbia": "RSD",
-    "MK": "MKD", "North Macedonia": "MKD",
-    "AL": "ALL", "Albania": "ALL",
-    "BA": "BAM",
-    "MD": "MDL", "Moldova": "MDL",
-    "AM": "AMD", "Armenia": "AMD",
-    "JE": "GBP",
-    # Middle East & Central Asia
-    "AE": "AED", "United Arab Emirates": "AED",
-    "SA": "SAR",
-    "KW": "KWD", "Kuwait": "KWD",
-    "QA": "QAR",
-    "OM": "OMR",
-    "BH": "BHD",
-    "IL": "ILS", "Israel": "ILS",
-    "IQ": "IQD", "Iraq": "IQD",
-    "IR": "IRR", "Iran": "IRR",
-    "UZ": "UZS", "Uzbekistan": "UZS",
-    "KZ": "KZT",
-    # Asia
-    "IN": "INR", "India": "INR",
-    "JP": "JPY", "Japan": "JPY",
-    "CN": "CNY", "China": "CNY",
-    "SG": "SGD", "Singapore": "SGD",
-    "HK": "HKD", "Hong Kong": "HKD",
-    "KR": "KRW",
-    "TW": "TWD",
-    "MY": "MYR", "Malaysia": "MYR",
-    "TH": "THB", "Thailand": "THB",
-    "PH": "PHP", "Philippines": "PHP",
-    "ID": "IDR", "Indonesia": "IDR",
-    "VN": "VND", "Vietnam": "VND",
-    "PK": "PKR", "Pakistan": "PKR",
-    "BD": "BDT",
-    "LK": "LKR",
-    "NP": "NPR",
-    "KH": "KHR",
-    "MM": "MMK",
+    "GB": "GBP", "JE": "GBP",
+    "DE": "EUR", "FR": "EUR", "ES": "EUR",
+    "IT": "EUR", "PT": "EUR", "NL": "EUR",
+    "BE": "EUR", "AT": "EUR", "IE": "EUR",
+    "GR": "EUR", "FI": "EUR", "LU": "EUR",
+    "SI": "EUR", "MT": "EUR", "CY": "EUR",
+    "EE": "EUR", "LV": "EUR", "LT": "EUR",
+    "SK": "EUR", "HR": "EUR",
+    "CH": "CHF", "SE": "SEK", "NO": "NOK",
+    "DK": "DKK", "PL": "PLN", "CZ": "CZK",
+    "HU": "HUF", "RO": "RON", "BG": "BGN",
+    "UA": "UAH", "RU": "RUB", "TR": "TRY",
+    "RS": "RSD", "MK": "MKD", "AL": "ALL",
+    "BA": "BAM", "MD": "MDL", "IS": "ISK",
+    # CIS / Caucasus / Central Asia
+    "AM": "AMD", "GE": "GEL", "AZ": "AZN",
+    "KZ": "KZT", "UZ": "UZS", "KG": "KGS",
+    "TJ": "TJS", "TM": "TMT", "BY": "BYR",
+    # Middle East
+    "AE": "AED", "SA": "SAR", "KW": "KWD",
+    "QA": "QAR", "OM": "OMR", "BH": "BHD",
+    "IL": "ILS", "IQ": "IQD", "IR": "IRR",
+    "JO": "JOD", "LB": "LBP", "SY": "SYP",
+    "YE": "YER", "LY": "LYD",
+    # South Asia
+    "IN": "INR", "PK": "PKR", "BD": "BDT",
+    "LK": "LKR", "NP": "NPR", "AF": "AFN",
+    # East / Southeast Asia
+    "JP": "JPY", "CN": "CNY", "KR": "KRW",
+    "HK": "HKD", "TW": "TWD", "SG": "SGD",
+    "MY": "MYR", "TH": "THB", "PH": "PHP",
+    "ID": "IDR", "VN": "VND", "MM": "MMK",
+    "KH": "KHR", "MN": "MNT", "LA": "LAK",
     # Oceania
-    "AU": "AUD", "Australia": "AUD",
-    "NZ": "NZD", "New Zealand": "NZD",
+    "AU": "AUD", "NZ": "NZD", "AS": "USD",
     # Africa
-    "ZA": "ZAR",
-    "NG": "NGN", "Nigeria": "NGN",
-    "EG": "EGP", "Egypt": "EGP",
-    "GH": "GHS", "Ghana": "GHS",
-    "KE": "KES", "Kenya": "KES",
-    "MA": "MAD", "Morocco": "MAD",
-    "DZ": "DZD", "Algeria": "DZD",
-    "TN": "TND", "Tunisia": "TND",
-    "CF": "XAF",
-    "AS": "USD",
+    "ZA": "ZAR", "NG": "NGN", "EG": "EGP",
+    "GH": "GHS", "KE": "KES", "MA": "MAD",
+    "DZ": "DZD", "TN": "TND", "CF": "XAF",
+    "TZ": "TZS", "UG": "UGX", "ET": "ETB",
 }
 
 # ---------------------------------------------------------------------------
@@ -449,20 +399,18 @@ def _format_params(currency_code: str) -> tuple[str, int]:
 def guess_currency(location_hint: Optional[str]) -> str:
     """
     Given a country name or ISO-2 code, return the most likely currency.
-    Falls back to USD if unknown.
+    Name/alias resolution is delegated to country_utils.resolve_iso2().
+    Falls back to USD if the country or its currency cannot be determined.
     """
     if not location_hint:
         return "USD"
-    key = str(location_hint).strip()
-    # Direct lookup
-    if key in COUNTRY_TO_CURRENCY:
-        return COUNTRY_TO_CURRENCY[key]
-    # Case-insensitive match
-    key_lower = key.lower()
-    for k, v in COUNTRY_TO_CURRENCY.items():
-        if k.lower() == key_lower:
-            return v
-    return "USD"
+    # Resolve any name or alias to a canonical ISO-2 code
+    iso = resolve_iso2(location_hint)
+    if iso and iso in COUNTRY_TO_CURRENCY:
+        return COUNTRY_TO_CURRENCY[iso]
+    # Direct ISO-2 lookup as a final fallback (handles codes not in resolve_iso2)
+    direct = str(location_hint).strip().upper()
+    return COUNTRY_TO_CURRENCY.get(direct, "USD")
 
 
 # ---------------------------------------------------------------------------
