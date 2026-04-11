@@ -679,13 +679,13 @@ def _app2_dash1(df):
         med_sal  = dff["salary_in_usd"].median()
         mean_sal = dff["salary_in_usd"].mean()
         top_exp  = dff.groupby("Experience Level")["salary_in_usd"].mean().idxmax()
-        top_size = dff.groupby("Company Size")["salary_in_usd"].mean().idxmax()
+        top_size_count = dff["Company Size"].value_counts().idxmax()
         _kpi_row([
             ("Records in View", f"{len(dff):,}", None),
             ("Median Salary", f"${med_sal:,.0f}", None),
             ("Mean Salary", f"${mean_sal:,.0f}", None),
             ("Highest Paying Exp Tier", top_exp, None),
-            ("Highest Paying Company Size", top_size, None),
+            ("Most Common Company Size", top_size_count, None),
         ])
         _rule()
 
@@ -1025,8 +1025,18 @@ def _app2_dash3(df, country_map):
 
         # KPIs
         _rule()
-        c_agg_kpi  = dff.groupby("Company Location Full")["salary_in_usd"].mean()
-        top_country = c_agg_kpi.idxmax() if not c_agg_kpi.empty else "N/A"
+        MIN_COUNTRY_COUNT = 10
+        c_agg_kpi = (
+            dff.groupby("Company Location Full")["salary_in_usd"]
+            .agg(["mean", "count"])
+        )
+
+        c_agg_kpi = c_agg_kpi[c_agg_kpi["count"] >= MIN_COUNTRY_COUNT]
+
+        top_country = (
+            c_agg_kpi["mean"].idxmax()
+            if not c_agg_kpi.empty else "N/A"
+        )       
         role_agg_kpi = (
             dff.groupby("job_title")["salary_in_usd"]
             .agg(["mean", "count"])
