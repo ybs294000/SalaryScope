@@ -302,8 +302,8 @@ def _app1_dash2(df):
     App1 Dashboard 2: Education, Experience and Career Progression
     Theme: How education and experience jointly drive salary growth.
     Plots: 6-scatter(exp vs salary by edu), 7-grouped bar(edu x gender),
-           8-line(progression by exp band), 9-bar(senior premium by edu),
-           10-bar(top job titles).
+       8-line(progression by exp band), 9-bar(record count by education),
+       10-bar(top job titles).
     Stats table + KPIs included.
     """
     with st.expander(":material/school: Dashboard 2 -- Education, Experience and Career Progression"):
@@ -982,7 +982,7 @@ def _app2_dash3(df, country_map):
     App2 Dashboard 3: Job Roles and Geographic Salary Patterns
     Theme: Which data science roles and markets offer highest compensation?
     Plots: 11-horizontal bar(top-N roles), 12-bar(top countries),
-           13-scatter(country count vs avg), 14-box(top-5 common roles).
+       14-box(top-10 common roles).
     KPIs included.
     """
     EXP_MAP  = {"EN": "Entry Level", "MI": "Mid Level", "SE": "Senior Level", "EX": "Executive Level"}
@@ -1094,7 +1094,7 @@ def _app2_dash3(df, country_map):
         _themed(fig)
         st.plotly_chart(fig, width='stretch')
        
-        # Plot 14: Box -- salary for top-5 most common data science roles
+        # Plot 14: Box -- salary for top-10 most common data science roles
         top10 = dff["job_title"].value_counts().head(10).index.tolist()
         df10  = dff[dff["job_title"].isin(top10)]
         if not df10.empty:
