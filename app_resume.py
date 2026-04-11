@@ -411,7 +411,7 @@ def get_base64_image(path):
 
 logo_base64 = get_base64_image("static/android-chrome-512x512.png")
 # ================================================
-#
+#   APP1 DROPWDOWNS
 # ================================================
 @st.cache_data
 def prepare_app1_dropdowns(df_app1):
@@ -422,7 +422,7 @@ def prepare_app1_dropdowns(df_app1):
     genders = sorted(df_app1["Gender"].dropna().unique())
     return job_titles, countries, genders
 # ================================================
-#
+#   APP2 DROPDOWNS
 # =================================================
 @st.cache_data
 def prepare_app2_dropdowns(df_app2):
@@ -949,7 +949,7 @@ def get_assoc_insight_a1(education, experience, country, job_group, predicted_sa
 
 
 # ==================================================
-# ASSOCIATION FUNCTIONS (IMPROVED VERSION)
+# ASSOCIATION FUNCTIONS
 # ==================================================
 def get_assoc_insight_a1_improved(
     education,
