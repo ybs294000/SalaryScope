@@ -1438,9 +1438,9 @@ else:
     app2_model, app2_metadata = load_app2_model()
 
 if IS_APP1:
-    st.caption("**Active Model:** Random Forest Regressor + Salary Level Classifier — trained on general salary dataset.")
+    st.caption("**Active Model:** Random Forest Regressor + Salary Level Classifier — trained on General Salary dataset.")
 else:
-    st.caption("**Active Model:** XGBoost Regressor (log-transformed) — trained on data science salary dataset.")
+    st.caption("**Active Model:** XGBoost Regressor (log-transformed) — trained on Data Science Salary dataset.")
 
 st.divider()
 
