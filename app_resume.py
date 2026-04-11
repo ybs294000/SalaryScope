@@ -6514,6 +6514,7 @@ with tab_objects[about_index]:
             st.markdown("### Model 2 — Data Science Salary (XGBoost)")
             st.markdown("""
     **Dataset:** [Data Science Salaries Dataset (Kaggle)](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
+    
     **Model:**
     - XGBoost Regressor with log-transformed target (`log1p(salary_in_usd)`)
     - Custom feature engineering on job titles (seniority, domain, management signals)
