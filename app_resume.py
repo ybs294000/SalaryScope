@@ -354,7 +354,7 @@ def load_app1_cluster_package():
 # ==================================================
 @st.cache_resource
 def load_app2_model():
-    package = joblib.load("model/salaryscope_3755_production_model.pkl")
+    package = joblib.load("model/ds_xgb_model_grid.pkl")
     return package["model"], package["metadata"]
 
 # ==================================================

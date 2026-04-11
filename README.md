@@ -418,7 +418,7 @@ salaryscope/
 │   ├── salary_band_classifier.pkl       # Model 1: Salary level classifier + metadata
 │   ├── career_cluster_pipeline.pkl      # Model 1: KMeans clustering pipeline + metadata
 │   ├── app1_analytics.pkl               # Model 1: Precomputed analytics (residuals, PCA, etc.)
-│   ├── salaryscope_3755_production_model.pkl  # Model 2: XGBoost pipeline + metadata
+│   ├── ds_xgb_model_grid.pkl            # Model 2: XGBoost pipeline + metadata
 │   └── app2_analytics.pkl               # Model 2: Precomputed analytics (SHAP, residuals, etc.)
 │
 ├── notebooks/                           # Jupyter notebooks for EDA, feature engineering, and model development

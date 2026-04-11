@@ -514,7 +514,7 @@ classifier     = joblib.load("model/salary_band_classifier.pkl")
 cluster_pipe   = joblib.load("model/career_cluster_pipeline.pkl")
 app1_analytics = joblib.load("model/app1_analytics.pkl")
 
-xgb_pipeline   = joblib.load("model/salaryscope_3755_production_model.pkl")
+xgb_pipeline   = joblib.load("model/ds_xgb_model_grid.pkl")
 app2_analytics = joblib.load("model/app2_analytics.pkl")
 ```
 
