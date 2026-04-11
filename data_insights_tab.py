@@ -432,29 +432,49 @@ def _app1_dash2(df):
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
 
-        # Plot 9: Bar -- senior premium (senior avg - non-senior avg) per education
+        # Plot 9: Bar -- number of records by education level
         with r2c2:
-            pass
+            edu_count = (
+                dff["Education Label"]
+                .value_counts()
+                .reindex(edu_order)
+                .reset_index()
+            )
+            edu_count.columns = ["Education Level", "Count"]
 
-        # Plot 10: Horizontal bar -- top 10 job titles by average salary
-        r3c1, _ = st.columns([3, 1])
-        with r3c1:
-            job_top = (
-                dff.groupby("Job Title")["Salary"].mean().reset_index()
-                .sort_values("Salary", ascending=True).tail(10)
-            )
             fig = px.bar(
-                job_top, x="Salary", y="Job Title",
-                orientation="h",
-                title="Top 10 Job Titles by Average Salary",
-                color_discrete_sequence=["#4F8EF7"],
-                text=[f"${v:,.0f}" for v in job_top["Salary"]],
-                labels={"Salary": "Avg Annual Salary (USD)", "Job Title": ""},
+                edu_count,
+                x="Education Level",
+                y="Count",
+                title="Number of Records by Education Level",
+                color="Education Level",
+                color_discrete_sequence=_C[:4],
+                text=edu_count["Count"],
+                labels={"Education Level": "", "Count": "Number of Records"},
+                category_orders={"Education Level": edu_order},
             )
-            fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=10))
-            fig.update_layout(height=350, xaxis_title="Avg Annual Salary (USD)")
+            fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=11))
+            fig.update_layout(showlegend=False, yaxis_title="Number of Records")
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
+
+        # Plot 10: Horizontal bar -- top 10 job titles by average salary
+        job_top = (
+            dff.groupby("Job Title")["Salary"].mean().reset_index()
+            .sort_values("Salary", ascending=True).tail(10)
+        )
+        fig = px.bar(
+            job_top, x="Salary", y="Job Title",
+            orientation="h",
+            title="Top 10 Job Titles by Average Salary",
+            color_discrete_sequence=["#4F8EF7"],
+            text=[f"${v:,.0f}" for v in job_top["Salary"]],                
+            labels={"Salary": "Avg Annual Salary (USD)", "Job Title": ""},
+        )
+        fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=10))
+        fig.update_layout(height=350, xaxis_title="Avg Annual Salary (USD)")
+        _themed(fig)
+        st.plotly_chart(fig, width='stretch')
 
 
 @st.fragment
