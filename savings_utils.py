@@ -374,27 +374,32 @@ def render_savings_adjuster(
             return _fmt(v)
 
         if location_hint and location_hint not in ("", "Other"):
-            income_display = (
-                f"{_loc(net_monthly_usd)}  ≈  {_fmt(net_monthly_usd)}"
-                if use_local else _fmt(net_monthly_usd)
+            gross_part = (
+                f" &nbsp;·&nbsp; <span style='color:#9CA6B5;'>Annual gross:</span>"
+                f" <b>{_loc(gross_usd)}</b>"
+                if gross_usd else ""
             )
-
-            gross_display = (
-                f"{_loc(gross_usd)}  ≈  {_fmt(gross_usd)}"
-                if use_local and gross_usd else (_fmt(gross_usd) if gross_usd else "")
-            )
-
-            st.info(
-                f"**Country:** {_country_name(location_hint)}\n\n"
-                f"Typical expense ratio: **{_pct(d_ratio)}** of net income\n\n"
-                f"Monthly income (net): **{income_display}**"
-                + (f"\n\nAnnual gross: **{gross_display}**" if gross_usd else "")
+            st.markdown(
+                f"<div style='background:#1E2D40;border-left:4px solid #22C55E;"
+                f"border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#C8D6E8;'>"
+                f"<span style='font-weight:700;color:#E6EAF0;'>Country:</span> "
+                f"{_country_name(location_hint)}<br>"
+                f"<span style='color:#9CA6B5;'>Typical expense ratio:</span> <b>{_pct(d_ratio)} of net income</b>"
+                f" &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>Monthly net income:</span> <b>{_loc(net_monthly_usd)}</b>"
+                f"{gross_part}"
+                f"</div>",
+                unsafe_allow_html=True,
             )
         else:
-            st.info(
-                f"Monthly net income: **{_loc(net_monthly_usd)}**. "
-                "No country detected -- using generic 65% expense ratio. "
+            st.markdown(
+                f"<div style='background:#1E2D40;border-left:4px solid #6B7585;"
+                f"border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#9CA6B5;'>"
+                f"Monthly net income: <b style='color:#C8D6E8;'>{_loc(net_monthly_usd)}</b>. "
+                "No country detected — using generic 65% expense ratio. "
                 "Override below for more accurate results."
+                "</div>",
+                unsafe_allow_html=True,
             )
 
         use_custom = st.toggle(
@@ -445,15 +450,6 @@ def render_savings_adjuster(
             custom_expense_usd=custom_expense,
         )
 
-        # --- Currency resolution ---
-        cur_code, cur_sym, fx_rate = _get_currency_meta(location_hint)
-        use_local = cur_code != "USD"
-
-        def _loc(v: float) -> str:
-            if use_local:
-                return _fmt_local(v * fx_rate, cur_sym, cur_code)
-            return _fmt(v)
-
         st.divider()
 
         # Top-level cards: income / expenses / savings
@@ -461,7 +457,6 @@ def render_savings_adjuster(
         c1.metric(
             f"Monthly Net Income ({cur_code})" if use_local else "Monthly Net Income (USD)",
             _loc(result["net_monthly"]),
-           # delta=_fmt(result["net_monthly"]) if use_local else None, delta_color="off",
         )
         c2.metric(
             f"Est. Monthly Expenses ({cur_code})" if use_local else "Est. Monthly Expenses (USD)",
@@ -477,7 +472,7 @@ def render_savings_adjuster(
         )
 
         annual_card_label = (
-            f"ESTIMATED ANNUAL SAVINGS ({cur_code}  ≈  {_fmt(result['annual_savings'])} USD)"
+            f"ESTIMATED ANNUAL SAVINGS ({cur_code})"
             if use_local else "ESTIMATED ANNUAL SAVINGS (USD)"
         )
         st.markdown(
@@ -494,12 +489,10 @@ def render_savings_adjuster(
         c5.metric(
             f"5-Year Savings ({cur_code})" if use_local else "5-Year Savings (USD)",
             _loc(result["five_year_savings"]),
-           # delta=_fmt(result["five_year_savings"]) if use_local else None, delta_color="off",
         )
         c6.metric(
             f"10-Year Savings ({cur_code})" if use_local else "10-Year Savings (USD)",
             _loc(result["ten_year_savings"]),
-            #delta=_fmt(result["ten_year_savings"]) if use_local else None, delta_color="off",
         )
 
         # Tier icon mapping
@@ -532,8 +525,7 @@ def render_savings_adjuster(
             f"width:{exp_bar}px;height:13px;border-radius:3px;"
             f"vertical-align:middle;margin-right:8px;'></span>"
             f"<span style='color:#E6EAF0;font-size:13px;'>"
-            f"{_loc(result['expenses'])} / mo ({exp_pct:.1f}%)"
-            f"{'  ≈ ' + _fmt(result['expenses']) if use_local else ''}</span>"
+            f"{_loc(result['expenses'])} / mo ({exp_pct:.1f}%)</span>"
             f"</div>"
             f"<div style='margin:4px 0;'>"
             f"<span style='display:inline-block;width:120px;color:#9CA6B5;"
@@ -542,8 +534,7 @@ def render_savings_adjuster(
             f"width:{sav_bar}px;height:13px;border-radius:3px;"
             f"vertical-align:middle;margin-right:8px;'></span>"
             f"<span style='color:#E6EAF0;font-size:13px;'>"
-            f"{_loc(result['savings'])} / mo ({sav_pct:.1f}%)"
-            f"{'  ≈ ' + _fmt(result['savings']) if use_local else ''}</span>"
+            f"{_loc(result['savings'])} / mo ({sav_pct:.1f}%)</span>"
             f"</div>",
             unsafe_allow_html=True,
         )

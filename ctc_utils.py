@@ -434,18 +434,27 @@ def render_ctc_adjuster(
         d_other = 0.05
 
         if location_hint and location_hint not in ("", "Other"):
-            st.info(
-                f"**Country detected:** {_country_name(location_hint)}\n\n"
-                f"Basic: {_pct(d_basic)} of CTC  |  "
-                f"HRA: {_pct(d_hra)} of Basic  |  "
-                f"Bonus: {_pct(d_bonus)} of CTC  |  "
-                f"PF: {_pct(d_pf)} of Basic  |  "
-                f"Gratuity: {_pct(d_gratuity)} of Basic"
+            st.markdown(
+                f"<div style='background:#1E2D40;border-left:4px solid #3E7DE0;"
+                f"border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#C8D6E8;'>"
+                f"<span style='font-weight:700;color:#E6EAF0;'>Country detected:</span> "
+                f"{_country_name(location_hint)}<br>"
+                f"<span style='color:#9CA6B5;'>Basic:</span> <b>{_pct(d_basic)} of CTC</b> &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>HRA:</span> <b>{_pct(d_hra)} of Basic</b> &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>Bonus:</span> <b>{_pct(d_bonus)} of CTC</b> &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>PF:</span> <b>{_pct(d_pf)} of Basic</b> &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>Gratuity:</span> <b>{_pct(d_gratuity)} of Basic</b>"
+                f"</div>",
+                unsafe_allow_html=True,
             )
         else:
-            st.info(
+            st.markdown(
+                "<div style='background:#1E2D40;border-left:4px solid #6B7585;"
+                "border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#9CA6B5;'>"
                 "No country detected. Using generic defaults. "
                 "Enable the override below for more accurate figures."
+                "</div>",
+                unsafe_allow_html=True,
             )
 
         use_custom = st.toggle(
@@ -532,38 +541,26 @@ def render_ctc_adjuster(
         st.divider()
 
         card_label = f"ANNUAL CTC ({cur_code})" if use_local else "ANNUAL CTC (USD)"
-        card_val = (
-            f"{_loc(result['gross_usd'])}  ≈ {_fmt(result['gross_usd'])}"
-            if use_local else _fmt(result["gross_usd"])
-        )
         st.markdown(
-            _card(card_val, card_label, color="#3E7DE0"),
+            _card(_loc(result["gross_usd"]), card_label, color="#3E7DE0"),
             unsafe_allow_html=True,
         )
 
-        comp_label = f"Annual Components ({cur_code} / USD)" if use_local else "Annual Components (USD)"
+        comp_label = f"Annual Components ({cur_code})" if use_local else "Annual Components (USD)"
         st.markdown(f"**{comp_label}**")
         c1, c2, c3 = st.columns(3)
-        c1.metric("Base Salary", _loc(result["basic"]),
-                  delta=_fmt(result["basic"]) if use_local else None, delta_color="off")
-        c2.metric("HRA", _loc(result["hra"]),
-                  delta=_fmt(result["hra"]) if use_local else None, delta_color="off")
-        c3.metric("Target Bonus", _loc(result["bonus"]),
-                  delta=_fmt(result["bonus"]) if use_local else None, delta_color="off")
+        c1.metric("Base Salary", _loc(result["basic"]))
+        c2.metric("HRA", _loc(result["hra"]))
+        c3.metric("Target Bonus", _loc(result["bonus"]))
 
         c4, c5, c6 = st.columns(3)
-        c4.metric("PF / Pension (Employee)", _loc(result["pf_employee"]),
-                  delta=_fmt(result["pf_employee"]) if use_local else None, delta_color="off")
-        c5.metric("Gratuity Provision", _loc(result["gratuity"]),
-                  delta=_fmt(result["gratuity"]) if use_local else None, delta_color="off")
-        c6.metric("Other Allowances", _loc(result["other_allowances"]),
-                  delta=_fmt(result["other_allowances"]) if use_local else None, delta_color="off")
+        c4.metric("PF / Pension (Employee)", _loc(result["pf_employee"]))
+        c5.metric("Gratuity Provision", _loc(result["gratuity"]))
+        c6.metric("Other Allowances", _loc(result["other_allowances"]))
 
         c7, c8, _ = st.columns(3)
-        c7.metric("Monthly Gross", _loc(result["monthly_gross"]),
-                  delta=_fmt(result["monthly_gross"]) if use_local else None, delta_color="off")
-        c8.metric("Monthly Basic", _loc(result["monthly_basic"]),
-                  delta=_fmt(result["monthly_basic"]) if use_local else None, delta_color="off")
+        c7.metric("Monthly Gross", _loc(result["monthly_gross"]))
+        c8.metric("Monthly Basic", _loc(result["monthly_basic"]))
 
         st.divider()
         st.markdown("**Component Proportions (% of CTC)**")
@@ -580,11 +577,7 @@ def render_ctc_adjuster(
         for label, val, color in components:
             pct_of_ctc = val / gross_usd * 100 if gross_usd > 0 else 0
             bar_w = max(4, int(pct_of_ctc * 5))
-            val_display = (
-                f"{_loc(val)} ({_fmt(val)}) ({pct_of_ctc:.1f}%)"
-                if use_local else
-                f"{_fmt(val)} ({pct_of_ctc:.1f}%)"
-            )
+            val_display = f"{_loc(val)} ({pct_of_ctc:.1f}%)"
             st.markdown(
                 f"<div style='display:flex;align-items:center;margin:3px 0;'>"
                 f"<span style='width:200px;color:#9CA6B5;font-size:13px;"

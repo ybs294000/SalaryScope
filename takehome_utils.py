@@ -405,15 +405,25 @@ def render_takehome_adjuster(
             tax_label = f"{_pct(d_tax)} (built-in estimate)"
 
         if location_hint and location_hint not in ("", "Other"):
-            st.info(
-                f"**Country:** {_country_name(location_hint)}\n\n"
-                f"Est. effective tax: **{tax_label}**  |  "
-                f"PF rate: **{_pct(d_pf)}** of gross"
+            st.markdown(
+                f"<div style='background:#1E2D40;border-left:4px solid #F59E0B;"
+                f"border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#C8D6E8;'>"
+                f"<span style='font-weight:700;color:#E6EAF0;'>Country:</span> "
+                f"{_country_name(location_hint)}<br>"
+                f"<span style='color:#9CA6B5;'>Est. effective tax:</span> <b>{tax_label}</b>"
+                f" &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>PF rate:</span> <b>{_pct(d_pf)} of gross</b>"
+                f"</div>",
+                unsafe_allow_html=True,
             )
         else:
-            st.info(
+            st.markdown(
+                "<div style='background:#1E2D40;border-left:4px solid #6B7585;"
+                "border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#9CA6B5;'>"
                 "No country detected. Using generic estimates. "
                 "Use the override below for more accurate results."
+                "</div>",
+                unsafe_allow_html=True,
             )
 
         use_custom = st.toggle(
@@ -515,7 +525,7 @@ def render_takehome_adjuster(
             return _fmt(v)
 
         net_card_label = (
-            f"ESTIMATED NET ANNUAL TAKE-HOME ({cur_code}  ≈  {_fmt(result['net_annual'])} USD)"
+            f"ESTIMATED NET ANNUAL TAKE-HOME ({cur_code})"
             if use_local else "ESTIMATED NET ANNUAL TAKE-HOME (USD)"
         )
         st.markdown(
@@ -524,27 +534,10 @@ def render_takehome_adjuster(
         )
 
         c1, c2, c3, c4 = st.columns(4)
-        #c1.metric("Gross Annual", _loc(result["gross_usd"]),
-        #          delta=_fmt(result["gross_usd"]) if use_local else None, delta_color="off")
         c1.metric("Gross Annual", _loc(result["gross_usd"]))
-        #c2.metric(
-        #    f"Net Monthly ({cur_code})" if use_local else "Net Monthly",
-        #    _loc(result["net_monthly"]),
-        #    delta=_fmt(result["net_monthly"]) if use_local else None, delta_color="off",
-        #)
         c2.metric(f"Net Monthly ({cur_code})" if use_local else "Net Monthly", _loc(result["net_monthly"]))
-        #c3.metric(
-        #    f"Net Weekly ({cur_code})" if use_local else "Net Weekly",
-        #    _loc(result["net_weekly"]),
-        #    delta=_fmt(result["net_weekly"]) if use_local else None, delta_color="off",
-        #)
         c3.metric(f"Net Weekly ({cur_code})" if use_local else "Net Weekly", _loc(result["net_weekly"]))
-        #c4.metric(
-        #    f"Net Hourly ({cur_code})" if use_local else "Net Hourly",
-        #    _loc(result["net_hourly"]),
-        #    delta=_fmt(result["net_hourly"]) if use_local else None, delta_color="off",
-        #)
-        c4.metric(f"Net Hourly ({cur_code})" if use_local else "Net Hourly",_loc(result["net_hourly"]))
+        c4.metric(f"Net Hourly ({cur_code})" if use_local else "Net Hourly", _loc(result["net_hourly"]))
 
         st.divider()
         st.markdown("**Deduction Breakdown**")
@@ -562,24 +555,20 @@ def render_takehome_adjuster(
             f"<span style='color:#9CA6B5;font-size:13px;font-weight:600;'>"
             f"Total Deductions</span>"
             f"<span style='color:#EF4444;font-size:13px;font-weight:600;'>"
-            f"{_loc(result['total_deductions'])}"
+            f"{_loc(result['total_deductions'])} "
             f"({result['total_deductions'] / gross_usd * 100:.1f}%)</span>"
             f"</div>",
             unsafe_allow_html=True,
         )
 
-        # Net take-home footer row — show local + USD if currency differs
-        net_display = (
-            f"{_loc(result['net_annual'])}  ≈  {_fmt(result['net_annual'])}"
-            if use_local else _fmt(result["net_annual"])
-        )
+        # Net take-home footer row
         st.markdown(
             f"<div style='display:flex;justify-content:space-between;"
             f"padding:7px 0;border-top:2px solid #3E7DE0;margin-top:2px;'>"
             f"<span style='color:#E6EAF0;font-size:14px;font-weight:700;'>"
             f"Net Take-Home (Annual)</span>"
             f"<span style='color:#22C55E;font-size:14px;font-weight:700;'>"
-            f"{net_display}</span>"
+            f"{_loc(result['net_annual'])}</span>"
             f"</div>",
             unsafe_allow_html=True,
         )

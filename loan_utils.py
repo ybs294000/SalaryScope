@@ -287,6 +287,18 @@ def _info_row(label: str, value: str) -> str:
     )
 
 
+def _status_box(message: str, color: str, bg: str) -> str:
+    """Styled eligibility message box replacing st.error / st.warning / st.success."""
+    return (
+        f"<div style='background:{bg};border-left:4px solid {color};"
+        f"border-radius:6px;padding:12px 16px;margin:6px 0;"
+        f"font-size:13px;color:#E6EAF0;'>"
+        f"<span style='font-size:16px;margin-right:6px;'></span>"
+        f"{message}"
+        f"</div>"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Core computation -- no Streamlit, reusable anywhere
 # ---------------------------------------------------------------------------
@@ -442,28 +454,32 @@ def render_loan_adjuster(
                     return _fmt_local(v * fx_rate, cur_sym, cur_code)
                 return _fmt(v)
 
-            income_display = (
-                f"{_loc(net_monthly_usd)}  ≈  {_fmt(net_monthly_usd)}"
-                if use_local else _fmt(net_monthly_usd)
-            )
+            income_display = _loc(net_monthly_usd)
+            gross_display = _loc(gross_usd) if gross_usd else ""
 
-            gross_display = (
-                f"{_loc(gross_usd)}  ≈  {_fmt(gross_usd)}"
-                if use_local and gross_usd else (_fmt(gross_usd) if gross_usd else "")
-            )
-
-            st.info(
-                f"**Country:** {_country_name(location_hint)}\n\n"
-                f"Default interest rate: {d_rate:.1f}% p.a.\n\n"
-                f"Lender EMI cap: {_pct(d_cap)} of net income\n\n"
-                f"Monthly net income: {income_display}"
-                + (f"\n\nAnnual gross: {gross_display}" if gross_usd else "")
+            st.markdown(
+                f"<div style='background:#1E2D40;border-left:4px solid #3E7DE0;"
+                f"border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#C8D6E8;'>"
+                f"<span style='font-weight:700;color:#E6EAF0;'>Country:</span> "
+                f"{_country_name(location_hint)}<br>"
+                f"<span style='color:#9CA6B5;'>Default interest rate:</span> <b>{d_rate:.1f}% p.a.</b>"
+                f" &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>Lender EMI cap:</span> <b>{_pct(d_cap)} of net income</b>"
+                f" &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>Monthly net income:</span> <b>{income_display}</b>"
+                + (f" &nbsp;·&nbsp; <span style='color:#9CA6B5;'>Annual gross:</span> <b>{gross_display}</b>" if gross_usd else "")
+                + "</div>",
+                unsafe_allow_html=True,
             )
         else:
-            st.info(
-                f"Monthly net income: {_fmt(net_monthly_usd)}. "
-                "No country detected -- using generic defaults. "
+            st.markdown(
+                f"<div style='background:#1E2D40;border-left:4px solid #6B7585;"
+                f"border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#9CA6B5;'>"
+                f"Monthly net income: <b>{_fmt(net_monthly_usd)}</b>. "
+                "No country detected — using generic defaults. "
                 "Override below for more accurate results."
+                "</div>",
+                unsafe_allow_html=True,
             )
 
         use_custom = st.toggle(
@@ -556,7 +572,7 @@ def render_loan_adjuster(
             card_color = "#3E7DE0"
 
         loan_card_label = (
-            f"ESTIMATED MAXIMUM LOAN AMOUNT ({cur_code}  ≈  {_fmt(result['max_loan'])} USD)"
+            f"ESTIMATED MAXIMUM LOAN AMOUNT ({cur_code})"
             if use_local else "ESTIMATED MAXIMUM LOAN AMOUNT (USD)"
         )
         st.markdown(
@@ -568,12 +584,10 @@ def render_loan_adjuster(
         c1.metric(
             f"Max Allowable EMI ({cur_code}/mo)" if use_local else "Max Allowable EMI (USD/mo)",
             _loc(result["max_emi"]),
-           # delta=_fmt(result["max_emi"]) if use_local else None, delta_color="off",
         )
         c2.metric(
             "Affordable EMI (after existing)",
             _loc(result["affordable_emi"]),
-         #   delta=_fmt(result["affordable_emi"]) if use_local else None, delta_color="off",
         )
         c3.metric("Loan Tenure", f"{result['loan_years']} years")
 
@@ -582,27 +596,25 @@ def render_loan_adjuster(
         c5.metric(
             f"Total Repayment ({cur_code})" if use_local else "Total Repayment (est.)",
             _loc(result["total_repayment"]),
-            #delta=_fmt(result["total_repayment"]) if use_local else None, delta_color="off",
         )
         c6.metric(
             f"Total Interest ({cur_code})" if use_local else "Total Interest Paid (est.)",
             _loc(result["total_interest"]),
-            #delta=_fmt(result["total_interest"]) if use_local else None, delta_color="off",
         )
 
         # Loan summary table
         st.divider()
         st.markdown("**Loan Summary**")
         rows = [
-            ("Monthly Net Income", _loc(net_monthly_usd) + (f"  ≈ {_fmt(net_monthly_usd)}" if use_local else "")),
+            ("Monthly Net Income", _loc(net_monthly_usd)),
             ("Lender EMI Cap", f"{_pct(result['emi_cap_fraction_used'])} of net income"),
-            ("Max Allowable EMI", _loc(result["max_emi"]) + (f"  ≈ {_fmt(result['max_emi'])}" if use_local else "")),
-            ("Less: Existing EMI", _loc(result["existing_emi_usd"]) + (f"  ≈ {_fmt(result['existing_emi_usd'])}" if use_local else "")),
-            ("Affordable EMI", _loc(result["affordable_emi"]) + (f"  ≈ {_fmt(result['affordable_emi'])}" if use_local else "")),
+            ("Max Allowable EMI", _loc(result["max_emi"])),
+            ("Less: Existing EMI", _loc(result["existing_emi_usd"])),
+            ("Affordable EMI", _loc(result["affordable_emi"])),
             ("Interest Rate", f"{result['interest_rate_pct']:.2f}% p.a."),
             ("Tenure", f"{result['loan_years']} years ({result['n_payments']} payments)"),
-            ("Maximum Loan Principal", _loc(result["max_loan"]) + (f"  ≈ {_fmt(result['max_loan'])}" if use_local else "")),
-            ("Total Interest Cost", _loc(result["total_interest"]) + (f"  ≈ {_fmt(result['total_interest'])}" if use_local else "")),
+            ("Maximum Loan Principal", _loc(result["max_loan"])),
+            ("Total Interest Cost", _loc(result["total_interest"])),
             ("Interest as % of Principal", f"{result['interest_cost_ratio'] * 100:.1f}%"),
         ]
         for label, value in rows:
@@ -612,26 +624,45 @@ def render_loan_adjuster(
 
         # Eligibility message
         if result["max_loan"] <= 0:
-            st.error(
-                ":material/error: Existing EMI obligations consume the full EMI cap. "
-                "No additional loan capacity under these parameters. "
-                "Consider increasing tenure, reducing existing debt, or increasing income."
+            st.markdown(
+                _status_box(
+                    color="#EF4444",
+                    bg="#2A1A1A",
+                    message=(
+                        "Existing EMI obligations consume the full EMI cap. "
+                        "No additional loan capacity under these parameters. "
+                        "Consider increasing tenure, reducing existing debt, or increasing income."
+                    ),
+                ),
+                unsafe_allow_html=True,
             )
         elif result["max_loan"] < net_monthly_usd * 12:
-            st.warning(
-                ":material/warning: Loan capacity is below one year of gross income. "
-                "Extending the tenure or reducing existing obligations may help. "
-                "This may reflect a high interest rate or low income-to-EMI ratio."
+            st.markdown(
+                _status_box(
+                    color="#F59E0B",
+                    bg="#251E0F",
+                    message=(
+                        "Loan capacity is below one year of gross income. "
+                        "Extending the tenure or reducing existing obligations may help. "
+                        "This may reflect a high interest rate or low income-to-EMI ratio."
+                    ),
+                ),
+                unsafe_allow_html=True,
             )
         else:
             months_payoff = result["n_payments"]
-            loan_str = f"{_loc(result['max_loan'])} ({_fmt(result['max_loan'])})" if use_local else _fmt(result['max_loan'])
-            emi_str = f"{_loc(result['affordable_emi'])} ({_fmt(result['affordable_emi'])})" if use_local else _fmt(result['affordable_emi'])
-            st.success(
-                f":material/check_circle: Based on these parameters, you can afford a loan "
-                f"of approximately {loan_str} with an EMI of "
-                f"{emi_str}/month over "
-                f"{result['loan_years']} years ({months_payoff} payments)."
+            st.markdown(
+                _status_box(
+                    color="#22C55E",
+                    bg="#0F2A1A",
+                    message=(
+                        f"Based on these parameters, you can afford a loan of approximately "
+                        f"<b>{_loc(result['max_loan'])}</b> with an EMI of "
+                        f"<b>{_loc(result['affordable_emi'])}/month</b> over "
+                        f"<b>{result['loan_years']} years ({months_payoff} payments)</b>."
+                    ),
+                ),
+                unsafe_allow_html=True,
             )
 
         st.caption(
