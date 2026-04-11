@@ -30,7 +30,7 @@ import requests
 import streamlit as st
 
 from country_utils import resolve_iso2
-
+from admin_panel import _is_local
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -603,16 +603,17 @@ def render_currency_converter(
 
         # Save-rates button (for offline use later)
         if rate_data["source"] == "live":
-            if st.button(
-                ":material/save: Save rates for offline use",
-                key=f"{widget_key}_save_rates",
-                help=f"Saves current live rates to {_FALLBACK_FILE_PATH}",
-            ):
-                ok = save_rates_to_file()
-                if ok:
-                    st.success(f"Rates saved to `{_FALLBACK_FILE_PATH}`")
-                else:
-                    st.error("Could not save rates file.")
+            if _is_local():
+                if st.button(
+                    ":material/save: Save rates for offline use",
+                    key=f"{widget_key}_save_rates",
+                    help=f"Saves current live rates to {_FALLBACK_FILE_PATH}",
+                ):
+                    ok = save_rates_to_file()
+                    if ok:
+                        st.success(f"Rates saved to `{_FALLBACK_FILE_PATH}`")
+                    else:
+                        st.error("Could not save rates file.")
 
         st.caption(
             "Exchange rates are for informational purposes only. "
