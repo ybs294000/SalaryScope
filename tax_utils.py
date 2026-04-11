@@ -841,7 +841,7 @@ def render_tax_adjuster(
     country_key = _resolve_country_key(location_hint) or ""
     saved_rate_for_country = saved_overrides.get(country_key)
 
-    with st.expander("Tax Estimation", expanded=True):
+    with st.expander(":material/percent: Tax Estimation", expanded=True):
 
         st.caption(
             ":material/warning: **Disclaimer:** Tax estimates are approximate and for planning only. "

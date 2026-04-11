@@ -403,7 +403,7 @@ def render_col_adjuster(
     # Load saved overrides
     saved_overrides = load_custom_col_file()
 
-    with st.expander("Cost-of-Living (Purchasing Power) Adjustment", expanded=True):
+    with st.expander(":material/home: Cost-of-Living (Purchasing Power) Adjustment", expanded=True):
 
         st.caption(
             ":material/info: **What is this?** This tool adjusts your salary for purchasing power. "
