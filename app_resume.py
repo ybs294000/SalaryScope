@@ -53,6 +53,10 @@ from feedback import feedback_ui
 from currency_utils import render_currency_converter, get_active_currency, get_active_rates
 from tax_utils import render_tax_adjuster
 from col_utils import render_col_adjuster
+from ctc_utils import render_ctc_adjuster
+from takehome_utils import render_takehome_adjuster
+from savings_utils import render_savings_adjuster
+from loan_utils import render_loan_adjuster
 
 from auth import login_ui, register_ui, logout, get_logged_in_user
 from auth import is_admin
@@ -1773,6 +1777,15 @@ with tab_objects[0]:
                                 converted_currency=active_currency, rates=active_rates)
             render_col_adjuster(gross_usd=prediction, work_country=country, widget_key="manual_a1_col")
 
+            render_ctc_adjuster(gross_usd=prediction, location_hint=country, widget_key="manual_a1_ctc")
+            th = render_takehome_adjuster(gross_usd=prediction, location_hint=country,
+                                           widget_key="manual_a1_th", net_usd=None)
+            net_monthly = th.get("net_monthly", prediction / 12)
+            render_savings_adjuster(net_monthly_usd=net_monthly, location_hint=country,
+                                     widget_key="manual_a1_sav", gross_usd=prediction)
+            render_loan_adjuster(net_monthly_usd=net_monthly, location_hint=country,
+                                 widget_key="manual_a1_loan", gross_usd=prediction)
+
             st.divider()
             st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
 
@@ -2033,6 +2046,15 @@ with tab_objects[0]:
             render_tax_adjuster(gross_usd=prediction_a2, location_hint=company_location, widget_key="manual_a2_tax",
                                 converted_currency=active_currency_a2, rates=active_rates_a2)
             render_col_adjuster(gross_usd=prediction_a2, work_country=company_location, widget_key="manual_a2_col")
+          
+            render_ctc_adjuster(gross_usd=prediction_a2, location_hint=company_location, widget_key="manual_a2_ctc")
+            th_a2 = render_takehome_adjuster(gross_usd=prediction_a2, location_hint=company_location,
+                                           widget_key="manual_a2_th", net_usd=None)
+            net_monthly_a2 = th_a2.get("net_monthly_a2", prediction_a2 / 12)
+            render_savings_adjuster(net_monthly_usd=net_monthly_a2, location_hint=company_location,
+                                     widget_key="manual_a2_sav", gross_usd=prediction_a2)
+            render_loan_adjuster(net_monthly_usd=net_monthly_a2, location_hint=company_location,
+                                 widget_key="manual_a2_loan", gross_usd=prediction_a2)
            # render_currency_converter(
            #     usd_amount=prediction_a2,       # or prediction_a2 for App 2
            #     location_hint=company_location,       # or company_location for App 2
