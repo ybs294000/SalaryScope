@@ -366,16 +366,33 @@ def render_savings_adjuster(
         key = _resolve_key(location_hint, _EXPENSE_RATIO)
         d_ratio = _EXPENSE_RATIO.get(key or "", _EXPENSE_RATIO_FALLBACK)
 
+        cur_code, cur_sym, fx_rate = _get_currency_meta(location_hint)
+        use_local = cur_code != "USD"
+        def _loc(v: float) -> str:
+            if use_local:
+                return _fmt_local(v * fx_rate, cur_sym, cur_code)
+            return _fmt(v)
+
         if location_hint and location_hint not in ("", "Other"):
+            income_display = (
+                f"{_loc(net_monthly_usd)}  ≈  {_fmt(net_monthly_usd)}"
+                if use_local else _fmt(net_monthly_usd)
+            )
+
+            gross_display = (
+                f"{_loc(gross_usd)}  ≈  {_fmt(gross_usd)}"
+                if use_local and gross_usd else (_fmt(gross_usd) if gross_usd else "")
+            )
+
             st.info(
                 f"**Country:** {_country_name(location_hint)}\n\n"
-                f"Typical expense ratio: **{_pct(d_ratio)}** of net income  |  "
-                f"Monthly income (net): **{_fmt(net_monthly_usd)}**"
-                + (f"  |  Annual gross: **{_fmt(gross_usd)}**" if gross_usd else "")
+                f"Typical expense ratio: **{_pct(d_ratio)}** of net income\n\n"
+                f"Monthly income (net): **{income_display}**"
+                + (f"\n\nAnnual gross: **{gross_display}**" if gross_usd else "")
             )
         else:
             st.info(
-                f"Monthly net income: **{_fmt(net_monthly_usd)}**. "
+                f"Monthly net income: **{_loc(net_monthly_usd)}**. "
                 "No country detected -- using generic 65% expense ratio. "
                 "Override below for more accurate results."
             )
@@ -444,7 +461,7 @@ def render_savings_adjuster(
         c1.metric(
             f"Monthly Net Income ({cur_code})" if use_local else "Monthly Net Income (USD)",
             _loc(result["net_monthly"]),
-            delta=_fmt(result["net_monthly"]) if use_local else None, delta_color="off",
+           # delta=_fmt(result["net_monthly"]) if use_local else None, delta_color="off",
         )
         c2.metric(
             f"Est. Monthly Expenses ({cur_code})" if use_local else "Est. Monthly Expenses (USD)",
@@ -477,12 +494,12 @@ def render_savings_adjuster(
         c5.metric(
             f"5-Year Savings ({cur_code})" if use_local else "5-Year Savings (USD)",
             _loc(result["five_year_savings"]),
-            delta=_fmt(result["five_year_savings"]) if use_local else None, delta_color="off",
+           # delta=_fmt(result["five_year_savings"]) if use_local else None, delta_color="off",
         )
         c6.metric(
             f"10-Year Savings ({cur_code})" if use_local else "10-Year Savings (USD)",
             _loc(result["ten_year_savings"]),
-            delta=_fmt(result["ten_year_savings"]) if use_local else None, delta_color="off",
+            #delta=_fmt(result["ten_year_savings"]) if use_local else None, delta_color="off",
         )
 
         # Tier icon mapping

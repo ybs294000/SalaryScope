@@ -526,22 +526,25 @@ def render_takehome_adjuster(
         c1, c2, c3, c4 = st.columns(4)
         #c1.metric("Gross Annual", _loc(result["gross_usd"]),
         #          delta=_fmt(result["gross_usd"]) if use_local else None, delta_color="off")
-        c1.metric("Gross Annual", _loc(result["gross_usd"])
-        c2.metric(
-            f"Net Monthly ({cur_code})" if use_local else "Net Monthly",
-            _loc(result["net_monthly"]),
-            delta=_fmt(result["net_monthly"]) if use_local else None, delta_color="off",
-        )
-        c3.metric(
-            f"Net Weekly ({cur_code})" if use_local else "Net Weekly",
-            _loc(result["net_weekly"]),
-            delta=_fmt(result["net_weekly"]) if use_local else None, delta_color="off",
-        )
-        c4.metric(
-            f"Net Hourly ({cur_code})" if use_local else "Net Hourly",
-            _loc(result["net_hourly"]),
-            delta=_fmt(result["net_hourly"]) if use_local else None, delta_color="off",
-        )
+        c1.metric("Gross Annual", _loc(result["gross_usd"]))
+        #c2.metric(
+        #    f"Net Monthly ({cur_code})" if use_local else "Net Monthly",
+        #    _loc(result["net_monthly"]),
+        #    delta=_fmt(result["net_monthly"]) if use_local else None, delta_color="off",
+        #)
+        c2.metric(f"Net Monthly ({cur_code})" if use_local else "Net Monthly", _loc(result["net_monthly"]))
+        #c3.metric(
+        #    f"Net Weekly ({cur_code})" if use_local else "Net Weekly",
+        #    _loc(result["net_weekly"]),
+        #    delta=_fmt(result["net_weekly"]) if use_local else None, delta_color="off",
+        #)
+        c3.metric(f"Net Weekly ({cur_code})" if use_local else "Net Weekly", _loc(result["net_weekly"]))
+        #c4.metric(
+        #    f"Net Hourly ({cur_code})" if use_local else "Net Hourly",
+        #    _loc(result["net_hourly"]),
+        #    delta=_fmt(result["net_hourly"]) if use_local else None, delta_color="off",
+        #)
+        c4.metric(f"Net Hourly ({cur_code})" if use_local else "Net Hourly",_loc(result["net_hourly"]))
 
         st.divider()
         st.markdown("**Deduction Breakdown**")

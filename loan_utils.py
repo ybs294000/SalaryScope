@@ -435,16 +435,33 @@ def render_loan_adjuster(
         d_cap = _EMI_INCOME_CAP.get(key or "", _EMI_INCOME_CAP_FALLBACK)
 
         if location_hint and location_hint not in ("", "Other"):
+            cur_code, cur_sym, fx_rate = _get_currency_meta(location_hint)
+            use_local = cur_code != "USD"
+            def _loc(v: float) -> str:
+                if use_local:
+                    return _fmt_local(v * fx_rate, cur_sym, cur_code)
+                return _fmt(v)
+
+            income_display = (
+                f"{_loc(net_monthly_usd)}  ≈  {_fmt(net_monthly_usd)}"
+                if use_local else _fmt(net_monthly_usd)
+            )
+
+            gross_display = (
+                f"{_loc(gross_usd)}  ≈  {_fmt(gross_usd)}"
+                if use_local and gross_usd else (_fmt(gross_usd) if gross_usd else "")
+            )
+
             st.info(
                 f"**Country:** {_country_name(location_hint)}\n\n"
-                f"Default interest rate: **{d_rate:.1f}% p.a.**  |  "
-                f"Lender EMI cap: **{_pct(d_cap)}** of net income  |  "
-                f"Monthly net income: **{_fmt(net_monthly_usd)}**"
-                + (f"  |  Annual gross: **{_fmt(gross_usd)}**" if gross_usd else "")
+                f"Default interest rate: {d_rate:.1f}% p.a.\n\n"
+                f"Lender EMI cap: {_pct(d_cap)} of net income\n\n"
+                f"Monthly net income: {income_display}"
+                + (f"\n\nAnnual gross: {gross_display}" if gross_usd else "")
             )
         else:
             st.info(
-                f"Monthly net income: **{_fmt(net_monthly_usd)}**. "
+                f"Monthly net income: {_fmt(net_monthly_usd)}. "
                 "No country detected -- using generic defaults. "
                 "Override below for more accurate results."
             )
@@ -551,12 +568,12 @@ def render_loan_adjuster(
         c1.metric(
             f"Max Allowable EMI ({cur_code}/mo)" if use_local else "Max Allowable EMI (USD/mo)",
             _loc(result["max_emi"]),
-            delta=_fmt(result["max_emi"]) if use_local else None, delta_color="off",
+           # delta=_fmt(result["max_emi"]) if use_local else None, delta_color="off",
         )
         c2.metric(
             "Affordable EMI (after existing)",
             _loc(result["affordable_emi"]),
-            delta=_fmt(result["affordable_emi"]) if use_local else None, delta_color="off",
+         #   delta=_fmt(result["affordable_emi"]) if use_local else None, delta_color="off",
         )
         c3.metric("Loan Tenure", f"{result['loan_years']} years")
 
@@ -565,12 +582,12 @@ def render_loan_adjuster(
         c5.metric(
             f"Total Repayment ({cur_code})" if use_local else "Total Repayment (est.)",
             _loc(result["total_repayment"]),
-            delta=_fmt(result["total_repayment"]) if use_local else None, delta_color="off",
+            #delta=_fmt(result["total_repayment"]) if use_local else None, delta_color="off",
         )
         c6.metric(
             f"Total Interest ({cur_code})" if use_local else "Total Interest Paid (est.)",
             _loc(result["total_interest"]),
-            delta=_fmt(result["total_interest"]) if use_local else None, delta_color="off",
+            #delta=_fmt(result["total_interest"]) if use_local else None, delta_color="off",
         )
 
         # Loan summary table
