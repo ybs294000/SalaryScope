@@ -958,7 +958,7 @@ def get_assoc_insight_a1_improved(
     job_group,
     predicted_salary,
     rules,
-    years_experience=None   # <-- NEW (pass from app.py)
+    years_experience=None   # <-- (pass from app.py)
 ):
 
     def extract_salary(consequents):
