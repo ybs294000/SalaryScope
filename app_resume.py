@@ -1319,7 +1319,7 @@ st.markdown(
 st.divider()
 
 # ==================================================
-# USER ACCOUNT SIDEBAR (SECURE VERSION)
+# USER ACCOUNT SIDEBAR 
 # ==================================================
 
 with st.sidebar:
@@ -1351,7 +1351,7 @@ with st.sidebar:
 
 
 # ==================================================
-# HEADER USER INDICATOR (SECURE VERSION)
+# HEADER USER INDICATOR
 # ==================================================
 
 header_left, header_right = st.columns([8, 2])
