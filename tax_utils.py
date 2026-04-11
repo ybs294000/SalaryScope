@@ -853,8 +853,8 @@ def render_tax_adjuster(
         built_in_rate, built_in_source, _ = get_effective_rate(gross_usd, location_hint)
         built_in_pct = round(built_in_rate * 100, 1)
 
-        #col_info1, col_info2 = st.columns(2)
-        #with col_info1:
+        col_info1, col_info2 = st.columns(2)
+        with col_info1:
         if location_hint and location_hint not in ("Other", ""):
             display_country = get_country_name(country_key) if country_key else (location_hint or "Unknown")
 
@@ -913,8 +913,8 @@ def render_tax_adjuster(
             custom_rate_value = custom_pct / 100.0
 
             if _is_local():
-            col_save, col_reset = st.columns(2)
-               with col_save:
+                col_save, col_reset = st.columns(2)
+                with col_save:
                     if st.button(
                         ":material/save: Save rate for this country",
                         key=f"{widget_key}_save_custom",
