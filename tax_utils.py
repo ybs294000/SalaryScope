@@ -855,19 +855,19 @@ def render_tax_adjuster(
 
         col_info1, col_info2 = st.columns(2)
         with col_info1:
-        if location_hint and location_hint not in ("Other", ""):
-            display_country = get_country_name(country_key) if country_key else (location_hint or "Unknown")
+            if location_hint and location_hint not in ("Other", ""):
+                display_country = get_country_name(country_key) if country_key else (location_hint or "Unknown")
 
-            st.info(
-                f"**Country detected:** {display_country}\n\n"
-                f"**Estimated effective rate:** {built_in_pct}%\n\n"
-                f"_{_SOURCE_NOTES.get(built_in_source, '')}_"
-            )
-        else:
-            st.info(
-                "No country detected. Using generic 25% rate.\n\n"
-                "Use the custom rate below for accuracy."
-            )
+                st.info(
+                    f"**Country detected:** {display_country}\n\n"
+                    f"**Estimated effective rate:** {built_in_pct}%\n\n"
+                    f"_{_SOURCE_NOTES.get(built_in_source, '')}_"
+                )
+            else:
+                st.info(
+                    "No country detected. Using generic 25% rate.\n\n"
+                    "Use the custom rate below for accuracy."
+                )
         if _is_local():
             with col_info2:
                 if saved_rate_for_country is not None:
