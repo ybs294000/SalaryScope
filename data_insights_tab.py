@@ -347,18 +347,14 @@ def _app1_dash2(df):
         _rule()
         corr_exp_sal = dff[["Years of Experience", "Salary"]].corr().iloc[0, 1]
         top_edu      = dff.groupby("Education Label")["Salary"].mean().idxmax()
-        sr_premium   = (
-            dff[dff["Seniority"] == "Senior"]["Salary"].mean() -
-            dff[dff["Seniority"] == "Non-Senior"]["Salary"].mean()
-        )
+        pct_sr = dff["Senior"].mean() * 100
         avg_sal = dff["Salary"].mean()
         _kpi_row([
             ("Records in View", f"{len(dff):,}", None),
             ("Mean Salary", f"${avg_sal:,.0f}", None),
             ("Exp-Salary Correlation", f"{corr_exp_sal:.2f}", None),
             ("Highest Paying Education", top_edu, None),
-            ("Seniority Premium (avg)", f"${sr_premium:,.0f}", None),
-        ])
+            ("Senior Share", f"{pct_sr:.1f}%", None),        ])
         _rule()
 
         # Stats table
