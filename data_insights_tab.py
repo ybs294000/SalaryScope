@@ -14,17 +14,6 @@ No circular imports: this module imports only stdlib + third-party libraries.
 All heavy data is passed in as arguments so datasets are loaded once in the
 host app and reused here without double loading.
 
-Chart toggle guide
-------------------
-Every plot slot carries a comment block like:
-
-    # DEFAULT: <chart type> -- <reason>
-    # SIMPLE ALT: comment out the block above and uncomment the block below
-    # ... simpler chart code ...
-
-To switch a plot to its simpler alternative, comment out the DEFAULT block
-and uncomment the SIMPLE ALT block immediately below it.  The alternatives
-use only: histogram, bar, horizontal bar, line, scatter, box, pie, donut.
 """
 
 import streamlit as st
