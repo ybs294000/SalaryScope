@@ -912,31 +912,32 @@ def render_tax_adjuster(
             )
             custom_rate_value = custom_pct / 100.0
 
-#            col_save, col_reset = st.columns(2)
-#           # with col_save:
-#                if st.button(
-#                    "\U0001f4be Save rate for this country",
-#                    key=f"{widget_key}_save_custom",
-#                    help=f"Saves {custom_pct}% for {country_key or 'unknown'} to tax_rates_custom.json",
-#                    disabled=not bool(country_key)
-#                ):
-#                    updated = dict(saved_overrides)
-#                    updated[country_key] = custom_rate_value
-#                    ok = save_custom_tax_file(updated)
-#                    if ok:
-#                        st.success(f"Saved {custom_pct:.1f}% for {country_key}.")
-#                    else:
-#                        st.error("Could not write tax_rates_custom.json.")
-#            with col_reset:
-#                if st.button(
-#                    "\U0001f5d1\ufe0f Remove saved rate",
-#                    key=f"{widget_key}_remove_custom",
-#                    disabled=not bool(saved_rate_for_country)
-#                ):
-#                    updated = {k: v for k, v in saved_overrides.items() if k != country_key}
-#                    save_custom_tax_file(updated)
-#                    st.success(f"Removed saved rate for {country_key}.")
-#                    st.rerun()
+            if _is_local():
+            col_save, col_reset = st.columns(2)
+               with col_save:
+                    if st.button(
+                        ":material/save: Save rate for this country",
+                        key=f"{widget_key}_save_custom",
+                        help=f"Saves {custom_pct}% for {country_key or 'unknown'} to tax_rates_custom.json",
+                        disabled=not bool(country_key)
+                    ):
+                        updated = dict(saved_overrides)
+                        updated[country_key] = custom_rate_value
+                        ok = save_custom_tax_file(updated)
+                        if ok:
+                            st.success(f"Saved {custom_pct:.1f}% for {country_key}.")
+                        else:
+                            st.error("Could not write tax_rates_custom.json.")
+                with col_reset:
+                    if st.button(
+                        ":material/delete: Remove saved rate",
+                        key=f"{widget_key}_remove_custom",
+                        disabled=not bool(saved_rate_for_country)
+                    ):
+                        updated = {k: v for k, v in saved_overrides.items() if k != country_key}
+                        save_custom_tax_file(updated)
+                        st.success(f"Removed saved rate for {country_key}.")
+                        st.rerun()
 
         # --- Compute ---
         final_result = compute_post_tax(
