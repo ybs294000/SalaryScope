@@ -6442,7 +6442,7 @@ if "Admin" in tabs:
 
         show_admin_panel(st.session_state.username)
 # ==================================================
-# TAB 8: ABOUT (Merged from both apps)
+# TAB 9: ABOUT (Merged from both apps)
 # ==================================================
 about_index = tabs.index("About")
 with tab_objects[about_index]:
@@ -6464,8 +6464,8 @@ with tab_objects[about_index]:
         with col_ab1:
             st.markdown("### Model 1 — General Salary (Random Forest)")
             st.markdown("""
-    **Dataset:** General salary dataset (`Salary.csv`)
-
+    **Dataset:** [General Salary Dataset (Kaggle)](https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country)
+    
     **Models:**
     - Random Forest Regressor (optimized via GridSearchCV) for salary prediction
     - HistGradientBoostingClassifier (optimized via GridSearchCV) for salary level classification
