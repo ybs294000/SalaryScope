@@ -450,7 +450,7 @@ def render_col_adjuster(
                     col_sw, col_rw = st.columns(2)
                     with col_sw:
                         if st.button(
-                            "\U0001f4be Save",
+                            ":material/save: Save",
                             key=f"{widget_key}_save_work",
                             disabled=not bool(work_key)
                         ):
@@ -462,7 +462,7 @@ def render_col_adjuster(
                                 st.error("Could not save file.")
                     with col_rw:
                         if st.button(
-                            "\U0001f5d1\ufe0f Reset",
+                            ":material/delete: Reset",
                             key=f"{widget_key}_reset_work",
                             disabled=work_key not in saved_overrides
                         ):
@@ -509,16 +509,17 @@ def render_col_adjuster(
                     step=1.0,
                     key=custom_cmp_slider,
                 )
-#                if st.button(
-#                    "\U0001f4be Save comparison index",
-#                    key=f"{widget_key}_save_cmp",
-#                ):
-#                    upd = dict(saved_overrides)
-#                    upd[cmp_code] = custom_cmp_idx_val
-#                    if save_custom_col_file(upd):
-#                        st.success(f"Saved {custom_cmp_idx_val:.0f} for {cmp_code}.")
-#                    else:
-#                        st.error("Could not save file.")
+                if _is_local():
+                    if st.button(
+                        ":material/save: Save comparison index",
+                        key=f"{widget_key}_save_cmp",
+                    ):
+                        upd = dict(saved_overrides)
+                        upd[cmp_code] = custom_cmp_idx_val
+                        if save_custom_col_file(upd):
+                            st.success(f"Saved {custom_cmp_idx_val:.0f} for {cmp_code}.")
+                        else:
+                            st.error("Could not save file.")
 
         # --- Compute ---
         result = compute_col_adjusted(

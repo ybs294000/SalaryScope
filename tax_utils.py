@@ -46,6 +46,9 @@ from typing import Optional
 import streamlit as st
 
 from country_utils import get_country_name, resolve_iso2
+
+from admin_panel import _is_local
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -865,19 +868,19 @@ def render_tax_adjuster(
                 "No country detected. Using generic 25% rate.\n\n"
                 "Use the custom rate below for accuracy."
             )
-
-        #with col_info2:
-        #    if saved_rate_for_country is not None:
-        #        st.success(
-        #            f"A saved custom rate for **{country_key}** was found: "
-        #            f"**{saved_rate_for_country * 100:.1f}%**\n\n"
-        #            "Enable 'Use custom rate' below to apply it."
-        #        )
-        #    else:
-        #        st.markdown(
-        #            "**No saved custom rate for this country.**\n\n"
-        #            "You can enter one below and save it for future sessions."
-        #        )
+        if _is_local():
+            with col_info2:
+                if saved_rate_for_country is not None:
+                    st.success(
+                        f"A saved custom rate for **{country_key}** was found: "
+                        f"**{saved_rate_for_country * 100:.1f}%**\n\n"
+                        "Enable 'Use custom rate' below to apply it."
+                    )
+                else:
+                    st.markdown(
+                        "**No saved custom rate for this country.**\n\n"
+                        "You can enter one below and save it for future sessions."
+                    )
 
         # --- Custom rate toggle ---
         use_custom = st.toggle(
