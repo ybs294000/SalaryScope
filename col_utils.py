@@ -43,6 +43,9 @@ from typing import Optional
 import streamlit as st
 
 from country_utils import get_country_name, resolve_iso2
+
+from admin_panel import _is_local
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -443,28 +446,29 @@ def render_col_adjuster(
                     step=1.0,
                     key=custom_work_slider,
                 )
-#                col_sw, col_rw = st.columns(2)
-#                with col_sw:
-#                    if st.button(
-#                        "\U0001f4be Save",
-#                        key=f"{widget_key}_save_work",
-#                        disabled=not bool(work_key)
-#                    ):
-#                        upd = dict(saved_overrides)
-#                        upd[work_key] = custom_work_idx
-#                        if save_custom_col_file(upd):
-#                            st.success(f"Saved {custom_work_idx:.0f} for {work_key}.")
-#                        else:
-#                            st.error("Could not save file.")
-#                with col_rw:
-#                    if st.button(
-#                        "\U0001f5d1\ufe0f Reset",
-#                        key=f"{widget_key}_reset_work",
-#                        disabled=work_key not in saved_overrides
-#                    ):
-#                        upd = {k: v for k, v in saved_overrides.items() if k != work_key}
-#                        save_custom_col_file(upd)
-#                        st.rerun()
+                if _is_local():
+                    col_sw, col_rw = st.columns(2)
+                    with col_sw:
+                        if st.button(
+                            "\U0001f4be Save",
+                            key=f"{widget_key}_save_work",
+                            disabled=not bool(work_key)
+                        ):
+                            upd = dict(saved_overrides)
+                            upd[work_key] = custom_work_idx
+                            if save_custom_col_file(upd):
+                                st.success(f"Saved {custom_work_idx:.0f} for {work_key}.")
+                            else:
+                                st.error("Could not save file.")
+                    with col_rw:
+                        if st.button(
+                            "\U0001f5d1\ufe0f Reset",
+                            key=f"{widget_key}_reset_work",
+                            disabled=work_key not in saved_overrides
+                        ):
+                            upd = {k: v for k, v in saved_overrides.items() if k != work_key}
+                            save_custom_col_file(upd)
+                            st.rerun()
 
         # --- Comparison country ---
         with col_b:
