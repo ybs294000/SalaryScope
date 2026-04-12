@@ -245,7 +245,7 @@ def _pct(r: float) -> str:
 def _get_currency_meta(location_hint: Optional[str]) -> tuple[str, str, float]:
     """Return (currency_code, symbol, fx_rate). Falls back to USD."""
     try:
-        from currency_utils import guess_currency, get_converted_amount, CURRENCY_INFO
+        from app.utils.currency_utils import guess_currency, get_converted_amount, CURRENCY_INFO
         code = guess_currency(location_hint) or "USD"
         if code == "USD":
             return "USD", "$", 1.0
