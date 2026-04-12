@@ -173,7 +173,7 @@ def _resolve_key(location_hint: Optional[str], table: dict) -> Optional[str]:
     if key in table:
         return key
     try:
-        from country_utils import resolve_iso2
+        from app.utils.country_utils import resolve_iso2
         resolved = resolve_iso2(location_hint)
         if resolved and resolved in table:
             return resolved
@@ -186,7 +186,7 @@ def _country_name(location_hint: Optional[str]) -> str:
     if not location_hint:
         return "Unknown"
     try:
-        from country_utils import get_country_name
+        from app.utils.country_utils import get_country_name
         return get_country_name(location_hint) or str(location_hint)
     except ImportError:
         return str(location_hint)
@@ -203,7 +203,7 @@ def _pct(r: float) -> str:
 def _get_currency_meta(location_hint: Optional[str]) -> tuple[str, str, float]:
     """Return (currency_code, symbol, fx_rate). Falls back to USD."""
     try:
-        from currency_utils import guess_currency, get_converted_amount, CURRENCY_INFO
+        from app.utils.currency_utils import guess_currency, get_converted_amount, CURRENCY_INFO
         code = guess_currency(location_hint) or "USD"
         if code == "USD":
             return "USD", "$", 1.0
