@@ -469,31 +469,31 @@ APP1_MODEL_COMPARISON = [
         "Model": "Linear Regression",
         "MAE": 16884.376635,
         "RMSE": 23008.684282,
-        "Test R²": 0.799584
+        "Test R2": 0.799584
     },
     {
         "Model": "Decision Tree Regression",
         "MAE": 13973.727758,
         "RMSE": 19079.721423,
-        "Test R²": 0.862186
+        "Test R2": 0.862186
     },
     {
         "Model": "Gradient Boosting Regression",
         "MAE": 12405.046692,
         "RMSE": 16871.279240,
-        "Test R²": 0.892243
+        "Test R2": 0.892243
     },
     {
         "Model": "XGBoost (GridSearchCV)",
         "MAE": 5861.980002,
         "RMSE": 10337.127946,
-        "Test R²": 0.959547
+        "Test R2": 0.959547
     },
     {
         "Model": "Random Forest (GridSearchCV)",
         "MAE": 4926.799420,
         "RMSE": 9760.508203,
-        "Test R²": 0.963934
+        "Test R2": 0.963934
     }
 ]
 
@@ -540,31 +540,31 @@ APP1_CLASSIFIER_MODEL_COMPARISON = [
 APP2_MODEL_COMPARISON = [
     {
         "Model": "Linear Regression (Raw)",
-        "Test R²": 0.3486,
+        "Test R2": 0.3486,
         "MAE": 40169,
         "RMSE": 53380
     },
     {
         "Model": "Gradient Boosting (Raw)",
-        "Test R²": 0.3989,
+        "Test R2": 0.3989,
         "MAE": 38921,
         "RMSE": 51278
     },
     {
         "Model": "Random Forest (Log)",
-        "Test R²": 0.5759,
+        "Test R2": 0.5759,
         "MAE": 37878,
         "RMSE": 51768
     },
     {
         "Model": "XGBoost (Log)",
-        "Test R²": 0.5944,
+        "Test R2": 0.5944,
         "MAE": 37668,
         "RMSE": 51505
     },
     {
         "Model": "XGBoost (Raw + Engineered)",
-        "Test R²": 0.5949,
+        "Test R2": 0.5949,
         "MAE": 35913,
         "RMSE": 48774
     }
@@ -3225,8 +3225,8 @@ with tab_objects[3]:
 
             st.subheader("Performance Metrics")
             col1d, col2d = st.columns(2)
-            col1d.metric("Test R²", round(app1_metadata["test_r2"], 4))
-            col2d.metric("Cross-Val R² (Mean)", round(app1_metadata["cv_mean_r2"], 4))
+            col1d.metric("Test R2", round(app1_metadata["test_r2"], 4))
+            col2d.metric("Cross-Val R2 (Mean)", round(app1_metadata["cv_mean_r2"], 4))
             col3d, col4d = st.columns(2)
             col3d.metric("MAE (Test)", round(app1_metadata["mae"], 2))
             col4d.metric("RMSE (Test)", round(app1_metadata["rmse"], 2))
@@ -3234,7 +3234,7 @@ with tab_objects[3]:
             st.divider()
             st.subheader("Model Comparison")
             comparison_df_a1 = pd.DataFrame(APP1_MODEL_COMPARISON)
-            comparison_df_a1 = comparison_df_a1.sort_values(by="Test R²", ascending=False)
+            comparison_df_a1 = comparison_df_a1.sort_values(by="Test R2", ascending=False)
 
             def highlight_selected(row):
                 if "Random Forest" in row["Model"]:
@@ -3245,11 +3245,11 @@ with tab_objects[3]:
             st.dataframe(styled_df_a1, width='stretch')
 
             fig_compare_a1 = px.bar(
-                comparison_df_a1, x="Model", y="Test R²",
-                title="Model Comparison (Test R²)", color="Model",
+                comparison_df_a1, x="Model", y="Test R2",
+                title="Model Comparison (Test R2)", color="Model",
                 color_discrete_sequence=_MODEL_COLORS
             )
-            _apply_theme(fig_compare_a1, {"xaxis_title": "Model", "yaxis_title": "Test R²", "showlegend": False})
+            _apply_theme(fig_compare_a1, {"xaxis_title": "Model", "yaxis_title": "Test R2", "showlegend": False})
             st.plotly_chart(fig_compare_a1, width='stretch')
 
             st.divider()
@@ -3260,8 +3260,8 @@ with tab_objects[3]:
             fig_radar_a1 = go.Figure()
             for _, row in comparison_radar_a1.iterrows():
                 fig_radar_a1.add_trace(go.Scatterpolar(
-                    r=[row["Test R²"], 1 - row["MAE_norm"], 1 - row["RMSE_norm"]],
-                    theta=["R²", "MAE (inverted)", "RMSE (inverted)"],
+                    r=[row["Test R2"], 1 - row["MAE_norm"], 1 - row["RMSE_norm"]],
+                    theta=["R2", "MAE (inverted)", "RMSE (inverted)"],
                     fill="toself", name=row["Model"]
                 ))
             fig_radar_a1.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 1])), showlegend=True)
@@ -3828,14 +3828,14 @@ with tab_objects[3]:
 
             st.subheader("Model Performance Metrics")
             col1f, col2f, col3f = st.columns(3)
-            col1f.metric("Test R² (log scale)", f"{metadata_a2.get('test_r2_log_scale',0):.4f}")
+            col1f.metric("Test R2 (log scale)", f"{metadata_a2.get('test_r2_log_scale',0):.4f}")
             col2f.metric("MAE (USD)", f"${metadata_a2.get('mae_usd',0):,.0f}")
             col3f.metric("RMSE (USD)", f"${metadata_a2.get('rmse_usd',0):,.0f}")
 
             st.divider()
             st.subheader("Model Comparison")
             comparison_df_a2 = pd.DataFrame(APP2_MODEL_COMPARISON)
-            comparison_df_a2 = comparison_df_a2.sort_values(by="Test R²", ascending=False)
+            comparison_df_a2 = comparison_df_a2.sort_values(by="Test R2", ascending=False)
             def highlight_selected_a2(row):
                 if "XGBoost (Raw + Engineered)" in row["Model"]:
                     return ["background-color: #1E2A3A"] * len(row)
@@ -3847,9 +3847,9 @@ with tab_objects[3]:
 
             st.divider()
             st.subheader("Model Performance Comparison")
-            fig_compare_a2 = px.bar(comparison_df_a2, x="Model", y="Test R²",
-                                     color="Model", title="Model Comparison Based on Test R²", color_discrete_sequence=_MODEL_COLORS)
-            fig_compare_a2.update_layout(xaxis_title="Model", yaxis_title="Test R²", showlegend=False)
+            fig_compare_a2 = px.bar(comparison_df_a2, x="Model", y="Test R2",
+                                     color="Model", title="Model Comparison Based on Test R2", color_discrete_sequence=_MODEL_COLORS)
+            fig_compare_a2.update_layout(xaxis_title="Model", yaxis_title="Test R2", showlegend=False)
             _apply_theme(fig_compare_a2)
             st.plotly_chart(fig_compare_a2, width='stretch')
 
