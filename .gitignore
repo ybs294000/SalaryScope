@@ -3,3 +3,4 @@ __pycache__/
 venv
 old-imp
 .streamlit/secrets.toml
+col_indices_custom.json
