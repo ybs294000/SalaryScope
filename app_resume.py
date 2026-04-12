@@ -12,6 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import base64
+
 from pdf_utils import (
     app1_generate_manual_pdf,
     app1_generate_resume_pdf,
@@ -38,6 +39,17 @@ from negotiation_tips import (
     generate_negotiation_tips_app2,
     render_negotiation_tips
 )
+
+from currency_utils import render_currency_converter, get_active_currency, get_active_rates
+from tax_utils import render_tax_adjuster
+from col_utils import render_col_adjuster
+from ctc_utils import render_ctc_adjuster
+from takehome_utils import render_takehome_adjuster
+from savings_utils import render_savings_adjuster
+from loan_utils import render_loan_adjuster
+
+from feedback import feedback_ui
+
 from resume_analysis import (
     extract_text_from_pdf,
     extract_resume_features,
@@ -48,7 +60,6 @@ from resume_analysis import (
     calculate_resume_score_a2, 
     APP2_ALLOWED_ISO_CODES_A2
 )
-from feedback import feedback_ui
 
 from batch_prediction_tab import render_batch_prediction_tab
 
@@ -60,13 +71,6 @@ from data_insights_tab import render_data_insights_tab
 
 from about_tab import render_about_tab
 
-from currency_utils import render_currency_converter, get_active_currency, get_active_rates
-from tax_utils import render_tax_adjuster
-from col_utils import render_col_adjuster
-from ctc_utils import render_ctc_adjuster
-from takehome_utils import render_takehome_adjuster
-from savings_utils import render_savings_adjuster
-from loan_utils import render_loan_adjuster
 
 from auth import login_ui, register_ui, logout, get_logged_in_user
 from auth import is_admin
