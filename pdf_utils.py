@@ -1017,10 +1017,10 @@ def app1_generate_model_analytics_pdf(metadata, model, model_comparison,
     y = draw_line(c, left_margin, right_margin, y)
     y -= 15
     c.setFont("Helvetica", 10)
-    sorted_models = sorted(model_comparison, key=lambda x: x["Test R²"], reverse=True)
+    sorted_models = sorted(model_comparison, key=lambda x: x["Test R2"], reverse=True)
     for row in sorted_models:
         c.drawString(left_margin + 5, y, row["Model"][:34])
-        c.drawString(left_margin + 260, y, f"{row['Test R²']:.4f}")
+        c.drawString(left_margin + 260, y, f"{row['Test R2']:.4f}")
         c.drawString(left_margin + 320, y, f"${row['MAE']:,.0f}")
         c.drawString(left_margin + 400, y, f"${row['RMSE']:,.0f}")
         y -= 15
@@ -2134,10 +2134,10 @@ def app2_generate_model_analytics_pdf(metadata, model, model_comparison, analyti
     c.line(left_margin, y, right_margin, y)
     y -= 15
     c.setFont("Helvetica", 10)
-    sorted_models = sorted(model_comparison, key=lambda x: x["Test R²"], reverse=True)
+    sorted_models = sorted(model_comparison, key=lambda x: x["Test R2"], reverse=True)
     for row in sorted_models:
         c.drawString(left_margin + 5, y, row["Model"][:34])
-        c.drawString(left_margin + 260, y, f"{row['Test R²']:.4f}")
+        c.drawString(left_margin + 260, y, f"{row['Test R2']:.4f}")
         c.drawString(left_margin + 320, y, f"${row['MAE']:,.0f}")
         c.drawString(left_margin + 400, y, f"${row['RMSE']:,.0f}")
         y -= 15
