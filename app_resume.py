@@ -62,15 +62,10 @@ from resume_analysis import (
 )
 
 from batch_prediction_tab import render_batch_prediction_tab
-
 from scenario_analysis_tab import render_scenario_tab
-
 from model_analytics_tab import render_model_analytics_tab
-
 from data_insights_tab import render_data_insights_tab
-
 from about_tab import render_about_tab
-
 
 from auth import login_ui, register_ui, logout, get_logged_in_user
 from auth import is_admin
