@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-from resume_analysis import (
+from app.core.resume_analysis import (
     extract_text_from_pdf,
     extract_resume_features,
     calculate_resume_score,
@@ -10,21 +10,21 @@ from resume_analysis import (
     calculate_resume_score_a2,
     APP2_ALLOWED_ISO_CODES_A2,
 )
-from insights_engine import generate_insights_app2, generate_insights_app1
-from recommendations import (
+from app.core.insights_engine import generate_insights_app2, generate_insights_app1
+from app.utils.recommendations import (
     generate_recommendations_app1,
     generate_recommendations_app2,
     render_recommendations,
 )
-from negotiation_tips import (
+from app.utils.negotiation_tips import (
     generate_negotiation_tips_app1,
     generate_negotiation_tips_app2,
     render_negotiation_tips,
 )
-from currency_utils import render_currency_converter, get_active_currency, get_active_rates
-from tax_utils import render_tax_adjuster
-from col_utils import render_col_adjuster
-from database import save_prediction
+from app.utils.currency_utils import render_currency_converter, get_active_currency, get_active_rates
+from app.utils.tax_utils import render_tax_adjuster
+from app.utils.col_utils import render_col_adjuster
+from app.core.database import save_prediction
 
 
 def render_resume_tab(

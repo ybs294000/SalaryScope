@@ -13,69 +13,74 @@ import plotly.graph_objects as go
 from datetime import datetime
 import base64
 
-from pdf_utils import (
+# -------------------------
+# UTILS
+# -------------------------
+from app.utils.pdf_utils import (
     app1_generate_manual_pdf,
     app1_generate_resume_pdf,
     app1_generate_bulk_pdf,
     app1_generate_scenario_pdf,
     cached_app1_model_analytics_pdf,
-
     app2_generate_manual_pdf,
     app2_generate_resume_pdf,
     app2_generate_bulk_pdf,
     app2_generate_scenario_pdf,
     cached_app2_model_analytics_pdf
 )
-from insights_engine import generate_insights_app2, generate_insights_app1
 
-from recommendations import (
+from app.utils.recommendations import (
     generate_recommendations_app1,
     generate_recommendations_app2,
     render_recommendations
 )
 
-from negotiation_tips import (
+from app.utils.negotiation_tips import (
     generate_negotiation_tips_app1,
     generate_negotiation_tips_app2,
     render_negotiation_tips
 )
 
-from currency_utils import render_currency_converter, get_active_currency, get_active_rates
-from tax_utils import render_tax_adjuster
-from col_utils import render_col_adjuster
-from ctc_utils import render_ctc_adjuster
-from takehome_utils import render_takehome_adjuster
-from savings_utils import render_savings_adjuster
-from loan_utils import render_loan_adjuster
+from app.utils.currency_utils import render_currency_converter, get_active_currency, get_active_rates
+from app.utils.tax_utils import render_tax_adjuster
+from app.utils.col_utils import render_col_adjuster
+from app.utils.ctc_utils import render_ctc_adjuster
+from app.utils.takehome_utils import render_takehome_adjuster
+from app.utils.savings_utils import render_savings_adjuster
+from app.utils.loan_utils import render_loan_adjuster
+from app.utils.feedback import feedback_ui
 
-from feedback import feedback_ui
+# -------------------------
+# CORE
+# -------------------------
+from app.core.insights_engine import generate_insights_app2, generate_insights_app1
 
-from resume_analysis import (
+from app.core.resume_analysis import (
     extract_text_from_pdf,
     extract_resume_features,
     calculate_resume_score,
     education_label,
-
-    extract_resume_features_a2, 
-    calculate_resume_score_a2, 
+    extract_resume_features_a2,
+    calculate_resume_score_a2,
     APP2_ALLOWED_ISO_CODES_A2
 )
 
-from manual_prediction_tab import render_manual_prediction_tab
-from resume_analysis_tab import render_resume_tab
-from batch_prediction_tab import render_batch_prediction_tab
-from scenario_analysis_tab import render_scenario_tab
-from model_analytics_tab import render_model_analytics_tab
-from data_insights_tab import render_data_insights_tab
-from about_tab import render_about_tab
+from app.core.auth import login_ui, register_ui, logout, get_logged_in_user, is_admin
+from app.core.database import init_db, create_prediction_table, save_prediction, delete_expired_sessions
 
-from auth import login_ui, register_ui, logout, get_logged_in_user
-from auth import is_admin
-from admin_panel import show_admin_panel
+# -------------------------
+# TABS
+# -------------------------
+from app.tabs.manual_prediction_tab import render_manual_prediction_tab
+from app.tabs.resume_analysis_tab import render_resume_tab
+from app.tabs.batch_prediction_tab import render_batch_prediction_tab
+from app.tabs.scenario_analysis_tab import render_scenario_tab
+from app.tabs.model_analytics_tab import render_model_analytics_tab
+from app.tabs.data_insights_tab import render_data_insights_tab
+from app.tabs.about_tab import render_about_tab
+from app.tabs.admin_panel import show_admin_panel
+from app.tabs.user_profile import show_profile
 
-from user_profile import show_profile
-from database import init_db, create_prediction_table, save_prediction
-from database import delete_expired_sessions
 if "db_initialized" not in st.session_state:
     init_db()
     create_prediction_table()

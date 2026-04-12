@@ -12,30 +12,38 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import base64
-from pdf_utils import (
+# -------------------------
+# UTILS
+# -------------------------
+from app.utils.pdf_utils import (
     app1_generate_manual_pdf,
+    app1_generate_resume_pdf,
     app1_generate_bulk_pdf,
+    app1_generate_scenario_pdf,
     cached_app1_model_analytics_pdf,
-
     app2_generate_manual_pdf,
+    app2_generate_resume_pdf,
     app2_generate_bulk_pdf,
+    app2_generate_scenario_pdf,
     cached_app2_model_analytics_pdf
 )
-from insights_engine import generate_insights_app2, generate_insights_app1
-from negotiation_tips import (
-    generate_negotiation_tips_app1,
-    generate_negotiation_tips_app2,
-    render_negotiation_tips
-)
-from recommendations import (
+
+from app.utils.recommendations import (
     generate_recommendations_app1,
     generate_recommendations_app2,
     render_recommendations
 )
-from auth import login_ui, register_ui, logout, get_logged_in_user
-from user_profile import show_profile
-from database import init_db, create_prediction_table, save_prediction
-from database import delete_expired_sessions
+
+from app.utils.negotiation_tips import (
+    generate_negotiation_tips_app1,
+    generate_negotiation_tips_app2,
+    render_negotiation_tips
+)
+from app.core.auth import login_ui, register_ui, logout, get_logged_in_user, is_admin
+from app.core.database import init_db, create_prediction_table, save_prediction, delete_expired_sessions
+
+from app.tabs.user_profile import show_profile
+
 if "db_initialized" not in st.session_state:
     init_db()
     create_prediction_table()

@@ -47,7 +47,7 @@ from datetime import datetime
 # ------------------------------------------------------------------
 
 def _db():
-    from database import _get_firestore_client
+    from app.core.database import _get_firestore_client
     return _get_firestore_client()
 
 

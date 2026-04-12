@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import json
-from auth import logout, get_logged_in_user
-from database import get_user_predictions
+from app.core.auth import logout, get_logged_in_user
+from app.core.database import get_user_predictions
 import plotly.express as px
 from io import BytesIO
 

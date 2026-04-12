@@ -9,8 +9,8 @@ import sys
 import platform
 import datetime
 import gc
-from auth import is_admin
-from database import _get_firestore_client
+from app.core.auth import is_admin
+from app.core.database import _get_firestore_client
 import os
 
 # -----------------------------------

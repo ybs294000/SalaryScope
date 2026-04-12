@@ -29,8 +29,8 @@ from typing import Optional
 import requests
 import streamlit as st
 
-from country_utils import resolve_iso2
-from admin_panel import _is_local
+from app.utils.country_utils import resolve_iso2
+from app.tabs.admin_panel import _is_local
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
