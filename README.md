@@ -722,6 +722,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Take-home salary estimation uses effective tax rates and simplified deduction models; real payroll calculations may differ.
 - Savings estimates are based on generalized expense ratios and do not account for individual lifestyle or financial obligations.
 - Loan affordability calculations use standard EMI formulas and typical lender norms, but actual loan eligibility depends on credit profile and bank policies.
+
 ---
 
 ## Future Scope
@@ -731,6 +732,10 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Expand the system to support additional job roles and domains beyond current datasets.
 - Add more interactive analysis features to help users better understand prediction behavior.
 - Use collected feedback data to retrain or calibrate models over time.
+- Enhance financial estimation modules (CTC, take-home, savings, loan) with more accurate country-specific rules and real-world datasets.  
+- Integrate detailed tax systems with deductions, exemptions, and region-specific regulations for improved take-home accuracy.  
+- Incorporate investment and wealth growth simulations (e.g., compounding, inflation-adjusted savings projections).  
+- Extend loan analysis with credit score impact, multiple loan types, and real-time interest rate integration.  
 
 ---
 
