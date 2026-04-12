@@ -1,5 +1,8 @@
 __pycache__/
-
+app/__pycache__/
+app/tabs/__pycache__/
+app/core/__pycache__/
+app/utils/__pycache__/
 venv
 old-imp
 .streamlit/secrets.toml
