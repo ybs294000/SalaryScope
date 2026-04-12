@@ -768,19 +768,30 @@ def _app2_dash1(df):
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
 
-        # Plot 5: Donut -- share of records by employment type
+        # Plot 5: Box -- salary distribution by employment type 
         r3c1, r3c2 = st.columns([2, 3])
         with r3c1:
-            emp_cnt = dff["Employment Type"].value_counts().reset_index()
-            emp_cnt.columns = ["Employment Type", "Count"]
-            fig = px.pie(
-                emp_cnt, names="Employment Type", values="Count",
-                title="Employment Type Share",
+            fig = px.box(
+                dff,
+                x="Employment Type",
+                y="salary_in_usd",
+                title="Salary Distribution by Employment Type",
+                color="Employment Type",
                 color_discrete_sequence=_C[:4],
-                hole=0.45,
+                labels={
+                    "Employment Type": "",
+                    "salary_in_usd": "Annual Salary (USD)"
+                },
+                points="outliers"
             )
-            fig.update_traces(textinfo="label+percent", textfont_size=12)
-            _themed(fig, extra={"margin": dict(l=10, r=10, t=50, b=10)})
+
+            fig.update_layout(
+                showlegend=False,
+                xaxis_title="",
+                yaxis_title="Annual Salary (USD)"
+            )
+
+            _themed(fig)
             st.plotly_chart(fig, width='stretch')
 
         with r3c2:
@@ -957,24 +968,31 @@ def _app2_dash2(df):
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
 
-        # Plot 10: Scatter -- experience level (numeric remote ratio) vs salary by work mode
+        # Plot 10: Donut -- Work Mode distribution
         r3c1, _ = st.columns([3, 1])
         with r3c1:
-            samp = dff.sample(min(len(dff), 600), random_state=42)
-            fig = px.scatter(
-                samp, x="remote_ratio", y="salary_in_usd",
-                color="Work Mode",
-                title="Salary vs Remote Ratio (Individual Records)",
-                color_discrete_sequence=_C[:3],
-                opacity=0.6,
-                labels={"remote_ratio": "Remote Ratio (%)", "salary_in_usd": "Annual Salary (USD)"},
-                category_orders={"Work Mode": _MODE_ORDER},
+            counts = (
+                dff["Work Mode"]
+                .value_counts()
+                .reindex(_MODE_ORDER)   # ensures correct order
+                .reset_index()
+                .dropna()
             )
-            fig.update_traces(marker=dict(size=5))
-            fig.update_layout(xaxis_title="Remote Ratio (%)", yaxis_title="Annual Salary (USD)")
+            counts.columns = ["Work Mode", "count"]
+
+            fig = px.pie(
+                counts,
+                names="Work Mode",
+                values="count",
+                title="Work Mode Distribution",
+                color="Work Mode",
+                color_discrete_sequence=_C[:3],
+                category_orders={"Work Mode": _MODE_ORDER},
+                hole=0.45
+            )
+            fig.update_traces(textinfo="label+percent", textposition="outside")
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
-
 
 @st.fragment
 def _app2_dash3(df, country_map):
