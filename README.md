@@ -718,6 +718,10 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Tax estimation uses approximate effective rates and does not model detailed national tax rules.
 - Cost-of-living adjustments are based on generalized indices and may not reflect individual lifestyle differences.
 - Combined currency, tax, and COL adjustments are intended for comparative insight, not exact financial planning.
+- CTC breakdown uses approximate country-level salary structures and may not reflect actual employer-specific compensation components.
+- Take-home salary estimation uses effective tax rates and simplified deduction models; real payroll calculations may differ.
+- Savings estimates are based on generalized expense ratios and do not account for individual lifestyle or financial obligations.
+- Loan affordability calculations use standard EMI formulas and typical lender norms, but actual loan eligibility depends on credit profile and bank policies.
 ---
 
 ## Future Scope
