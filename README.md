@@ -65,7 +65,7 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 
 ## Overview
 
-SalaryScope allows users to predict salaries either manually, via resume upload (hybrid extraction using spaCy and rule-based techniques), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, basic tax estimation, and cost-of-living adjusted salary insights, user authentication, prediction feedback collection, and PDF report generation.
+SalaryScope allows users to predict salaries either manually, via resume upload (hybrid extraction using spaCy and rule-based techniques), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration,basic tax estimation, cost-of-living adjusted salary insights, and extended financial analysis tools such as CTC breakdown, take-home salary estimation, savings potential, loan affordability insights, user authentication, prediction feedback collection, and PDF report generation.
 
 The project follows a structured workflow:
 - Data analysis and model development using Jupyter notebooks
@@ -89,6 +89,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Firebase-based authentication and feedback system
 - Basic post-tax salary estimation with country-specific effective rates
 - Basic cost-of-living (COL) adjustment for contextual salary comparison
+- Basicfinancial analysis tools: CTC breakdown, take-home salary estimation, savings potential, and loan affordability analysis
 ---
 
 ## Live Demo
@@ -306,6 +307,17 @@ The application runs in a web browser, making it platform-independent and easily
 **Notes:**
 - COL values are approximate and may vary by city, lifestyle, and time
 - Intended for comparison and insight, not exact financial planning
+
+### Financial Insights Layer
+
+- Provides extended salary interpretation beyond raw predictions
+- Includes:
+  - Take-home salary estimation
+  - CTC structure breakdown
+  - Savings potential analysis
+  - Loan affordability estimation
+- Designed as modular utilities with toggle-based UI integration
+- Works alongside prediction outputs
 
 ### Admin Panel (Diagnostics & Monitoring)
 
@@ -565,6 +577,7 @@ client_x509_cert_url = "your_cert_url"
   - Enable post-tax salary estimation
   - Apply cost-of-living adjustment for better comparison across regions
   - Download a PDF report
+  - Explore additional financial insights such as take-home salary, savings potential, CTC breakdown, and loan affordability
 5. Expand the **Share Feedback on This Prediction** section to rate the prediction accuracy — login is not required
 
 ### Resume Prediction
