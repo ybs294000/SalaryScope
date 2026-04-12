@@ -28,16 +28,16 @@ from app.utils.pdf_utils import (
     cached_app2_model_analytics_pdf
 )
 
+from app.core.insights_engine import generate_insights_app2, generate_insights_app1
 from app.utils.recommendations import (
     generate_recommendations_app1,
     generate_recommendations_app2,
-    render_recommendations
+    render_recommendations,
 )
-
 from app.utils.negotiation_tips import (
     generate_negotiation_tips_app1,
     generate_negotiation_tips_app2,
-    render_negotiation_tips
+    render_negotiation_tips,
 )
 from app.core.auth import login_ui, register_ui, logout, get_logged_in_user, is_admin
 from app.core.database import init_db, create_prediction_table, save_prediction, delete_expired_sessions
