@@ -399,20 +399,38 @@ salaryscope/
 │
 ├── app_resume.py                        # Main Streamlit application with resume analysis and scenario/what-if analysis
 ├── app-lite.py                          # Lightweight Streamlit application
-├── resume_analysis.py                   # Resume parsing (SpaCy, regex, feature extraction)
-├── auth.py                              # Firebase Authentication (login, register, session)
-├── database.py                          # Firestore client, user and prediction functions
-├── feedback.py                          # Prediction feedback collection (UI + Firestore save)
-├── insights_engine.py                   # Insights engine
-├── recommendations.py                   # Recommendations engine
-├── negotiation_tips.py                  # Salary negotiation tips engine
-├── pdf_utils.py                         # ReportLab PDF generation for all report types
-├── country_utils.py                   # Centralized country resolution (ISO-2, aliases, CLDR via Babel)
-├── currency_utils.py                    # Currency conversion utility (live rates, fallback system, Streamlit UI)
-├── tax_utils.py                         # Basic tax estimation utility (country-based effective rates, Streamlit UI)
-├── col_utils.py                         # Basic cost-of-living adjustment utility (relative salary normalization)
-├── user_profile.py                      # User profile tab UI and prediction history
-├── admin_panel.py                       # Admin dashboard for basic system diagnostics, usage insights, and monitoring
+│
+├── app/
+│   ├── core/
+│   │   ├── auth.py                      # Firebase Authentication (login, register, session)
+│   │   ├── database.py                  # Firestore client, user and prediction functions
+│   │   ├── insights_engine.py           # Insights engine
+│   │   └── resume_analysis.py           # Resume parsing (SpaCy, regex, feature extraction)
+│   │
+│   ├── tabs/
+│   │   ├── manual_prediction_tab.py    # Manual Prediction: Salary prediction, breakdown, insights, reports, adjustments
+│   │   ├── resume_analysis_tab.py      # Resume Prediction: E    xtract features from resume and predict salary
+│   │   ├── batch_prediction_tab.py     # Batch Prediction: Process files, run predictions, analytics, export results
+│   │   ├── scenario_analysis_tab.py    # Scenario Analysis: Compare scenarios, charts, sensitivity analysis
+│   │   ├── model_analytics_tab.py      # Model Analytics: Metrics, feature importance, residuals, evaluation
+│   │   ├── data_insights_tab.py        # Data Insights: Dataset analysis, distributions, trends
+│   │   ├── user_profile.py             # User profile tab UI and prediction history
+│   │   ├── admin_panel.py              # Admin dashboard for basic system diagnostics, usage insights, and monitoring
+│   │   └── about_tab.py                # About: Project overview and information
+│   │
+│   ├── utils/
+│   │   ├── country_utils.py             # Centralized country resolution (ISO-2, aliases, CLDR via Babel)
+│   │   ├── currency_utils.py            # Currency conversion utility (live rates, fallback system, Streamlit UI)
+│   │   ├── tax_utils.py                 # Basic tax estimation utility (country-based effective rates, Streamlit UI)
+│   │   ├── col_utils.py                 # Basic cost-of-living adjustment utility (relative salary normalization)
+│   │   ├── pdf_utils.py                 # ReportLab PDF generation for all report types
+│   │   ├── feedback.py                  # Prediction feedback collection (UI + Firestore save)
+│   │   ├── recommendations.py           # Recommendations engine
+│   │   ├── negotiation_tips.py          # Salary negotiation tips engine
+│   │   ├── ctc_utils.py                 # CTC Breakdown: Splits salary into base, HRA, bonus, PF, gratuity, and allowances
+│   │   ├── takehome_utils.python        # Take-Home Salary: Calculates net salary after tax, PF, and deductions
+│   │   ├── savings_utils.py             # Savings Calculator: Estimates monthly and long-term savings from net income
+│   │   └── loan_utils.python            # Loan Estimator: Calculates maximum loan based on income, EMI limits, and interest
 │
 ├── model/
 │   ├── rf_model_grid.pkl                # Model 1: Random Forest pipeline + metadata
@@ -446,9 +464,9 @@ salaryscope/
 ├── .streamlit/
 │   └── config.toml                      # Streamlit configuration
 │
+├── exchange_rates_fallback.json
 ├── requirements.txt
 └── README.md
-
 ```
 
 ---

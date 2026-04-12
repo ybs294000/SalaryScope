@@ -262,7 +262,7 @@ def _get_currency_meta(location_hint: Optional[str]) -> tuple[str, str, float]:
     or the location cannot be resolved.
     """
     try:
-        from currency_utils import guess_currency, get_converted_amount, CURRENCY_INFO
+        from app.utils.currency_utils import guess_currency, get_converted_amount, CURRENCY_INFO
         code = guess_currency(location_hint) or "USD"
         if code == "USD":
             return "USD", "$", 1.0
