@@ -139,6 +139,58 @@ def save_prediction(username: str, model_used: str, input_data: dict, predicted_
     })
 
 
+# ---------------------------------------------------
+# EMAIL VERIFICATION STATE (Firestore-backed)
+# Persists the pending-verification record so that if a user registers,
+# closes the tab, and comes back later to log in, the app knows the
+# account is still awaiting verification.
+#
+# Rollback: remove these two functions and their call sites in
+# email_verification.py and auth.py. No schema migration needed --
+# the Firestore collection can simply be left or manually cleared.
+# ---------------------------------------------------
+
+def save_pending_verification(email: str, id_token: str) -> None:
+    """
+    Store a pending-verification record in Firestore.
+    Keyed by email so it is idempotent on repeated calls.
+    """
+    try:
+        db = _db()
+        db.collection("pending_verifications").document(email).set({
+            "email": email,
+            "id_token": id_token,
+            "created_at": datetime.utcnow().isoformat(),
+        })
+    except Exception:
+        pass
+
+
+def get_pending_verification_db(email: str) -> dict | None:
+    """
+    Return the pending-verification record for email, or None if not found.
+    """
+    try:
+        db = _db()
+        doc = db.collection("pending_verifications").document(email).get()
+        if doc.exists:
+            return doc.to_dict()
+        return None
+    except Exception:
+        return None
+
+
+def clear_pending_verification_db(email: str) -> None:
+    """
+    Delete the pending-verification record once the user is verified.
+    """
+    try:
+        db = _db()
+        db.collection("pending_verifications").document(email).delete()
+    except Exception:
+        pass
+
+
 def get_user_predictions(username: str):
     """
     Return a list of tuples matching the old SQLite schema:

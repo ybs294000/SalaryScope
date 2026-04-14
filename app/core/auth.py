@@ -6,6 +6,17 @@ import urllib.parse
 from datetime import datetime, timedelta
 import requests as http_requests
 
+# Email verification -- all logic is isolated in email_verification.py.
+# Rollback: remove this import and the three call sites marked below.
+from app.core.email_verification import (
+    send_verification_email,
+    set_pending_verification,
+    get_pending_verification,
+    clear_pending_verification,
+    is_verification_pending,
+    render_verification_pending_ui,
+)
+
 
 def _safe_request(method, url, **kwargs):
     try:
@@ -272,6 +283,15 @@ def get_oauth_redirect_uri():
 def login_ui():
     st.subheader("Sign In")
 
+    # If the user registered in this session but has not yet verified,
+    # show the verification waiting screen instead of the login form.
+    # -- ROLLBACK: remove this block --
+    if is_verification_pending():
+        email, id_token = get_pending_verification()
+        render_verification_pending_ui(email, id_token)
+        return
+    # -- ROLLBACK end --
+
     tab_email = st.tabs(["Email & Password"])[0]
 
     with tab_email:
@@ -302,7 +322,52 @@ def login_ui():
                 email = result.get("email", email_input)
                 id_token = result.get("idToken", "")
 
+                # Check email verification before creating a session.
+                # -- ROLLBACK: remove from here to the next ROLLBACK marker --
+                from app.core.email_verification import check_email_verified
+
+                verified, err = check_email_verified(id_token)
+
+                if verified is None:
+                    # Network error during check -- fail open with a warning
+                    # so a Firebase outage does not permanently lock out users.
+                    st.warning(
+                        "Could not confirm email verification status due to a network issue. "
+                        "Proceeding with login. If you have not verified your email, "
+                        "some features may be restricted."
+                    )
+
+                elif not verified:
+                    # Account exists but email is not verified.
+                    # Check if there is a stored id_token from a prior session.
+                    stored_token = id_token  # current token is valid for resend
+
+                    try:
+                        from app.core.database import get_pending_verification_db, save_pending_verification
+                        record = get_pending_verification_db(email)
+                        if record and record.get("id_token"):
+                            stored_token = record["id_token"]
+                        else:
+                            save_pending_verification(email, id_token)
+                    except Exception:
+                        pass
+
+                    set_pending_verification(email, stored_token)
+                    st.rerun()
+                    return False
+                # -- ROLLBACK end --
+
                 _set_logged_in(email, id_token)
+
+                # Clear any stale verification state for this email.
+                # -- ROLLBACK: remove this block --
+                try:
+                    clear_pending_verification()
+                    from app.core.database import clear_pending_verification_db
+                    clear_pending_verification_db(email)
+                except Exception:
+                    pass
+                # -- ROLLBACK end --
 
                 try:
                     from app.core.database import ensure_firestore_user
@@ -322,6 +387,19 @@ def login_ui():
 # ---------------------------------------------------
 
 def register_ui():
+    # -- ROLLBACK NOTE: the verification pending UI block and the
+    #    send_verification_email call below are the only additions here.
+    #    Everything else is unchanged from the original.
+
+    # If this session already has a pending verification in progress,
+    # show the waiting screen instead of the registration form.
+    # This handles the case where the user submits the form and Streamlit reruns.
+    if is_verification_pending():
+        email, id_token = get_pending_verification()
+        st.subheader("Create Account")
+        render_verification_pending_ui(email, id_token)
+        return
+
     st.subheader("Create Account")
 
     username = st.text_input("Display Name", key="reg_username").strip()
@@ -344,14 +422,38 @@ def register_ui():
             return
 
         firebase_email = result.get("email", email)
+        id_token = result.get("idToken", "")
 
+        # Create the Firestore user document (display name stored here).
         try:
             from app.core.database import ensure_firestore_user
             ensure_firestore_user(firebase_email, firebase_email, display_name=username)
         except Exception:
             pass
 
-        st.success("Account created! You can now sign in.")
+        # Send verification email via Firebase.
+        # -- ROLLBACK: remove from here to the next ROLLBACK marker --
+        ok, err = send_verification_email(id_token)
+
+        if ok:
+            set_pending_verification(firebase_email, id_token)
+
+            try:
+                from app.core.database import save_pending_verification
+                save_pending_verification(firebase_email, id_token)
+            except Exception:
+                pass
+
+            st.rerun()
+        else:
+            # Sending the verification email failed, but the Firebase account
+            # was created successfully. Tell the user to try logging in so
+            # they can request a resend from the login flow.
+            st.warning(
+                f"Account created, but we could not send the verification email: {err} "
+                "Please try signing in to request a new verification email."
+            )
+        # -- ROLLBACK end --
 
 
 # ---------------------------------------------------
