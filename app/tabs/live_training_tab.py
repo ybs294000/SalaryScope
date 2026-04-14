@@ -6,7 +6,7 @@ The "Live Model" tab for SalaryScope.
 This tab has two independent panels:
 
   Panel A -- Training (admin + local only, guarded by is_local())
-    Step 1: Configure search parameters (job titles, countries)
+    Step 1: Configure search parameters (domains, countries)
     Step 2: Fetch data from Adzuna API (real live salary listings)
     Step 3: Clean and audit data
     Step 4: Train GradientBoostingRegressor
@@ -15,45 +15,44 @@ This tab has two independent panels:
 
   Panel B -- Prediction (all logged-in users, local + cloud)
     Loads the current model from HuggingFace.
-    Input form styled like manual_prediction_tab.
+    Input form with full feature set (experience, education, title, size,
+    location, work mode, contract type).
     Output: predicted salary + 80% interval + model provenance card.
 
-Integration with the model switcher
--------------------------------------
-This tab adds "Model 3 -- Live Community (GBR)" to MODEL_OPTIONS in
-app_resume.py.  When selected, the model switcher caption updates and
-the active_model flag is set.  The Live Model tab always shows
-regardless of which model is selected in the switcher -- the switcher
-selection only affects tabs 1-4 (Manual, Resume, Batch, Scenario).
-The prediction in Panel B always uses the HuggingFace live model,
-independent of IS_APP1.
+IMPORTANT NOTICE TO USERS
+--------------------------
+This is an EXPERIMENTAL feature. The live model is trained on Adzuna job
+listing salary data, which has several known limitations:
+  - Salary ranges from job postings are not verified actual compensation.
+  - The training dataset size is modest (hundreds to low thousands of records).
+  - Some features (company size, education) cannot be inferred from Adzuna.
+  - Cross-currency normalisation introduces approximation error.
+  - Model performance (R2, MAE) will typically be LOWER than the main
+    historical-data models (Model 1 and Model 2).
 
-Rollback (tab-level, not just model-level)
-------------------------------------------
-EXTERNAL (persistent):
-  Each uploaded model is saved as live_model_<version>.pkl on HuggingFace.
-  The Rollback Manager lists all versions with metrics and lets the admin
-  promote any version to current with one click.
+Users requiring accurate salary estimates should prefer Model 1 (Random
+Forest) or Model 2 (XGBoost), both trained on a curated historical dataset
+that is significantly larger and more feature-rich than the Adzuna live feed.
 
-INTERNAL (session-only):
-  After training but before uploading, the admin can discard the result.
-  A "Discard" button clears the session artefact so nothing is persisted.
+Quota safety
+------------
+The Adzuna free tier allows 250 requests per day. Fetching is capped at 25%
+(62 requests per session) to preserve quota across multiple training runs.
+Override with ADZUNA_MAX_REQUESTS_OVERRIDE in secrets.
 
-COMPLETE FEATURE REMOVAL (making app return to pre-addition state):
-  1. Remove import from app_resume.py (see INTEGRATION below)
-  2. Remove the three MODEL_OPTIONS / tab additions from app_resume.py
-  The existing tabs 1-6, profile, admin, and about are entirely unaffected.
-  No existing file is modified; all new code is purely additive.
+Rollback
+--------
+EXTERNAL (persistent): each upload is versioned on HuggingFace. Rollback
+  Manager lets the admin promote any version to current.
+INTERNAL (session-only): Discard button clears session artefact before upload.
+COMPLETE REMOVAL: remove the import in app_resume.py.
 
 is_local() convention
------------------------
-Training Panel A is shown only when _is_local() returns True (same logic
-as admin_panel.py).  On Streamlit Cloud, admins see a read-only status
-card instead because cloud containers are ephemeral -- training must
-happen locally then be uploaded to HuggingFace for cloud serving.
+---------------------
+Training Panel A is shown only when _is_local() returns True. On Streamlit
+Cloud, admins see a read-only status card instead.
 
-No emojis, no unicode outside string literals.
-Icons use :material/icon_name: syntax only.
+No unicode outside string literals. Icons use :material/icon_name: syntax only.
 """
 
 from __future__ import annotations
@@ -67,6 +66,11 @@ from app.utils.live_training_datasource import (
     get_fetch_quality_summary,
     is_adzuna_configured,
     SUPPORTED_COUNTRIES,
+    DOMAIN_TITLES,
+    DEFAULT_DOMAINS,
+    DEFAULT_SESSION_MAX_REQS,
+    FREE_TIER_DAILY_LIMIT,
+    QUOTA_SAFETY_FRACTION,
 )
 from app.utils.live_training_cleaner import (
     clean_adzuna_records,
@@ -88,6 +92,7 @@ from app.utils.live_model_predictor import (
     predict_salary,
     EXPERIENCE_DISPLAY,
     EXPERIENCE_NUM_MAP,
+    _DEFAULT_CATEGORY,
 )
 
 # ---------------------------------------------------------------------------
@@ -117,34 +122,34 @@ def _is_local() -> bool:
 # SESSION STATE KEYS -- prefixed "lt_" to avoid clashes with existing keys
 # ---------------------------------------------------------------------------
 
-_K_RAW      = "lt_raw_records"
-_K_FETCH_RPT= "lt_fetch_report"
-_K_CLEAN_DF = "lt_clean_df"
-_K_AUDIT    = "lt_clean_audit"
-_K_ART      = "lt_artefact"
-_K_ART_BYTES= "lt_artefact_bytes"
-_K_REPORT   = "lt_train_report"
-_K_UPLOADED = "lt_upload_done"
-_K_LIVE_ART = "lt_live_artefact"
+_K_RAW       = "lt_raw_records"
+_K_FETCH_RPT = "lt_fetch_report"
+_K_CLEAN_DF  = "lt_clean_df"
+_K_AUDIT     = "lt_clean_audit"
+_K_ART       = "lt_artefact"
+_K_ART_BYTES = "lt_artefact_bytes"
+_K_REPORT    = "lt_train_report"
+_K_UPLOADED  = "lt_upload_done"
+_K_LIVE_ART  = "lt_live_artefact"
 _K_LIVE_BYTES= "lt_live_bytes"
-_K_PRED     = "lt_prediction"
-_K_LEDGER   = "lt_ledger"
+_K_PRED      = "lt_prediction"
+_K_LEDGER    = "lt_ledger"
 
 
 def _init_state() -> None:
     defaults: dict = {
-        _K_RAW: None,
+        _K_RAW:       None,
         _K_FETCH_RPT: None,
-        _K_CLEAN_DF: None,
-        _K_AUDIT: None,
-        _K_ART: None,
+        _K_CLEAN_DF:  None,
+        _K_AUDIT:     None,
+        _K_ART:       None,
         _K_ART_BYTES: None,
-        _K_REPORT: None,
-        _K_UPLOADED: False,
-        _K_LIVE_ART: None,
-        _K_LIVE_BYTES: None,
-        _K_PRED: None,
-        _K_LEDGER: None,
+        _K_REPORT:    None,
+        _K_UPLOADED:  False,
+        _K_LIVE_ART:  None,
+        _K_LIVE_BYTES:None,
+        _K_PRED:      None,
+        _K_LEDGER:    None,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -165,23 +170,13 @@ _REM_DISPLAY = {0: "On-site", 50: "Hybrid", 100: "Fully Remote"}
 _REM_REV     = {v: k for k, v in _REM_DISPLAY.items()}
 
 _EDU_DISPLAY = {
-    0: "High School", 1: "Bachelor's Degree", 2: "Master's Degree", 3: "PhD",
+    0: "High School",
+    1: "Bachelor's Degree",
+    2: "Master's Degree",
+    3: "PhD",
 }
 
-# Default job titles used for Adzuna search (admin can edit before fetching)
-_DEFAULT_TITLES = [
-    "data scientist",
-    "software engineer",
-    "data analyst",
-    "machine learning engineer",
-    "product manager",
-    "data engineer",
-    "backend developer",
-    "frontend developer",
-]
-
-# Default countries (all supported by Adzuna)
-_DEFAULT_COUNTRIES = ["us", "gb", "ca", "au", "in", "de"]
+_CONTRACT_DISPLAY = {0: "Permanent / Full-time", 1: "Contract / Freelance / Temp"}
 
 
 # ---------------------------------------------------------------------------
@@ -215,6 +210,17 @@ def _salary_card(label: str, value: str, color: str = "#4F8EF7") -> None:
     )
 
 
+def _experimental_warning_banner() -> None:
+    st.warning(
+        "**Experimental Feature** -- This live model is trained on Adzuna job "
+        "posting data and is provided for exploratory use only. Prediction "
+        "accuracy is expected to be lower than the main models. For reliable "
+        "salary estimates, use **Model 1 (Random Forest)** or **Model 2 (XGBoost)** "
+        "which are trained on a larger, curated historical dataset.",
+        icon=":material/science:",
+    )
+
+
 # ===========================================================================
 # PANEL A -- LIVE TRAINING
 # ===========================================================================
@@ -224,7 +230,10 @@ def _render_training_panel() -> None:
     st.caption(
         "Fetch real salary data from the Adzuna Jobs API, train a "
         "GradientBoostingRegressor, and upload it to HuggingFace Hub "
-        "so cloud users can make predictions."
+        "so cloud users can make predictions. "
+        f"Quota guard: fetching stops at {QUOTA_SAFETY_FRACTION:.0%} of the "
+        f"{FREE_TIER_DAILY_LIMIT}/day Adzuna free tier "
+        f"({DEFAULT_SESSION_MAX_REQS} requests per session by default)."
     )
 
     if not is_adzuna_configured():
@@ -241,39 +250,93 @@ def _render_training_panel() -> None:
     st.markdown("#### :material/search: Step 1 -- Configure Data Fetch")
 
     with st.expander("Search parameters", expanded=True):
-        raw_titles = st.text_area(
-            "Job titles to search (one per line)",
-            value="\n".join(_DEFAULT_TITLES),
-            height=180,
-            key="lt_titles_input",
-            help="Adzuna does partial keyword matching. Keep terms concise.",
+        # Domain-based selection replaces the raw text area of titles
+        st.markdown("**Select job domains to include**")
+        st.caption(
+            "Each domain contributes a curated set of generic search terms. "
+            "Selecting more domains increases coverage and training data volume "
+            "but uses more API quota. A multi-domain dataset produces a more "
+            "general-purpose model."
         )
+        all_domain_names = list(DOMAIN_TITLES.keys())
+        selected_domains = st.multiselect(
+            "Job domains",
+            options=all_domain_names,
+            default=DEFAULT_DOMAINS,
+            key="lt_domains_input",
+        )
+
+        # Optional: let admin see and fine-tune the titles for selected domains
+        derived_titles: list[str] = []
+        for d in selected_domains:
+            derived_titles.extend(DOMAIN_TITLES.get(d, []))
+        derived_titles = list(dict.fromkeys(derived_titles))  # preserve order, dedup
+
+        with st.expander(
+            f"Preview search terms ({len(derived_titles)} titles from selected domains)",
+            expanded=False,
+        ):
+            raw_titles_override = st.text_area(
+                "Edit titles if needed (one per line)",
+                value="\n".join(derived_titles),
+                height=220,
+                key="lt_titles_override",
+                help=(
+                    "These are derived from the selected domains above. "
+                    "You can remove or add terms before fetching. "
+                    "Keep terms concise -- Adzuna uses partial keyword matching."
+                ),
+            )
+        if raw_titles_override.strip():
+            job_titles = [t.strip() for t in raw_titles_override.splitlines() if t.strip()]
+        else:
+            job_titles = derived_titles
+
+        st.divider()
+
         country_opts = {v: k for k, v in SUPPORTED_COUNTRIES.items()}
+        default_country_names = [
+            SUPPORTED_COUNTRIES[c]
+            for c in ["us", "gb", "ca", "au", "in", "de"]
+            if c in SUPPORTED_COUNTRIES
+        ]
         selected_country_names = st.multiselect(
             "Countries to include",
             options=list(country_opts.keys()),
-            default=[SUPPORTED_COUNTRIES[c] for c in _DEFAULT_COUNTRIES
-                     if c in SUPPORTED_COUNTRIES],
+            default=default_country_names,
             key="lt_countries_input",
         )
+        countries = [country_opts[n] for n in selected_country_names]
+
         max_records = st.slider(
             "Maximum records to collect",
-            min_value=100,
-            max_value=2000,
-            value=600,
-            step=50,
+            min_value=200,
+            max_value=5000,
+            value=2000,
+            step=100,
             key="lt_max_records",
             help=(
-                "Each page = 1 API request. Adzuna free tier: 250 req/day. "
-                "600 records requires approx 36-60 requests depending on salary coverage."
+                "Each page = 1 API request (50 results/page). "
+                f"Default quota cap: {DEFAULT_SESSION_MAX_REQS} requests/session "
+                f"({QUOTA_SAFETY_FRACTION:.0%} of {FREE_TIER_DAILY_LIMIT}/day). "
+                "With that cap you can collect roughly 1500-2500 salary records "
+                "per session depending on listing coverage. "
+                "Model performance improves significantly above 500 records. "
+                "Training on fewer than 200 records will produce unreliable results."
             ),
         )
 
-    job_titles  = [t.strip() for t in raw_titles.splitlines() if t.strip()]
-    countries   = [country_opts[n] for n in selected_country_names]
+        # Show how many requests the current config will likely require
+        estimated_reqs = min(len(job_titles) * len(countries) * 3, max_records // 25 + 1)
+        quota_est_pct  = (estimated_reqs / FREE_TIER_DAILY_LIMIT) * 100
+        st.caption(
+            f"Estimated API requests for this config: ~{estimated_reqs} "
+            f"({quota_est_pct:.0f}% of daily free quota). "
+            f"Hard stop at {DEFAULT_SESSION_MAX_REQS} requests per session."
+        )
 
     if not job_titles:
-        st.warning("Enter at least one job title.")
+        st.warning("Select at least one domain (or add titles manually).")
         return
     if not countries:
         st.warning("Select at least one country.")
@@ -287,7 +350,7 @@ def _render_training_panel() -> None:
     st.markdown("#### :material/download: Step 2 -- Fetch from Adzuna API")
     st.caption(
         f"Will search {len(job_titles)} title(s) x {len(countries)} country/ies. "
-        "Results are cached for 1 hour; click Refresh to force a new fetch."
+        "Results are cached for 1 hour; use Refresh to force a new fetch."
     )
 
     col_btn, col_refresh = st.columns([3, 1])
@@ -301,16 +364,12 @@ def _render_training_panel() -> None:
         st.write("")
         if st.button(":material/refresh: Refresh Cache", key="lt_refresh_cache"):
             fetch_adzuna_salary_records.clear()
-            st.session_state[_K_RAW]       = None
-            st.session_state[_K_FETCH_RPT] = None
-            st.session_state[_K_CLEAN_DF]  = None
-            st.session_state[_K_AUDIT]     = None
-            st.session_state[_K_ART]       = None
-            st.session_state[_K_REPORT]    = None
+            for k in (_K_RAW, _K_FETCH_RPT, _K_CLEAN_DF, _K_AUDIT, _K_ART, _K_REPORT):
+                st.session_state[k] = None
             st.rerun()
 
     if fetch_clicked:
-        with st.spinner("Fetching from Adzuna API... (may take 30-90 seconds)"):
+        with st.spinner("Fetching from Adzuna API... (may take 30-120 seconds)"):
             records, fetch_rpt = fetch_adzuna_salary_records(
                 job_titles=job_titles,
                 countries=countries,
@@ -333,8 +392,25 @@ def _render_training_panel() -> None:
             f"**Fetch Result:** {ok_badge} -- {fetch_rpt['reason']}",
             unsafe_allow_html=True,
         )
+
+        quota_pct = fetch_rpt.get("quota_used_pct", 0.0)
+        if fetch_rpt.get("quota_stopped"):
+            st.warning(
+                f"Session request cap reached ({DEFAULT_SESSION_MAX_REQS} requests, "
+                f"{quota_pct:.1f}% of daily free quota used). "
+                "The fetch was stopped early. To collect more records, "
+                "set ADZUNA_MAX_REQUESTS_OVERRIDE in secrets or run again tomorrow."
+            )
+        else:
+            st.caption(
+                f"API quota used this session: {fetch_rpt.get('requests_made', 0)} requests "
+                f"({quota_pct:.1f}% of {FREE_TIER_DAILY_LIMIT}/day free tier)."
+            )
+
         if fetch_rpt.get("warnings"):
-            with st.expander(f"{len(fetch_rpt['warnings'])} fetch warning(s)", expanded=False):
+            with st.expander(
+                f"{len(fetch_rpt['warnings'])} fetch warning(s)", expanded=False
+            ):
                 for w in fetch_rpt["warnings"][:30]:
                     st.caption(w)
 
@@ -342,10 +418,16 @@ def _render_training_panel() -> None:
             qs = get_fetch_quality_summary(raw_records)
             fc1, fc2, fc3, fc4 = st.columns(4)
             fc1.metric("Total Listings", qs["total"])
-            fc2.metric("Countries", len(qs["countries"]))
-            fc3.metric("Salary Median", f"${qs['salary_median']:,.0f}")
+            fc2.metric("Countries",      len(qs["countries"]))
+            fc3.metric("Salary Median",  f"${qs['salary_median']:,.0f}")
             fc4.metric("Salary Range",
                        f"${qs['salary_min']:,.0f} - ${qs['salary_max']:,.0f}")
+            if qs.get("categories"):
+                st.caption(
+                    "Adzuna categories found: "
+                    + ", ".join(sorted(qs["categories"])[:12])
+                    + ("..." if len(qs["categories"]) > 12 else "")
+                )
     else:
         st.info("Configure search parameters and click 'Fetch Salary Data'.")
 
@@ -355,6 +437,13 @@ def _render_training_panel() -> None:
     # STEP 3 -- Clean and audit
     # -----------------------------------------------------------------------
     st.markdown("#### :material/cleaning_services: Step 3 -- Clean and Audit Data")
+    st.caption(
+        "The cleaner normalises raw Adzuna titles to canonical names "
+        "(e.g. 'Senior Data Scientist III at Acme Ltd' -> 'Data Scientist'), "
+        "infers experience level and remote ratio from title keywords, "
+        "removes duplicates and salary outliers, and drops records with no "
+        "matching canonical title rule."
+    )
 
     if not raw_records:
         st.caption("Fetch data first.")
@@ -401,6 +490,17 @@ def _render_training_panel() -> None:
         if df_clean is not None and not df_clean.empty:
             with st.expander(":material/table_chart: Preview cleaned data", expanded=False):
                 st.dataframe(df_clean.head(30), use_container_width=True, hide_index=True)
+
+            if "job_title" in df_clean.columns:
+                with st.expander(":material/bar_chart: Title distribution (top 20)", expanded=False):
+                    top_titles = (
+                        df_clean["job_title"]
+                        .value_counts()
+                        .head(20)
+                        .reset_index()
+                        .rename(columns={"count": "Count", "job_title": "Canonical Title"})
+                    )
+                    st.dataframe(top_titles, use_container_width=True, hide_index=True)
     else:
         st.caption("Run the cleaner to inspect data quality before training.")
 
@@ -416,10 +516,16 @@ def _render_training_panel() -> None:
     elif not (audit or {}).get("ok"):
         st.warning((audit or {}).get("reason", "Not enough clean records to train."))
     else:
-        cv_folds = min(5, max(3, len(df_clean) // 20))
+        folds = min(5, max(3, len(df_clean) // 50))
         st.info(
-            f"Ready to train on {len(df_clean)} clean records. "
-            f"GradientBoostingRegressor with {cv_folds}-fold cross-validation."
+            f"Ready to train on {len(df_clean)} clean records "
+            f"with {folds}-fold cross-validation. "
+            f"Feature set: {len(st.session_state.get(_K_CLEAN_DF).columns) - 1} "  # type: ignore
+            f"input features + salary target."
+        )
+        st.caption(
+            "Training time varies by dataset size: typically 30-120 seconds "
+            "for 500-3000 records on a modern CPU."
         )
         if st.button(
             ":material/play_arrow: Train Model Now",
@@ -427,11 +533,15 @@ def _render_training_panel() -> None:
             type="primary",
         ):
             prev_bytes = st.session_state.get(_K_LIVE_BYTES)
-            with st.spinner("Training... (20-90 seconds depending on data size)"):
-                artefact, report = train_live_model(df_clean, previous_model_bytes=prev_bytes)
+            with st.spinner("Training... (30-120 seconds depending on data size)"):
+                artefact, report = train_live_model(
+                    df_clean, previous_model_bytes=prev_bytes
+                )
             st.session_state[_K_ART]       = artefact
             st.session_state[_K_REPORT]    = report
-            st.session_state[_K_ART_BYTES] = serialise_artefact(artefact) if artefact else None
+            st.session_state[_K_ART_BYTES] = (
+                serialise_artefact(artefact) if artefact else None
+            )
             st.session_state[_K_UPLOADED]  = False
 
     report   = st.session_state.get(_K_REPORT)
@@ -454,10 +564,14 @@ def _render_training_panel() -> None:
             tr5.metric("Test MAE",  f"${d['test_mae']:,.0f}")
             tr6.metric("Test RMSE", f"${d['test_rmse']:,.0f}")
             st.caption(
-                "Adzuna salary data reflects real posted salaries. "
-                "R2 of 0.4-0.6 is typical for cross-country salary regression "
-                "with limited features."
+                "Adzuna salary data reflects posted salary ranges, not verified "
+                "compensation. R2 of 0.30-0.55 is typical for cross-country "
+                "salary regression on posting data with inferred features. "
+                "An R2 below 0.30 or a Test MAE above $30,000 indicates "
+                "insufficient or poorly distributed training data -- consider "
+                "adding more domains or countries and retraining."
             )
+
     st.divider()
 
     # -----------------------------------------------------------------------
@@ -477,8 +591,12 @@ def _render_training_panel() -> None:
     else:
         meta    = artefact.get("metadata", {})
         version = meta.get("version", "unknown")
-        st.write(f"Version: **{version}** | Samples: **{meta.get('n_samples', '?')}** | "
-                 f"Test R2: **{meta.get('test_r2', 0):.4f}**")
+        st.write(
+            f"Version: **{version}** | "
+            f"Samples: **{meta.get('n_samples', '?')}** | "
+            f"Test R2: **{meta.get('test_r2', 0):.4f}** | "
+            f"Test MAE: **${meta.get('test_mae', 0):,.0f}**"
+        )
 
         col_up, col_disc = st.columns(2)
 
@@ -502,7 +620,7 @@ def _render_training_panel() -> None:
             if st.button(
                 ":material/undo: Discard (internal rollback)",
                 key="lt_discard_btn",
-                help="Throw away this training result without touching HuggingFace.",
+                help="Discard this training result without touching HuggingFace.",
             ):
                 for k in (_K_ART, _K_ART_BYTES, _K_REPORT):
                     st.session_state[k] = None
@@ -516,7 +634,7 @@ def _render_training_panel() -> None:
     st.markdown("#### :material/history: Step 6 -- Rollback Manager")
     st.caption(
         "Every uploaded model is kept permanently on HuggingFace. "
-        "Promote any previous version to current in one click."
+        "Promote any previous version to current with one click."
     )
 
     if not is_storage_configured():
@@ -563,9 +681,9 @@ def _render_training_panel() -> None:
                         ok, msg = rollback_to_version(fname)
                     if ok:
                         st.success(msg)
-                        st.session_state[_K_LIVE_ART]   = None
-                        st.session_state[_K_LIVE_BYTES]  = None
-                        st.session_state[_K_LEDGER]      = None
+                        st.session_state[_K_LIVE_ART]  = None
+                        st.session_state[_K_LIVE_BYTES] = None
+                        st.session_state[_K_LEDGER]     = None
                         st.rerun()
                     else:
                         st.error(msg)
@@ -594,10 +712,11 @@ def _render_cloud_status() -> None:
         return
     current = next((e for e in reversed(ledger) if e.get("is_current")), None)
     if current:
-        cc1, cc2, cc3 = st.columns(3)
+        cc1, cc2, cc3, cc4 = st.columns(4)
         cc1.metric("Active Version", current.get("version", "-"))
         cc2.metric("Trained On",     f"{current.get('n_samples', '-')} samples")
         cc3.metric("Test R2",        f"{current.get('test_r2', 0):.4f}")
+        cc4.metric("Test MAE",       f"${current.get('test_mae', 0):,.0f}")
 
 
 # ===========================================================================
@@ -606,10 +725,15 @@ def _render_cloud_status() -> None:
 
 def _render_prediction_panel() -> None:
     st.subheader(":material/insights: Live Model Prediction")
+
+    _experimental_warning_banner()
+
     st.caption(
         "Predict salary using the community-trained GradientBoosting model, "
         "built from real Adzuna job listing data. "
-        "Model is fetched from HuggingFace Hub and cached for the session."
+        "This model is **experimental** and is expected to have lower accuracy "
+        "than Model 1 and Model 2, which are trained on larger historical "
+        "compensation datasets. Treat results as rough directional estimates only."
     )
 
     if not is_storage_configured():
@@ -637,9 +761,9 @@ def _render_prediction_panel() -> None:
                 if load_err:
                     st.error(f"Deserialisation failed: {load_err}")
                 else:
-                    st.session_state[_K_LIVE_ART]   = artefact
-                    st.session_state[_K_LIVE_BYTES]  = model_bytes
-                    st.session_state[_K_PRED]        = None
+                    st.session_state[_K_LIVE_ART]  = artefact
+                    st.session_state[_K_LIVE_BYTES] = model_bytes
+                    st.session_state[_K_PRED]       = None
                     st.rerun()
 
     if live_artefact is None:
@@ -650,6 +774,8 @@ def _render_prediction_panel() -> None:
         return
 
     with col_info:
+        test_r2 = meta.get("test_r2", 0)
+        r2_color = "#EF4444" if test_r2 < 0.3 else ("#F59E0B" if test_r2 < 0.5 else "#22C55E")
         st.markdown(
             f"""
             <div style='
@@ -660,13 +786,19 @@ def _render_prediction_panel() -> None:
                 <strong style='color:#E6EAF0;'>Live Model</strong><br>
                 Version: {meta.get("version", "?")} &nbsp;|&nbsp;
                 Samples: {meta.get("n_samples", "?")}<br>
-                Test R2: {meta.get("test_r2", 0):.4f} &nbsp;|&nbsp;
+                Test R2: <span style='color:{r2_color};font-weight:700;'>
+                    {test_r2:.4f}</span> &nbsp;|&nbsp;
                 Test MAE: ${meta.get("test_mae", 0):,.0f}<br>
                 Source: Adzuna live salary listings
             </div>
             """,
             unsafe_allow_html=True,
         )
+        if test_r2 < 0.3:
+            st.warning(
+                "This model version has low predictive accuracy (R2 < 0.30). "
+                "Consider retraining with more data or use Model 1 / Model 2 instead."
+            )
 
     st.divider()
     st.markdown("#### Enter Profile Details")
@@ -679,6 +811,10 @@ def _render_prediction_panel() -> None:
             _EXP_LABELS,
             index=1,
             key="lt_pred_exp",
+            help=(
+                "The model infers experience from title keywords at training time. "
+                "For best results, select the level that matches your actual seniority."
+            ),
         )
         experience_level = _EXP_REV[exp_label]
 
@@ -688,15 +824,32 @@ def _render_prediction_panel() -> None:
             format_func=lambda x: _EDU_DISPLAY[x],
             index=1,
             key="lt_pred_edu",
+            help=(
+                "Education is not available in Adzuna data and defaults to "
+                "Bachelor's during training, so this field has limited influence "
+                "on the live model. It is kept for consistency with other models."
+            ),
         )
 
-        job_title = st.text_input(
+        job_title_input = st.text_input(
             "Job Title",
             value="Data Scientist",
-            max_chars=120,
+            max_chars=150,
             key="lt_pred_job",
-            help="Enter the job title as it appears in job listings.",
+            help=(
+                "Enter a job title such as 'Data Scientist', 'Software Engineer', "
+                "'Product Manager'. The predictor normalises your input to the "
+                "nearest canonical training label. If no match is found, the raw "
+                "title is used and the model may fall back to an average estimate."
+            ),
         )
+
+        contract_label = st.selectbox(
+            "Employment Type",
+            list(_CONTRACT_DISPLAY.values()),
+            key="lt_pred_contract",
+        )
+        is_contract = 1 if contract_label == _CONTRACT_DISPLAY[1] else 0
 
     with col2:
         cs_label = st.selectbox(
@@ -704,6 +857,11 @@ def _render_prediction_panel() -> None:
             list(_CS_DISPLAY.values()),
             index=1,
             key="lt_pred_cs",
+            help=(
+                "Company size is not available in Adzuna data and defaults to "
+                "Medium during training, so this field has limited influence on "
+                "the live model."
+            ),
         )
         company_size = _CS_REV[cs_label]
 
@@ -719,12 +877,40 @@ def _render_prediction_panel() -> None:
             "Work Mode",
             list(_REM_DISPLAY.values()),
             key="lt_pred_remote",
+            help=(
+                "Remote ratio is inferred from title keywords at training time "
+                "(e.g. 'Remote Data Scientist' -> 100). Your selection here "
+                "adjusts the model input accordingly."
+            ),
         )
         remote_ratio = _REM_REV[rem_label]
 
+        category_label = st.selectbox(
+            "Job Category (Adzuna)",
+            options=[
+                "IT Jobs",
+                "Accounting & Finance Jobs",
+                "Engineering Jobs",
+                "Healthcare & Nursing Jobs",
+                "Sales Jobs",
+                "Marketing Jobs",
+                "Scientific & QA Jobs",
+                "Consultancy Jobs",
+                "Unknown",
+            ],
+            index=0,
+            key="lt_pred_category",
+            help=(
+                "Select the broad category that best matches the role. "
+                "This matches Adzuna's category labels used at training time."
+            ),
+        )
+
     st.caption(
-        "Note: company size and education are approximated internally by the model "
-        "because Adzuna listings do not always include these fields."
+        "Note: fields marked with an asterisk (*) have reduced influence on "
+        "this model because Adzuna does not provide them in listings. "
+        "Education (*) and Company Size (*) are inferred defaults. "
+        "Results should be treated as indicative only."
     )
     st.divider()
 
@@ -735,7 +921,7 @@ def _render_prediction_panel() -> None:
         use_container_width=True,
     ):
         errors = []
-        if not job_title.strip():
+        if not job_title_input.strip():
             errors.append("Job title cannot be empty.")
         if len(company_location) != 2 or not company_location.isalpha():
             errors.append("Company location must be a 2-letter ISO code (e.g. US, GB).")
@@ -748,9 +934,11 @@ def _render_prediction_panel() -> None:
                 experience_level=experience_level,
                 education_level=education_level,
                 remote_ratio=remote_ratio,
-                job_title=job_title.strip(),
+                job_title=job_title_input.strip(),
                 company_size=company_size,
                 company_location=company_location,
+                is_contract=is_contract,
+                category_label=category_label,
             )
             if err:
                 st.error(f"Prediction failed: {err}")
@@ -761,10 +949,12 @@ def _render_prediction_panel() -> None:
                     "inputs": {
                         "Experience Level":  exp_label,
                         "Education Level":   _EDU_DISPLAY[education_level],
-                        "Job Title":         job_title.strip(),
+                        "Job Title":         job_title_input.strip(),
+                        "Employment Type":   contract_label,
                         "Company Size":      cs_label,
                         "Company Location":  company_location,
                         "Work Mode":         rem_label,
+                        "Job Category":      category_label,
                     },
                 }
 
@@ -776,7 +966,7 @@ def _render_prediction_panel() -> None:
     lower = result["lower"]
     upper = result["upper"]
 
-    _salary_card("ANNUAL SALARY (USD) -- LIVE MODEL", f"${pred:,.2f}", "#34D399")
+    _salary_card("ANNUAL SALARY ESTIMATE (USD) -- LIVE MODEL", f"${pred:,.2f}", "#34D399")
 
     st.divider()
     st.markdown(
@@ -784,8 +974,8 @@ def _render_prediction_panel() -> None:
         unsafe_allow_html=True,
     )
     bk1, bk2, bk3 = st.columns(3)
-    bk1.metric("Monthly",         f"${pred / 12:,.2f}")
-    bk2.metric("Weekly",          f"${pred / 52:,.2f}")
+    bk1.metric("Monthly",          f"${pred / 12:,.2f}")
+    bk2.metric("Weekly",           f"${pred / 52:,.2f}")
     bk3.metric("Hourly (40 h/wk)", f"${pred / (52 * 40):,.2f}")
 
     st.divider()
@@ -797,8 +987,9 @@ def _render_prediction_panel() -> None:
     iv1.metric("Lower Estimate", f"${lower:,.2f}")
     iv2.metric("Upper Estimate", f"${upper:,.2f}")
     st.caption(
-        "Interval estimated using 1.28 x test MAE (approximate 80% credible interval). "
-        "The live model is trained on real posted salaries which include a wide natural spread."
+        "Interval estimated using 1.28 x test MAE (approximate 80% interval). "
+        "The live model is trained on posted salary ranges which have high natural "
+        "variance across countries and job levels, so this interval may be wide."
     )
 
     st.divider()
@@ -808,9 +999,11 @@ def _render_prediction_panel() -> None:
     mi3.metric("Test R2",       f"{meta.get('test_r2', 0):.4f}")
     mi4.metric("Test MAE",      f"${meta.get('test_mae', 0):,.0f}")
     st.caption(
-        "This model is trained on Adzuna live job salary data and retrained locally "
-        "whenever the admin runs the training pipeline. Results complement but do not "
-        "replace the main Random Forest and XGBoost models."
+        "This is an experimental live model trained on Adzuna job posting salary "
+        "data. Performance is typically lower than Model 1 (Random Forest) and "
+        "Model 2 (XGBoost), which are trained on larger, curated historical "
+        "compensation datasets. For the most reliable salary estimates, "
+        "please use Model 1 or Model 2 from the main prediction tabs."
     )
 
 
@@ -833,7 +1026,8 @@ def render_live_training_tab() -> None:
     st.markdown(
         "<p style='text-align:center;color:#9CA6B5;'>"
         "A GradientBoosting salary model trained on real Adzuna job listing data. "
-        "Trained locally by the admin, served globally via HuggingFace Hub."
+        "Trained locally by the admin, served globally via HuggingFace Hub. "
+        "This feature is <strong>experimental</strong> -- see the notice below."
         "</p>",
         unsafe_allow_html=True,
     )

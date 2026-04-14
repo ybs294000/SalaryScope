@@ -4,32 +4,36 @@ live_model_trainer.py
 Trains a GradientBoostingRegressor on cleaned Adzuna salary data and
 packages the result as a versioned artefact.
 
+Feature set (expanded from previous version):
+    Numeric:
+        experience_level_num   0-3  (inferred from raw title keywords)
+        education_level        0-3  (defaults to 1 from Adzuna; reserved for enrichment)
+        remote_ratio           0 / 50 / 100  (inferred from title keywords)
+        is_contract            0 / 1  (permanent=0, contract/temp=1)
+        salary_band_ratio      float 0-5  (salary_max/salary_min - 1; precision proxy)
+
+    Categorical:
+        job_title              canonical normalised title (e.g. "Data Scientist")
+        company_size           S / M / L  (defaults to M from Adzuna)
+        company_location       ISO-2 code
+        category_label         Adzuna category (e.g. "IT Jobs", "Accounting Jobs")
+
 Model artefact schema
 ---------------------
 {
     "model":    sklearn Pipeline,
     "metadata": {
-        "version":        str,
-        "trained_at":     str,
-        "n_samples":      int,
-        "features":       list[str],
-        "cv_r2_mean":     float,
-        "cv_r2_std":      float,
-        "cv_mae_mean":    float,
-        "test_r2":        float,
-        "test_mae":       float,
-        "test_rmse":      float,
-        "target":         "salary_in_usd",
-        "model_type":     "GradientBoostingRegressor",
-        "source":         "adzuna_live_training",
-        "previous_hash":  str | None,
+        "version", "trained_at", "n_samples", "features",
+        "cv_r2_mean", "cv_r2_std", "cv_mae_mean",
+        "test_r2", "test_mae", "test_rmse",
+        "target", "model_type", "source", "previous_hash"
     }
 }
 
 Rollback note
 -------------
-Delete this file and the import in live_training_tab.py to remove training
-completely.  The storage and prediction modules are unaffected.
+Delete this file and the import in live_training_tab.py to remove training.
+The storage and prediction modules are unaffected.
 """
 
 from __future__ import annotations
@@ -55,29 +59,32 @@ from app.utils.live_training_cleaner import MIN_RECORDS_FOR_TRAINING
 # ---------------------------------------------------------------------------
 
 NUMERIC_FEATURES: list[str] = [
-    "experience_level_num",   # 0-3 inferred from title
-    "education_level",        # 0-3 (mostly 1 from Adzuna; kept for future enrichment)
-    "remote_ratio",           # 0 / 50 / 100
+    "experience_level_num",  # 0-3 inferred from raw title
+    "education_level",       # 0-3 (mostly 1 from Adzuna; reserved for enrichment)
+    "remote_ratio",          # 0 / 50 / 100 inferred from title keywords
+    "is_contract",           # 0=permanent, 1=contract/temp
+    "salary_band_ratio",     # (max-min)/min -- salary precision proxy, 0-5
 ]
 
 CATEGORICAL_FEATURES: list[str] = [
-    "job_title",
-    "company_size",
-    "company_location",
+    "job_title",          # canonical normalised name
+    "company_size",       # S / M / L (defaults to M from Adzuna)
+    "company_location",   # ISO-2 code
+    "category_label",     # Adzuna category label
 ]
 
 ALL_FEATURES: list[str] = NUMERIC_FEATURES + CATEGORICAL_FEATURES
 TARGET: str = "salary_in_usd"
 
-# Tuned for real job-listing datasets (typically 200-2000 rows)
+# Tuned for real job-listing datasets (200-5000 rows typical with multi-domain fetch)
 GBR_PARAMS: dict = {
-    "n_estimators":   400,
-    "learning_rate":  0.05,
-    "max_depth":      4,
-    "min_samples_leaf": 5,
-    "subsample":      0.8,
-    "loss":           "huber",   # robust to salary outliers
-    "random_state":   42,
+    "n_estimators":     500,
+    "learning_rate":    0.04,
+    "max_depth":        4,
+    "min_samples_leaf": 4,
+    "subsample":        0.8,
+    "loss":             "huber",   # robust to salary outliers
+    "random_state":     42,
 }
 
 # ---------------------------------------------------------------------------
@@ -90,8 +97,8 @@ def _build_pipeline() -> Pipeline:
     categorical_transformer = OneHotEncoder(
         handle_unknown="ignore",
         sparse_output=False,
-        min_frequency=3,       # rare titles collapse to 'infrequent'
-        max_categories=200,
+        min_frequency=3,    # rare titles / locations collapse to 'infrequent'
+        max_categories=250,
     )
 
     preprocessor = ColumnTransformer(
@@ -105,7 +112,7 @@ def _build_pipeline() -> Pipeline:
 
     pipe = Pipeline([
         ("preprocessor", preprocessor),
-        ("model", GradientBoostingRegressor(**GBR_PARAMS)),
+        ("model",        GradientBoostingRegressor(**GBR_PARAMS)),
     ])
     return pipe
 
@@ -123,32 +130,34 @@ def train_live_model(
 
     Parameters
     ----------
-    df_clean : pd.DataFrame
-        Output of clean_adzuna_records().
-    previous_model_bytes : bytes | None
-        Raw bytes of the current HF model (used to compute previous_hash).
+    df_clean             : cleaned DataFrame from clean_adzuna_records()
+    previous_model_bytes : bytes of the current HF model (for hash tracking)
 
-    Returns
-    -------
-    (artefact, train_report)
-        artefact is None on failure.
+    Returns (artefact, train_report). artefact is None on failure.
     """
     if len(df_clean) < MIN_RECORDS_FOR_TRAINING:
         return None, {
             "ok": False,
-            "reason": f"Need at least {MIN_RECORDS_FOR_TRAINING} clean records; got {len(df_clean)}.",
+            "reason": (
+                f"Need at least {MIN_RECORDS_FOR_TRAINING} clean records; "
+                f"got {len(df_clean)}."
+            ),
             "details": {},
         }
 
     missing = [c for c in ALL_FEATURES + [TARGET] if c not in df_clean.columns]
     if missing:
-        return None, {"ok": False, "reason": f"Missing columns: {missing}", "details": {}}
+        return None, {
+            "ok": False,
+            "reason": f"Missing columns: {missing}",
+            "details": {},
+        }
 
     try:
         X = df_clean[ALL_FEATURES].copy()
         y = df_clean[TARGET].copy()
 
-        folds = min(5, max(3, len(df_clean) // 20))
+        folds = min(5, max(3, len(df_clean) // 50))
 
         try:
             X_train, X_test, y_train, y_test = train_test_split(
@@ -162,9 +171,13 @@ def train_live_model(
 
         pipe = _build_pipeline()
 
-        cv_r2  = cross_val_score(pipe, X_train, y_train, cv=folds, scoring="r2", n_jobs=-1)
-        cv_mae = cross_val_score(pipe, X_train, y_train, cv=folds,
-                                  scoring="neg_mean_absolute_error", n_jobs=-1)
+        cv_r2  = cross_val_score(
+            pipe, X_train, y_train, cv=folds, scoring="r2", n_jobs=-1
+        )
+        cv_mae = cross_val_score(
+            pipe, X_train, y_train, cv=folds,
+            scoring="neg_mean_absolute_error", n_jobs=-1,
+        )
 
         pipe.fit(X_train, y_train)
 
@@ -173,7 +186,10 @@ def train_live_model(
         test_mae  = float(mean_absolute_error(y_test, y_pred))
         test_rmse = float(np.sqrt(mean_squared_error(y_test, y_pred)))
 
-        prev_hash = hashlib.sha256(previous_model_bytes).hexdigest() if previous_model_bytes else None
+        prev_hash = (
+            hashlib.sha256(previous_model_bytes).hexdigest()
+            if previous_model_bytes else None
+        )
 
         now     = datetime.datetime.utcnow()
         version = now.strftime("%Y%m%dT%H%M%SZ")

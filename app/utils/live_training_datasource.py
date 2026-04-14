@@ -9,8 +9,6 @@ Why Adzuna?
 - No credit card required.
 - Free limits: 250 requests/day, 25 requests/minute.
 - Returns real live job listings including salary_min / salary_max per listing.
-- Covers 12 countries: us, gb, de, fr, au, ca, in, nl, pl, ru, sg, za.
-- Salary histogram endpoint gives aggregated distribution data per job title.
 
 Credentials required (add to .streamlit/secrets.toml and Streamlit Cloud secrets):
     ADZUNA_APP_ID  = "your_app_id"
@@ -18,33 +16,22 @@ Credentials required (add to .streamlit/secrets.toml and Streamlit Cloud secrets
 
 Registration: https://developer.adzuna.com/signup (free, instant)
 
-Data collected per job listing
--------------------------------
-- title          : str   job title as posted
-- salary_min     : float annual salary lower bound (USD equivalent)
-- salary_max     : float annual salary upper bound (USD equivalent)
-- salary_mid     : float average of min/max used as training target
-- country        : str   ISO 2-letter code
-- contract_type  : str   permanent / contract / part_time
-- created        : str   ISO date of posting
-
-Rate limiting
--------------
-A minimum 0.3-second sleep is applied between paginated calls to stay
-well under the 25/minute limit.  A daily quota guard warns when fewer
-than 20 requests remain (based on response headers when available).
+Quota safety
+------------
+The free tier allows 250 requests per day. This module enforces a hard stop
+at 25% usage (62 requests per session) to prevent accidental exhaustion of
+the daily quota across multiple training runs. Override by setting
+ADZUNA_MAX_REQUESTS_OVERRIDE in secrets (integer).
 
 Rollback note
 -------------
-This module has no side effects beyond HTTP calls and returns pure data.
-Remove the import from live_training_tab.py to disable it completely.
+This module has no side effects beyond HTTP calls. Remove the import from
+live_training_tab.py to disable it completely.
 """
 
 from __future__ import annotations
 
 import time
-import math
-import datetime
 import streamlit as st
 import requests
 
@@ -54,7 +41,6 @@ import requests
 
 ADZUNA_BASE = "https://api.adzuna.com/v1/api/jobs"
 
-# Supported Adzuna country codes and their display names
 SUPPORTED_COUNTRIES: dict[str, str] = {
     "us": "United States",
     "gb": "United Kingdom",
@@ -68,40 +54,139 @@ SUPPORTED_COUNTRIES: dict[str, str] = {
     "sg": "Singapore",
 }
 
-# Results per page (Adzuna max is 50)
 RESULTS_PER_PAGE = 50
+REQUEST_DELAY_S  = 0.35
 
-# Seconds to sleep between page requests (keeps under 25/min)
-REQUEST_DELAY_S = 0.35
-
-# Minimum plausible annual salary (USD)
 SALARY_MIN_USD = 8_000.0
-
-# Maximum plausible annual salary (USD)
 SALARY_MAX_USD = 2_500_000.0
 
-# Approximate USD conversion multipliers for non-USD countries
-# Updated periodically; exact rates are not critical for training data
+# Quota guard: stop at 25% of 250/day = 62 requests per session
+FREE_TIER_DAILY_LIMIT    = 250
+QUOTA_SAFETY_FRACTION    = 0.25
+DEFAULT_SESSION_MAX_REQS = int(FREE_TIER_DAILY_LIMIT * QUOTA_SAFETY_FRACTION)  # 62
+
 _APPROX_FX: dict[str, float] = {
     "us": 1.0,
-    "gb": 1.27,   # GBP -> USD
-    "au": 0.65,   # AUD -> USD
-    "ca": 0.74,   # CAD -> USD
-    "de": 1.09,   # EUR -> USD
+    "gb": 1.27,
+    "au": 0.65,
+    "ca": 0.74,
+    "de": 1.09,
     "fr": 1.09,
-    "in": 0.012,  # INR -> USD
+    "in": 0.012,
     "nl": 1.09,
-    "pl": 0.25,   # PLN -> USD
-    "sg": 0.75,   # SGD -> USD
+    "pl": 0.25,
+    "sg": 0.75,
 }
 
+# ---------------------------------------------------------------------------
+# MULTI-DOMAIN JOB TITLE CATALOGUE
+# ---------------------------------------------------------------------------
+# Organised by domain so the tab can offer domain-level toggles.
+# Titles use short generic keywords that Adzuna partial-matches broadly,
+# improving recall. Normalization to canonical names happens in the cleaner.
+
+DOMAIN_TITLES: dict[str, list[str]] = {
+    "Data and AI": [
+        "data scientist",
+        "data analyst",
+        "machine learning engineer",
+        "data engineer",
+        "business intelligence analyst",
+        "analytics engineer",
+        "AI engineer",
+        "NLP engineer",
+        "computer vision engineer",
+        "MLops engineer",
+    ],
+    "Software Engineering": [
+        "software engineer",
+        "backend developer",
+        "frontend developer",
+        "full stack developer",
+        "mobile developer",
+        "iOS developer",
+        "Android developer",
+        "platform engineer",
+        "site reliability engineer",
+        "DevOps engineer",
+    ],
+    "Cloud and Infrastructure": [
+        "cloud architect",
+        "cloud engineer",
+        "infrastructure engineer",
+        "systems administrator",
+        "network engineer",
+        "database administrator",
+        "Kubernetes engineer",
+    ],
+    "Cybersecurity": [
+        "security engineer",
+        "penetration tester",
+        "information security analyst",
+        "SOC analyst",
+        "security architect",
+    ],
+    "Product and Design": [
+        "product manager",
+        "product designer",
+        "UX designer",
+        "UI developer",
+        "scrum master",
+        "agile coach",
+    ],
+    "Finance and Accounting": [
+        "financial analyst",
+        "quantitative analyst",
+        "investment analyst",
+        "accountant",
+        "finance manager",
+        "risk analyst",
+        "actuarial analyst",
+    ],
+    "Marketing and Growth": [
+        "digital marketing manager",
+        "SEO specialist",
+        "growth hacker",
+        "content strategist",
+        "marketing analyst",
+        "performance marketer",
+    ],
+    "Healthcare and Science": [
+        "clinical data analyst",
+        "bioinformatics scientist",
+        "research scientist",
+        "pharmacist",
+        "biomedical engineer",
+        "health informatics specialist",
+    ],
+    "Operations and Consulting": [
+        "management consultant",
+        "business analyst",
+        "operations manager",
+        "supply chain analyst",
+        "project manager",
+        "strategy analyst",
+    ],
+    "Sales and Customer Success": [
+        "sales engineer",
+        "account executive",
+        "customer success manager",
+        "solutions architect",
+        "technical account manager",
+    ],
+}
+
+DEFAULT_DOMAINS: list[str] = [
+    "Data and AI",
+    "Software Engineering",
+    "Cloud and Infrastructure",
+]
 
 # ---------------------------------------------------------------------------
 # CREDENTIAL HELPERS
 # ---------------------------------------------------------------------------
 
 def _get_credentials() -> tuple[str | None, str | None]:
-    """Return (app_id, app_key) from Streamlit secrets, or (None, None)."""
     try:
         app_id  = st.secrets.get("ADZUNA_APP_ID")
         app_key = st.secrets.get("ADZUNA_APP_KEY")
@@ -112,8 +197,21 @@ def _get_credentials() -> tuple[str | None, str | None]:
     return None, None
 
 
+def _get_session_request_cap() -> int:
+    """
+    Return per-session request cap. Default is 25% of 250/day = 62 requests.
+    Override with ADZUNA_MAX_REQUESTS_OVERRIDE in secrets.
+    """
+    try:
+        override = st.secrets.get("ADZUNA_MAX_REQUESTS_OVERRIDE")
+        if override is not None:
+            return max(1, int(override))
+    except Exception:
+        pass
+    return DEFAULT_SESSION_MAX_REQS
+
+
 def is_adzuna_configured() -> bool:
-    """Return True if Adzuna credentials are present in secrets."""
     app_id, app_key = _get_credentials()
     return app_id is not None and app_key is not None
 
@@ -123,10 +221,6 @@ def is_adzuna_configured() -> bool:
 # ---------------------------------------------------------------------------
 
 def _get(url: str, params: dict, timeout: int = 15) -> tuple[dict | None, str | None]:
-    """
-    Execute one GET request.  Returns (json_dict, error_string).
-    Never raises.
-    """
     try:
         resp = requests.get(url, params=params, timeout=timeout)
         if resp.status_code == 429:
@@ -149,20 +243,14 @@ def _get(url: str, params: dict, timeout: int = 15) -> tuple[dict | None, str | 
 # ---------------------------------------------------------------------------
 
 def _to_usd_annual(raw_salary: float, country: str) -> float:
-    """Convert a raw Adzuna salary figure to approximate USD annual."""
     fx = _APPROX_FX.get(country.lower(), 1.0)
     return raw_salary * fx
 
 
-def _mid(salary_min: float | None, salary_max: float | None) -> float | None:
-    """Return midpoint of salary range, or None if both are absent."""
-    if salary_min is not None and salary_max is not None:
-        return (salary_min + salary_max) / 2.0
-    if salary_min is not None:
-        return salary_min
-    if salary_max is not None:
-        return salary_max
-    return None
+def _mid(s_min: float | None, s_max: float | None) -> float | None:
+    if s_min is not None and s_max is not None:
+        return (s_min + s_max) / 2.0
+    return s_min if s_min is not None else s_max
 
 
 # ---------------------------------------------------------------------------
@@ -173,47 +261,40 @@ def _mid(salary_min: float | None, salary_max: float | None) -> float | None:
 def fetch_adzuna_salary_records(
     job_titles: list[str],
     countries: list[str],
-    max_records: int = 1000,
+    max_records: int = 3000,
 ) -> tuple[list[dict], dict]:
     """
     Fetch job listings with salary data from the Adzuna API.
 
-    Searches each (job_title, country) pair and collects records that
-    include salary information.  Results are deduplicated on (title, salary_mid).
+    Enforces a per-session request cap at 25% of the 250/day free tier
+    (62 requests by default). Override with ADZUNA_MAX_REQUESTS_OVERRIDE.
 
-    Parameters
-    ----------
-    job_titles : list of str
-        Job title keywords to search.  E.g. ["data scientist", "software engineer"].
-        Kept short to maximize recall; Adzuna does partial matching.
-    countries : list of str
-        Adzuna country codes.  E.g. ["us", "gb", "in"].
-    max_records : int
-        Soft cap on total records collected across all searches.
-        Prevents exhausting the daily quota on a single training run.
-
-    Returns
-    -------
-    (records, fetch_report)
-        records      -- list of dicts (one per job listing with salary)
-        fetch_report -- dict with counts, warnings, quota hint
+    Returns (records, fetch_report).
     """
     app_id, app_key = _get_credentials()
     if not app_id:
         return [], {
             "ok": False,
             "reason": "ADZUNA_APP_ID and ADZUNA_APP_KEY not set in secrets.",
-            "total_fetched": 0,
             "with_salary": 0,
             "warnings": [],
+            "requests_made": 0,
+            "quota_used_pct": 0.0,
+            "quota_stopped": False,
         }
 
+    session_request_cap = _get_session_request_cap()
     records: list[dict] = []
     warnings: list[str] = []
     requests_made = 0
     seen: set[str] = set()
+    quota_stopped = False
 
-    base_params = {"app_id": app_id, "app_key": app_key, "results_per_page": RESULTS_PER_PAGE}
+    base_params = {
+        "app_id": app_id,
+        "app_key": app_key,
+        "results_per_page": RESULTS_PER_PAGE,
+    }
 
     outer_break = False
 
@@ -232,9 +313,19 @@ def fetch_adzuna_salary_records(
                 outer_break = True
                 break
 
-            # Adzuna paginates; fetch up to 3 pages per (title, country)
             for page in range(1, 4):
                 if len(records) >= max_records:
+                    break
+
+                if requests_made >= session_request_cap:
+                    quota_stopped = True
+                    outer_break = True
+                    warnings.append(
+                        f"Session request cap of {session_request_cap} reached "
+                        f"({QUOTA_SAFETY_FRACTION:.0%} of {FREE_TIER_DAILY_LIMIT}/day free tier). "
+                        "Fetch stopped to protect your daily quota. "
+                        "Override with ADZUNA_MAX_REQUESTS_OVERRIDE in secrets."
+                    )
                     break
 
                 url = f"{ADZUNA_BASE}/{country_lower}/search/{page}"
@@ -242,7 +333,7 @@ def fetch_adzuna_salary_records(
                     **base_params,
                     "what": title,
                     "content-type": "application/json",
-                    "salary_include_unknown": 0,  # only listings with salary data
+                    "salary_include_unknown": 0,
                 }
 
                 data, err = _get(url, params)
@@ -250,14 +341,14 @@ def fetch_adzuna_salary_records(
 
                 if err:
                     warnings.append(f"[{country}/{title}/p{page}] {err}")
-                    break   # stop pagination for this (title, country) on error
+                    break
 
                 if data is None:
                     break
 
                 jobs = data.get("results", [])
                 if not jobs:
-                    break   # no more pages
+                    break
 
                 for job in jobs:
                     s_min = job.get("salary_min")
@@ -278,7 +369,6 @@ def fetch_adzuna_salary_records(
 
                     mid_usd = _to_usd_annual(mid_raw, country_lower)
 
-                    # Plausibility gate
                     if not (SALARY_MIN_USD <= mid_usd <= SALARY_MAX_USD):
                         continue
 
@@ -286,41 +376,61 @@ def fetch_adzuna_salary_records(
                     if not job_title_raw:
                         continue
 
-                    # Deduplication key
+                    # Adzuna category label: "IT Jobs", "Accounting Jobs", etc.
+                    category_label = ""
+                    cat = job.get("category")
+                    if isinstance(cat, dict):
+                        category_label = str(cat.get("label", "")).strip()
+
+                    # Salary band width as a signal: wide band = more uncertainty
+                    salary_band_usd = None
+                    if s_min_f is not None and s_max_f is not None:
+                        salary_band_usd = _to_usd_annual(s_max_f - s_min_f, country_lower)
+
+                    contract = str(job.get("contract_type") or "").strip().lower()
+                    created  = str(job.get("created", ""))[:10]
+
                     dedup_key = f"{job_title_raw.lower()}|{round(mid_usd, -3)}"
                     if dedup_key in seen:
                         continue
                     seen.add(dedup_key)
 
-                    contract = str(job.get("contract_type") or "").strip().lower()
-                    created  = str(job.get("created", ""))[:10]
-
                     records.append({
-                        "job_title":    job_title_raw,
-                        "salary_min":   _to_usd_annual(s_min_f, country_lower) if s_min_f else None,
-                        "salary_max":   _to_usd_annual(s_max_f, country_lower) if s_max_f else None,
-                        "salary_mid":   mid_usd,
-                        "country":      country_lower.upper(),
-                        "search_term":  title,
-                        "contract":     contract,
-                        "created":      created,
+                        "job_title":        job_title_raw,
+                        "salary_min":       _to_usd_annual(s_min_f, country_lower) if s_min_f else None,
+                        "salary_max":       _to_usd_annual(s_max_f, country_lower) if s_max_f else None,
+                        "salary_mid":       mid_usd,
+                        "salary_band_usd":  salary_band_usd,
+                        "country":          country_lower.upper(),
+                        "search_term":      title,
+                        "contract":         contract,
+                        "category_label":   category_label,
+                        "created":          created,
                     })
 
                 time.sleep(REQUEST_DELAY_S)
 
+    quota_used_pct = (requests_made / FREE_TIER_DAILY_LIMIT) * 100.0
+
     fetch_report = {
         "ok": len(records) > 0,
-        "total_fetched": len(records) + len(seen) - len(records),
         "with_salary": len(records),
         "requests_made": requests_made,
+        "session_request_cap": session_request_cap,
+        "quota_used_pct": quota_used_pct,
+        "quota_stopped": quota_stopped,
         "countries_searched": countries,
         "titles_searched": job_titles,
         "warnings": warnings,
         "reason": (
-            f"Fetched {len(records)} listings with salary from "
-            f"{requests_made} API requests."
+            f"Fetched {len(records)} listings with salary data from "
+            f"{requests_made} API requests ({quota_used_pct:.1f}% of daily free quota)."
+            + (
+                " Session request cap reached; increase ADZUNA_MAX_REQUESTS_OVERRIDE to fetch more."
+                if quota_stopped else ""
+            )
         ) if records else (
-            "No salary records returned.  Check credentials or try different search terms."
+            "No salary records returned. Check credentials or try different search terms."
         ),
     }
 
@@ -332,16 +442,19 @@ def fetch_adzuna_salary_records(
 # ---------------------------------------------------------------------------
 
 def get_fetch_quality_summary(records: list[dict]) -> dict:
-    """Lightweight summary of fetched records without cleaning."""
     if not records:
         return {"total": 0}
 
-    salaries = [r["salary_mid"] for r in records if r.get("salary_mid")]
+    salaries   = [r["salary_mid"] for r in records if r.get("salary_mid")]
+    categories = list({r.get("category_label", "") for r in records if r.get("category_label")})
     import statistics
     return {
         "total": len(records),
-        "with_salary_range": sum(1 for r in records if r.get("salary_min") and r.get("salary_max")),
-        "countries": list({r["country"] for r in records}),
+        "with_salary_range": sum(
+            1 for r in records if r.get("salary_min") and r.get("salary_max")
+        ),
+        "countries":     list({r["country"] for r in records}),
+        "categories":    categories,
         "salary_min":    min(salaries) if salaries else 0,
         "salary_max":    max(salaries) if salaries else 0,
         "salary_median": statistics.median(salaries) if salaries else 0,
