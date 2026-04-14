@@ -679,41 +679,37 @@ def _render_app1_section4_clustering_assoc(
             width='stretch'
         )
 
-        col_lift_bar, col_scatter = st.columns(2)
+        st.subheader("Rule Strength Analysis (Lift)")
+        fig_lift = px.bar(
+            top_rules,
+            x="lift", y="rule",
+            orientation="h",
+            title="Top Rules by Lift",
+            color="lift",
+            color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1.0, "#38BDF8"]]
+        )
+        fig_lift.update_coloraxes(showscale=False)
+        apply_theme(fig_lift)
+        st.plotly_chart(fig_lift, width='stretch')
 
-        with col_lift_bar:
-            st.subheader("Rule Strength Analysis (Lift)")
-            fig_lift = px.bar(
-                top_rules,
-                x="lift", y="rule",
-                orientation="h",
-                title="Top Rules by Lift",
-                color="lift",
-                color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1.0, "#38BDF8"]]
-            )
-            fig_lift.update_coloraxes(showscale=False)
-            apply_theme(fig_lift)
-            st.plotly_chart(fig_lift, width='stretch')
-
-        with col_scatter:
-            st.subheader("Support vs Confidence Distribution")
-            fig_scatter = px.scatter(
-                rules_df,
-                x="support", y="confidence",
-                size="lift",
-                hover_data=["rule"],
-                title="Support vs Confidence (Bubble size represents Lift)",
-                color="lift",
-                color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1.0, "#38BDF8"]]
-            )
-            fig_scatter.update_coloraxes(showscale=False)
-            apply_theme(fig_scatter)
-            st.plotly_chart(fig_scatter, width='stretch')
-            st.caption(
-                "Most rules cluster at low support but high confidence, indicating strong "
-                "but less frequent patterns. High-lift rules highlight meaningful associations "
-                "between career attributes and salary categories."
-            )
+        st.subheader("Support vs Confidence Distribution")
+        fig_scatter = px.scatter(
+            rules_df,
+            x="support", y="confidence",
+            size="lift",
+            hover_data=["rule"],
+            title="Support vs Confidence (Bubble size represents Lift)",
+            color="lift",
+            color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1.0, "#38BDF8"]]
+        )
+        fig_scatter.update_coloraxes(showscale=False)
+        apply_theme(fig_scatter)
+        st.plotly_chart(fig_scatter, width='stretch')
+        st.caption(
+            "Most rules cluster at low support but high confidence, indicating strong "
+            "but less frequent patterns. High-lift rules highlight meaningful associations "
+            "between career attributes and salary categories."
+        )
 
 
 # ---------------------------------------------------------------------------
