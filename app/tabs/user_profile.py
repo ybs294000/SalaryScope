@@ -248,5 +248,5 @@ def show_profile():
 
     st.divider()
 
-    if st.button("Logout"):
+    if st.button(":material/logout: Logout"):
         logout()
