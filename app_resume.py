@@ -1694,7 +1694,7 @@ if "Admin" in tabs:
 
     with tab_objects[admin_index]:
 
-        from auth import is_admin
+        from app.core.auth import is_admin
 
         if not is_admin():
             st.error("Access denied.")
