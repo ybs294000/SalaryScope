@@ -20,6 +20,11 @@ from app.utils.ctc_utils import render_ctc_adjuster
 from app.utils.takehome_utils import render_takehome_adjuster
 from app.utils.savings_utils import render_savings_adjuster
 from app.utils.loan_utils import render_loan_adjuster
+from app.utils.budget_utils import render_budget_planner
+from app.utils.investment_utils import render_investment_estimator
+from app.utils.emergency_fund_utils import render_emergency_fund_planner
+from app.utils.lifestyle_utils import render_lifestyle_split
+
 from app.utils.feedback import feedback_ui
 from app.core.database import save_prediction
 
@@ -366,15 +371,24 @@ def render_manual_prediction_tab(
             render_tax_adjuster(gross_usd=prediction, location_hint=country, widget_key="manual_a1_tax",
                                 converted_currency=active_currency, rates=active_rates)
             render_col_adjuster(gross_usd=prediction, work_country=country, widget_key="manual_a1_col")
-
+ 
             render_ctc_adjuster(gross_usd=prediction, location_hint=country, widget_key="manual_a1_ctc")
             th = render_takehome_adjuster(gross_usd=prediction, location_hint=country,
                                            widget_key="manual_a1_th", net_usd=None)
             net_monthly = th.get("net_monthly", prediction / 12)
-            render_savings_adjuster(net_monthly_usd=net_monthly, location_hint=country,
+            sav_a1 = render_savings_adjuster(net_monthly_usd=net_monthly, location_hint=country,
                                      widget_key="manual_a1_sav", gross_usd=prediction)
             render_loan_adjuster(net_monthly_usd=net_monthly, location_hint=country,
                                  widget_key="manual_a1_loan", gross_usd=prediction)
+            render_budget_planner(net_monthly_usd=net_monthly, location_hint=country,
+                                  widget_key="manual_a1_budget", gross_usd=prediction)
+            monthly_savings_a1 = sav_a1.get("savings", net_monthly * 0.20) if sav_a1 else net_monthly * 0.20
+            render_investment_estimator(monthly_savings_usd=monthly_savings_a1, location_hint=country,
+                                        widget_key="manual_a1_inv", net_monthly_usd=net_monthly)
+            render_emergency_fund_planner(net_monthly_usd=net_monthly, location_hint=country,
+                                          widget_key="manual_a1_ef", gross_usd=prediction)
+            render_lifestyle_split(net_monthly_usd=net_monthly, location_hint=country,
+                                   widget_key="manual_a1_lifestyle", gross_usd=prediction)
 
             st.divider()
             st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
@@ -637,15 +651,24 @@ def render_manual_prediction_tab(
             render_tax_adjuster(gross_usd=prediction_a2, location_hint=company_location, widget_key="manual_a2_tax",
                                 converted_currency=active_currency_a2, rates=active_rates_a2)
             render_col_adjuster(gross_usd=prediction_a2, work_country=company_location, widget_key="manual_a2_col")
-
+ 
             render_ctc_adjuster(gross_usd=prediction_a2, location_hint=company_location, widget_key="manual_a2_ctc")
             th_a2 = render_takehome_adjuster(gross_usd=prediction_a2, location_hint=company_location,
                                            widget_key="manual_a2_th", net_usd=None)
             net_monthly_a2 = th_a2.get("net_monthly_a2", prediction_a2 / 12)
-            render_savings_adjuster(net_monthly_usd=net_monthly_a2, location_hint=company_location,
+            sav_a2 = render_savings_adjuster(net_monthly_usd=net_monthly_a2, location_hint=company_location,
                                      widget_key="manual_a2_sav", gross_usd=prediction_a2)
             render_loan_adjuster(net_monthly_usd=net_monthly_a2, location_hint=company_location,
                                  widget_key="manual_a2_loan", gross_usd=prediction_a2)
+            render_budget_planner(net_monthly_usd=net_monthly_a2, location_hint=company_location,
+                                  widget_key="manual_a2_budget", gross_usd=prediction_a2)
+            monthly_savings_a2 = sav_a2.get("savings", net_monthly_a2 * 0.20) if sav_a2 else net_monthly_a2 * 0.20
+            render_investment_estimator(monthly_savings_usd=monthly_savings_a2, location_hint=company_location,
+                                        widget_key="manual_a2_inv", net_monthly_usd=net_monthly_a2)
+            render_emergency_fund_planner(net_monthly_usd=net_monthly_a2, location_hint=company_location,
+                                          widget_key="manual_a2_ef", gross_usd=prediction_a2)
+            render_lifestyle_split(net_monthly_usd=net_monthly_a2, location_hint=company_location,
+                                   widget_key="manual_a2_lifestyle", gross_usd=prediction_a2)
            # render_currency_converter(
            #     usd_amount=prediction_a2,       # or prediction_a2 for App 2
            #     location_hint=company_location,       # or company_location for App 2
