@@ -652,6 +652,17 @@ client_x509_cert_url = "your_cert_url"
 | API Integration | ExchangeRate API (open.er-api.com) |
 ---
 
+## Security Features
+
+* Email verification before account activation
+* Password validation with minimum length and basic strength checks
+* Rate limiting for login, registration, and password reset actions
+* Secure password reset using Firebase email-based system
+* Session management with expiry (24 hours)
+* Firebase-managed authentication (no password storage in application database)
+
+> Note: These features are implemented for basic application-level security and demonstration purposes.
+
 ## Authentication & Database
 
 - User registration and login is handled via **Firebase Authentication** (email and password)
