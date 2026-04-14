@@ -773,4 +773,6 @@ def is_admin() -> bool:
             and user_email.strip().lower() == admin_email.strip().lower()
         )
     except Exception:
-        return False
+        return False 
+
+        

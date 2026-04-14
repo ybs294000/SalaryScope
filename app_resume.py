@@ -49,6 +49,7 @@ from app.utils.takehome_utils import render_takehome_adjuster
 from app.utils.savings_utils import render_savings_adjuster
 from app.utils.loan_utils import render_loan_adjuster
 from app.utils.feedback import feedback_ui
+from app.tabs.live_training_tab import render_live_training_tab
 
 # -------------------------
 # CORE
@@ -1416,7 +1417,8 @@ with header_right:
 # ==================================================
 MODEL_OPTIONS = [
     "Model 1 — General Salary (Random Forest)",
-    "Model 2 — Data Science Salary (XGBoost)"
+    "Model 2 — Data Science Salary (XGBoost)",
+    "Model 3 — Live Community (GBR)"
 ]
 
 selected_model = st.selectbox(
@@ -1457,8 +1459,12 @@ if IS_APP1:
 else:
     app2_model, app2_metadata = load_app2_model()
 
+IS_LIVE = (st.session_state.active_model == MODEL_OPTIONS[2])
+
 if IS_APP1:
     st.caption("**Active Model:** Random Forest Regressor + Salary Level Classifier — trained on a general salary dataset.")
+elif IS_LIVE:
+    st.caption("**Active Model:** Live Community GradientBoosting Regressor — trained on real Adzuna job listings via HuggingFace Hub.")
 else:
     st.caption("**Active Model:** XGBoost Regressor (log-transformed) — trained on a Data Science salary dataset.")
 
@@ -1473,7 +1479,8 @@ tabs = [
     "Batch Prediction",
     "Scenario Analysis", 
     "Model Analytics",
-    "Data Insights"
+    "Data Insights",
+    "Live Model",
 ]
 
 if st.session_state.logged_in:
@@ -1676,6 +1683,21 @@ with tab_objects[4]:
 # ==================================================
 with tab_objects[5]:
     render_data_insights_tab(IS_APP1, df_app1, df_app2, COUNTRY_NAME_MAP)
+
+#=================================================
+#
+#=================================================
+# LIVE MODEL TAB
+live_idx = tabs.index("Live Model")
+
+with tab_objects[live_idx]:
+    if st.session_state.logged_in:
+        render_live_training_tab()
+    else:
+        st.info(
+            "Log in to access the Live Model tab. "
+            "The community model requires authentication."
+        )
 # =================================================
 # TAB 7: Add Profile Tab If Logged In
 # =================================================
