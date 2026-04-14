@@ -393,6 +393,7 @@ def render_col_adjuster(
 
     show_col = st.toggle(
         ":material/home: Show Cost-of-Living Adjustment",
+        help="Adjust your salary to reflect cost-of-living differences between countries.",
         key=toggle_key,
         value=False,
     )

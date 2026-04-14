@@ -503,6 +503,7 @@ def render_currency_converter(
     # --- Toggle ---
     show_conversion = st.toggle(
         ":material/currency_exchange: Show Currency Conversion",
+        help="Convert your salary into a selected currency using current exchange rates.",
         key=toggle_key,
         value=False,
     )

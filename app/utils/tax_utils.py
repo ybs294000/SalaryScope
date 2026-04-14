@@ -827,6 +827,7 @@ def render_tax_adjuster(
 
     show_tax = st.toggle(
         ":material/percent: Show Tax Adjustment",
+        help="Show estimated post-tax salary based on country-specific tax rates.",
         key=toggle_key,
         value=False,
     )
