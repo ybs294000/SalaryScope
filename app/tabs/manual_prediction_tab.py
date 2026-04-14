@@ -359,29 +359,22 @@ def render_manual_prediction_tab(
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
 
             st.divider()
-            st.markdown("<h3 style='text-align: left;'>Financial Tools</h3>", unsafe_allow_html=True)
-            
-            with st.expander(":material/currency_exchange: Currency & Tax Adjustment", expanded=False):
-                render_currency_converter(usd_amount=prediction, location_hint=country, widget_key="manual_a1")
-                active_currency = get_active_currency("manual_a1")
-                active_rates    = get_active_rates()
-                render_tax_adjuster(gross_usd=prediction, location_hint=country, widget_key="manual_a1_tax",
-                                    converted_currency=active_currency, rates=active_rates)
-            
-            with st.expander(":material/home: Cost of Living Adjustment", expanded=False):
-                render_col_adjuster(gross_usd=prediction, work_country=country, widget_key="manual_a1_col")
-            
-            with st.expander(":material/business_center: Compensation Breakdown", expanded=False):
-                render_ctc_adjuster(gross_usd=prediction, location_hint=country, widget_key="manual_a1_ctc")
-                th = render_takehome_adjuster(gross_usd=prediction, location_hint=country,
-                                               widget_key="manual_a1_th", net_usd=None)
-                net_monthly = th.get("net_monthly", prediction / 12)
-            
-            with st.expander(":material/bar_chart: Financial Planning", expanded=False):
-                render_savings_adjuster(net_monthly_usd=net_monthly, location_hint=country,
-                                         widget_key="manual_a1_sav", gross_usd=prediction)
-                render_loan_adjuster(net_monthly_usd=net_monthly, location_hint=country,
-                                     widget_key="manual_a1_loan", gross_usd=prediction)
+            st.subheader("Salary Insights & Financial Planning Tools")
+            render_currency_converter(usd_amount=prediction, location_hint=country, widget_key="manual_a1")
+            active_currency = get_active_currency("manual_a1")
+            active_rates    = get_active_rates()
+            render_tax_adjuster(gross_usd=prediction, location_hint=country, widget_key="manual_a1_tax",
+                                converted_currency=active_currency, rates=active_rates)
+            render_col_adjuster(gross_usd=prediction, work_country=country, widget_key="manual_a1_col")
+
+            render_ctc_adjuster(gross_usd=prediction, location_hint=country, widget_key="manual_a1_ctc")
+            th = render_takehome_adjuster(gross_usd=prediction, location_hint=country,
+                                           widget_key="manual_a1_th", net_usd=None)
+            net_monthly = th.get("net_monthly", prediction / 12)
+            render_savings_adjuster(net_monthly_usd=net_monthly, location_hint=country,
+                                     widget_key="manual_a1_sav", gross_usd=prediction)
+            render_loan_adjuster(net_monthly_usd=net_monthly, location_hint=country,
+                                 widget_key="manual_a1_loan", gross_usd=prediction)
 
             st.divider()
             st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
