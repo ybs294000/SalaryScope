@@ -89,7 +89,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Firebase-based authentication and feedback system
 - Basic post-tax salary estimation with country-specific effective rates
 - Basic cost-of-living (COL) adjustment for contextual salary comparison
-- Basicfinancial analysis tools: CTC breakdown, take-home salary estimation, savings potential, and loan affordability analysis
+- Basic financial analysis tools: CTC breakdown, take-home salary estimation, savings potential, and loan affordability analysis
 ---
 
 ## Live Demo
