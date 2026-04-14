@@ -6,6 +6,12 @@ from app.core.database import get_user_predictions
 import plotly.express as px
 from io import BytesIO
 
+# Account management (change password, delete account).
+# Rollback: remove this import and the three render_account_management_section()
+# calls below (all marked -- ROLLBACK: account_management --).
+# No other changes are needed in this file.
+from app.core.account_management import render_account_management_section
+
 
 def show_profile():
     st.header(":material/account_circle: User Profile")
@@ -26,6 +32,11 @@ def show_profile():
         st.info("No predictions recorded yet.")
 
         st.divider()
+
+        # -- ROLLBACK: account_management --
+        render_account_management_section()
+        # -- ROLLBACK end --
+
         if st.button("Logout"):
             logout()
         return
@@ -52,6 +63,11 @@ def show_profile():
         st.info("No valid prediction records found.")
 
         st.divider()
+
+        # -- ROLLBACK: account_management --
+        render_account_management_section()
+        # -- ROLLBACK end --
+
         if st.button("Logout"):
             logout()
         return
@@ -86,10 +102,10 @@ def show_profile():
         y="Predicted Salary",
         color="Model",
         color_discrete_map={
-            "Random Forest":        "#4F8EF7",  
+            "Random Forest":        "#4F8EF7",
             "XGBoost":              "#38BDF8",
-            "Random Forest Resume": "#818CF8",  
-            "XGBoost Resume":       "#A78BFA",  
+            "Random Forest Resume": "#818CF8",
+            "XGBoost Resume":       "#A78BFA",
         }
     )
 
@@ -171,7 +187,7 @@ def show_profile():
     selection = st.selectbox(
         "Select a prediction",
         df.index,
-        format_func=lambda x: f"{df.loc[x, 'Model']} — {df.loc[x, 'DateDisplay']}"
+        format_func=lambda x: f"{df.loc[x, 'Model']} -- {df.loc[x, 'DateDisplay']}"
     )
 
     selected_row = df.loc[selection]
@@ -246,7 +262,9 @@ def show_profile():
             mime=st.session_state.history_mime
         )
 
-    st.divider()
+    # -- ROLLBACK: account_management --
+    render_account_management_section()
+    # -- ROLLBACK end --
 
     if st.button(":material/logout: Logout"):
         logout()

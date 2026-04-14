@@ -1199,12 +1199,12 @@ def show_admin_panel(user_email):
                     e1.metric("Implementation", esnap.get("python_impl", "—"))
                     e2.metric("Default Encoding", esnap.get("encoding", "—"))
 
-                    st.text(f"Full version : {esnap.get('python_full', '—')}")
-                    st.text(f"Executable   : {esnap.get('executable', '—')}")
-                    st.text(f"Prefix       : {esnap.get('prefix', '—')}")
-                    st.text(f"Working dir  : {esnap.get('cwd', '—')}")
-                    st.text(f"Hostname     : {esnap.get('node', '—')}")
-                    st.text(f"Platform     : {esnap.get('platform_full', '—')}")
+                    st.text(f"Full version: {esnap.get('python_full', '—')}")
+                    st.text(f"Executable: {esnap.get('executable', '—')}")
+                    st.text(f"Prefix: {esnap.get('prefix', '—')}")
+                    st.text(f"Working dir: {esnap.get('cwd', '—')}")
+                    st.text(f"Hostname: {esnap.get('node', '—')}")
+                    st.text(f"Platform: {esnap.get('platform_full', '—')}")
 
                     st.markdown("**Runtime Limits**")
                     rl1, rl2 = st.columns(2)
