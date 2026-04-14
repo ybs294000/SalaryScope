@@ -359,6 +359,7 @@ def render_manual_prediction_tab(
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
 
             st.divider()
+            st.subheader("Financial Tools")
             render_currency_converter(usd_amount=prediction, location_hint=country, widget_key="manual_a1")
             active_currency = get_active_currency("manual_a1")
             active_rates    = get_active_rates()
