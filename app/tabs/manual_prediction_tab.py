@@ -630,6 +630,7 @@ def render_manual_prediction_tab(
             #st.caption("Range estimated using variation across individual trees in the XGBoost model.")
 
             st.divider()
+            st.subheader("Salary Insights & Financial Planning Tools")
             render_currency_converter(usd_amount=prediction_a2, location_hint=company_location, widget_key="manual_a2")
             active_currency_a2 = get_active_currency("manual_a2")
             active_rates_a2    = get_active_rates()
