@@ -502,7 +502,7 @@ def render_currency_converter(
 
     # --- Toggle ---
     show_conversion = st.toggle(
-        ":material/public: Show Currency Conversion",
+        ":material/currency_exchange: Show Currency Conversion",
         key=toggle_key,
         value=False,
     )
