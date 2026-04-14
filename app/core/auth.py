@@ -91,7 +91,7 @@ def _has_internet():
 #     st.session_state._session_expiry = expiry
 #
 #     try:
-#         from database import ensure_firestore_user
+#         from app.core.database import ensure_firestore_user
 #         ensure_firestore_user(email, email)
 #     except Exception:
 #         pass
@@ -305,7 +305,7 @@ def login_ui():
                 _set_logged_in(email, id_token)
 
                 try:
-                    from database import ensure_firestore_user
+                    from app.core.database import ensure_firestore_user
                     ensure_firestore_user(email, email)
                 except Exception:
                     pass
@@ -346,7 +346,7 @@ def register_ui():
         firebase_email = result.get("email", email)
 
         try:
-            from database import ensure_firestore_user
+            from app.core.database import ensure_firestore_user
             ensure_firestore_user(firebase_email, firebase_email, display_name=username)
         except Exception:
             pass
