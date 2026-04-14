@@ -416,12 +416,15 @@ salaryscope/
 │   ├── core/
 │   │   ├── auth.py                      # Firebase Authentication (login, register, session)
 │   │   ├── database.py                  # Firestore client, user and prediction functions
+│   │   ├── email_verification.py        # Email verification flow and UI handling
+│   │   ├── password_policy.py           # Password validation
+│   │   ├── rate_limiter.py              # Brute-force protection (per-action rate limiting)
+│   │   ├── account_management.py        # Account actions (change password, delete account)
 │   │   ├── insights_engine.py           # Insights engine
 │   │   └── resume_analysis.py           # Resume parsing (SpaCy, regex, feature extraction)
-│   │
 │   ├── tabs/
 │   │   ├── manual_prediction_tab.py    # Manual Prediction: Salary prediction, breakdown, insights, reports, adjustments
-│   │   ├── resume_analysis_tab.py      # Resume Prediction: E    xtract features from resume and predict salary
+│   │   ├── resume_analysis_tab.py      # Resume Prediction: Extract features from resume and predict salary
 │   │   ├── batch_prediction_tab.py     # Batch Prediction: Process files, run predictions, analytics, export results
 │   │   ├── scenario_analysis_tab.py    # Scenario Analysis: Compare scenarios, charts, sensitivity analysis
 │   │   ├── model_analytics_tab.py      # Model Analytics: Metrics, feature importance, residuals, evaluation

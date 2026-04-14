@@ -30,7 +30,7 @@ def render_about_tab():
         "It uses machine learning models to give an estimated salary along with some basic insights. "
         "The application supports manual input, resume-based prediction, and batch prediction. "
         "It is designed to help students and job seekers get a general idea of salary expectations. "
-        "It also includes basic post-tax estimation and cost-of-living adjustments for better real-world context."
+        "It also includes basic post-tax estimation, cost-of-living adjustments, and a secure user account system for better real-world usability."
     )
 
     with st.expander(":material/widgets: Features & Modules"):
@@ -186,9 +186,16 @@ def render_about_tab():
 
         st.markdown("### User Account System")
         st.markdown("""
-    - Email and password registration and login via Firebase Authentication
-    - User profile data stored in Firestore
-    - Session management via Streamlit session state (per-browser, 24-hour expiry)
+        - Email and password registration and login via Firebase Authentication
+        - Email verification required before full account access
+        - User profile data stored in Firestore
+        - Session management via Streamlit session state (per-browser, 24-hour expiry)
+        - Basic password validation (minimum length and strength checks)
+        - Rate limiting for login, registration, and password reset actions
+        - Secure password reset via email (Firebase)
+        - Account management features:
+          - Change password (with re-authentication)
+          - Delete account (with confirmation)
         """)
 
         st.divider()
