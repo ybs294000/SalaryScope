@@ -560,7 +560,8 @@ salaryscope/
 ├── data/
 │   ├── Salary_Streamlit_App.csv         # Model 1 training dataset
 │   ├── ds_salaries_Streamlit_App.csv    # Model 2 training dataset
-│   └── association_rules.csv            # Precomputed Apriori association rules
+│   ├── association_rules.csv            # Precomputed Apriori association rules
+│   └── exchange_rates_fallback.json           
 │
 ├── static/                              # Icons, favicons, and web assets
 │
@@ -574,7 +575,6 @@ salaryscope/
 ├── .streamlit/
 │   └── config.toml                      # Streamlit configuration
 │
-├── exchange_rates_fallback.json
 ├── requirements.txt
 └── README.md
 ```
