@@ -49,6 +49,7 @@ from app.utils.takehome_utils import render_takehome_adjuster
 from app.utils.savings_utils import render_savings_adjuster
 from app.utils.loan_utils import render_loan_adjuster
 from app.utils.feedback import feedback_ui
+
 # -------------------------
 # CORE
 # -------------------------
@@ -79,6 +80,9 @@ from app.tabs.data_insights_tab import render_data_insights_tab
 from app.tabs.about_tab import render_about_tab
 from app.tabs.admin_panel import show_admin_panel
 from app.tabs.user_profile import show_profile
+
+from app.tabs.model_hub_tab import render_model_hub_tab
+
 
 if "db_initialized" not in st.session_state:
     init_db()
@@ -1473,6 +1477,7 @@ tabs = [
     "Scenario Analysis", 
     "Model Analytics",
     "Data Insights",
+    "Model Hub",  
 ]
 
 if st.session_state.logged_in:
@@ -1676,8 +1681,16 @@ with tab_objects[4]:
 with tab_objects[5]:
     render_data_insights_tab(IS_APP1, df_app1, df_app2, COUNTRY_NAME_MAP)
 
+# ==================================================
+# TAB 7: MODEL HUB
+# ==================================================
+with tab_objects[tabs.index("Model Hub")]:
+    render_model_hub_tab(
+        user={"username": st.session_state.username} if st.session_state.logged_in else None,
+        is_admin_user=is_admin() if st.session_state.logged_in else False,
+    )
 # =================================================
-# TAB 7: Add Profile Tab If Logged In
+# TAB 8: Add Profile Tab If Logged In
 # =================================================
 if st.session_state.logged_in:
 
@@ -1687,7 +1700,7 @@ if st.session_state.logged_in:
         show_profile()
 
 # ==================================================
-# ADMIN TAB
+# TAB 9: ADMIN TAB
 # ==================================================
 if "Admin" in tabs:
     admin_index = tabs.index("Admin")
@@ -1702,7 +1715,7 @@ if "Admin" in tabs:
 
         show_admin_panel(st.session_state.username)
 # ==================================================
-# TAB 9: ABOUT (Merged from both apps)
+# TAB 10: ABOUT (Merged from both apps)
 # ==================================================
 about_index = tabs.index("About")
 with tab_objects[about_index]:

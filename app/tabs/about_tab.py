@@ -8,6 +8,7 @@ including:
 - Overview and purpose of SalaryScope
 - Model descriptions (Model 1 and Model 2)
 - Features and modules
+- Model Hub description
 - Resume analysis details
 - Scenario analysis and prediction workflow
 - User account system and profile features
@@ -30,7 +31,8 @@ def render_about_tab():
         "It uses machine learning models to give an estimated salary along with some basic insights. "
         "The application supports manual input, resume-based prediction, and batch prediction. "
         "It is designed to help students and job seekers get a general idea of salary expectations. "
-        "It also includes basic post-tax estimation, cost-of-living adjustments, and a secure user account system for better real-world usability."
+        "It also includes basic post-tax estimation, cost-of-living adjustments, and a secure user account system for better real-world usability. "
+        "A Model Hub tab allows admins to upload additional trained models and make them available to logged-in users through a dynamically generated prediction interface."
     )
 
     with st.expander(":material/widgets: Features & Modules"):
@@ -118,6 +120,23 @@ def render_about_tab():
     - Cost-of-living adjustment for cross-country salary comparison
     - Real-world salary interpretation using combined financial adjustments
             """)
+
+        st.divider()
+
+        st.markdown("### Model Hub")
+        st.markdown("""
+    - Available to all logged-in users; upload and management controls are admin-only
+    - Admins upload a three-file bundle: `model.pkl`, `columns.pkl`, and `schema.json`
+    - Each upload creates a new versioned folder in a private HuggingFace dataset repo — existing bundles are never overwritten
+    - A registry file (`models_registry.json`) tracks all uploaded models and their active status
+    - Users see a dropdown of active models and a prediction form generated dynamically from the model's schema
+    - `schema.json` defines the input fields, their types, and the Streamlit widget to use (slider, selectbox, number_input, text_input, checkbox)
+    - The predictor maps schema fields to model columns automatically, including one-hot expansion for selectbox fields
+    - Admins can activate, deactivate, or roll back models from the Registry Manager
+    - A visual Schema Editor allows admins to build or validate a schema.json without editing JSON directly
+    - Model files are size-checked before upload (200 MB limit for model.pkl)
+    - Requires `HF_TOKEN` and `HF_REPO_ID` to be set in secrets
+        """)
 
         st.divider()
 
@@ -216,7 +235,7 @@ def render_about_tab():
         st.markdown("""
     - Model switcher to toggle between both prediction systems
     - Unified dark professional theme across the entire application
-    - Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Profile (logged-in only), About
+    - Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, Profile (logged-in only), About
     - ReportLab-based multi-page PDF reports with embedded charts
     - State-managed UI to prevent re-computation on interaction
     - Google Drive public link upload for batch files
@@ -240,7 +259,9 @@ def render_about_tab():
     - ReportLab (PDF generation)
     - Firebase Authentication (user login and registration)
     - Firebase Admin SDK / Firestore (user data, prediction storage, and feedback storage)
-    - Requests (Cloud file retrieval)
+    - HuggingFace Hub SDK (model bundle storage and retrieval for Model Hub)
+    - joblib (model serialization and deserialization)
+    - Requests (cloud file retrieval)
     - bcrypt (password hashing utility)
         """)
 
@@ -279,6 +300,12 @@ def render_about_tab():
 - Explore the dataset used to train the active model.
 - Includes salary distributions and comparisons by education, experience, country, job role, company size, and work mode.
 
+**Model Hub**
+- Requires login to access.
+- Select a model from the dropdown and click Load Model to download the bundle.
+- Fill in the input form — fields are generated from the model's schema — and click Predict.
+- Admins additionally see an Upload Bundle tab, a Registry Manager for activating and deactivating models, and a Schema Editor for building or validating schema.json files.
+
 **Profile**
 - Visible only when logged in.
 - Shows your prediction history, summary statistics, and a timeline chart.
@@ -293,7 +320,7 @@ def render_about_tab():
         st.markdown("""
 **Getting Started**
 - Select a prediction model from the dropdown at the top: Model 1 (Random Forest) for general salary prediction, or Model 2 (XGBoost) for data science roles.
-- The active model applies across all tabs.
+- The active model applies across all tabs except Model Hub, which has its own independent model selector.
 
 **Manual Prediction**
 - Fill in all input fields in the Manual Prediction tab.
@@ -328,6 +355,13 @@ def render_about_tab():
 - Select a baseline scenario from the dropdown in the sweep section to simulate how salary responds to changes in experience or education while everything else stays fixed.
 - Use the export dropdown and download button to save scenario results.
 
+**Model Hub**
+- Log in first — the tab requires authentication.
+- Select a model from the dropdown. Only models approved by an admin are listed.
+- Click **Load Model** to download the bundle from HuggingFace. This only needs to be done once per session.
+- Fill in the input form that appears and click **Predict**.
+- If you are an admin, the Upload Bundle, Registry Manager, and Schema Editor sections are visible below the prediction panel.
+
 **Account (Optional)**
 - Register or log in from the sidebar to save predictions.
 - Logged-in users can view their full prediction history in the Profile tab.
@@ -351,4 +385,6 @@ def render_about_tab():
     - Tax estimation is based on simplified models and approximate effective rates; it does not account for deductions, filing status, or local regulations.
     - Cost-of-living adjustments use country-level indices and may not accurately represent city-level variations or individual lifestyle differences.
     - Combined salary adjustments (tax, currency, cost of living) are indicative and should be interpreted as general estimates rather than precise financial outcomes.
+    - Model Hub bundles are deserialized using joblib (pickle). Only upload model files from sources you control entirely.
+    - Model Hub predictions are only as reliable as the model and training data used — the system does not validate model quality or dataset coverage.
         """)

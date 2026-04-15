@@ -18,7 +18,7 @@
   </a>
   <a>
     <a>
-      <img src="https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.0.0" />
+      <img src="https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.1.0" />
     </a>
   </a>
 </p>
@@ -34,7 +34,7 @@
   </a>
 </p>
 
-> Machine learning-powered salary prediction system with dual models, hybrid resume analysis (spaCy + rule-based extraction), and interactive analytics.
+> Machine learning-powered salary prediction system with dual models, hybrid resume analysis (spaCy + rule-based extraction), interactive analytics, and an extensible Model Hub for deploying additional trained models.
 
 SalaryScope is a machine learning-based web application developed as a Final Year B.Tech Project. It provides salary prediction capabilities through two distinct models, each trained on a different dataset and targeting different use cases. The application is built with Streamlit and deployed on Streamlit Cloud.
 
@@ -46,6 +46,7 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 - [Live Demo](#live-demo)
 - [Screenshots](#screenshots)
 - [Features](#features)
+- [Model Hub](#model-hub)
 - [Models](#models)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
@@ -65,7 +66,9 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 
 ## Overview
 
-SalaryScope allows users to predict salaries either manually, via resume upload (hybrid extraction using spaCy and rule-based techniques), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration,basic tax estimation, cost-of-living adjusted salary insights, and extended financial analysis tools such as CTC breakdown, take-home salary estimation, savings potential, loan affordability insights, user authentication, prediction feedback collection, and PDF report generation.
+SalaryScope allows users to predict salaries either manually, via resume upload (hybrid extraction using spaCy and rule-based techniques), or in bulk (via file upload). It supports two prediction models targeting different domains — a general salary dataset and a data science-specific salary dataset. The app includes scenario analysis, model analytics, dataset exploration, basic tax estimation, cost-of-living adjusted salary insights, and extended financial analysis tools such as CTC breakdown, take-home salary estimation, savings potential, loan affordability insights, user authentication, prediction feedback collection, and PDF report generation.
+
+A Model Hub module allows admins to upload additional independently trained sklearn-compatible models and make them available to logged-in users through a dynamically generated prediction interface, without modifying application code.
 
 The project follows a structured workflow:
 - Data analysis and model development using Jupyter notebooks
@@ -90,6 +93,8 @@ The application runs in a web browser, making it platform-independent and easily
 - Basic post-tax salary estimation with country-specific effective rates
 - Basic cost-of-living (COL) adjustment for contextual salary comparison
 - Basic financial analysis tools: CTC breakdown, take-home salary estimation, savings potential, and loan affordability analysis
+- Model Hub: upload and serve additional trained models with dynamic schema-driven prediction UI
+
 ---
 
 ## Live Demo
@@ -355,6 +360,84 @@ The admin panel is lightweight, on-demand, and designed for monitoring without a
 
 ---
 
+## Model Hub
+
+The Model Hub is a separate tab that allows admins to upload additional independently trained models and make them available to logged-in users, without changing application code.
+
+### How it works
+
+Admins train models offline and upload a three-file bundle:
+
+| File | Purpose |
+|---|---|
+| `model.pkl` | Trained sklearn-compatible estimator, serialized with joblib |
+| `columns.pkl` | Ordered list of feature column names the model expects |
+| `schema.json` | Defines the user-facing input fields and their UI widget types |
+
+Each upload creates a versioned folder in a private HuggingFace dataset repo (`models/model_<timestamp>_<id>/`). Bundles are never overwritten. A registry file (`models_registry.json`) tracks all uploaded models and their active status.
+
+### What users see
+
+- A dropdown listing only active, registered models
+- An input form generated dynamically from the model's `schema.json`
+- A prediction result for the model's target variable
+- No access to upload, registry management, or schema editing
+
+### What admins can do
+
+- Upload a complete bundle (model.pkl + columns.pkl + schema.json)
+- Activate or deactivate models from the Registry Manager
+- Roll back to an earlier version within a model family
+- Edit or create schema.json using a visual field builder, then download it
+- Upload a replacement schema.json to an existing bundle without re-uploading the model
+
+### Schema system
+
+`schema.json` defines the prediction form entirely. Supported field types:
+
+```json
+{
+  "fields": [
+    { "name": "experience_years", "type": "int",      "ui": "slider",    "min": 0, "max": 20 },
+    { "name": "job_title",        "type": "category", "ui": "selectbox", "values": ["Data Scientist", "ML Engineer"] },
+    { "name": "remote_ratio",     "type": "int",      "ui": "slider",    "min": 0, "max": 100 }
+  ]
+}
+```
+
+Supported `ui` values: `slider`, `selectbox`, `number_input`, `text_input`, `checkbox`.
+
+### Column mapping
+
+The predictor maps schema fields to model columns automatically:
+
+- **Direct match** — field name equals column name
+- **One-hot expansion** — a `selectbox` field named `job_title` with values `["Data Scientist", "ML Engineer"]` maps to columns `job_title_Data Scientist` and `job_title_ML Engineer` (sklearn get_dummies convention)
+- **Unmatched columns** — filled with `0.0`; a warning is shown if this occurs
+
+### Access control
+
+- The tab requires login to access
+- Upload, Registry Manager, and Schema Editor are visible only to admin users
+- Non-admin users see only the model selector and prediction form
+
+### Storage
+
+Models are stored in a private HuggingFace dataset repo configured via `st.secrets`. Required secrets:
+
+```toml
+HF_TOKEN   = "hf_xxxxxxxxxxxxxxxxxxxx"   # write-scope token
+HF_REPO_ID = "your-username/your-repo"  # dataset repo
+```
+
+### Security notes
+
+- `model.pkl` files are deserialized using joblib (which uses pickle internally). Only upload bundles you have trained yourself.
+- File size limits are enforced: 200 MB for model.pkl, 10 MB for columns.pkl, 512 KB for schema.json.
+- The tab is auth-gated — unauthenticated users cannot access it.
+
+---
+
 ## Models
 
 ### Model 1 — General Salary (Random Forest)
@@ -409,7 +492,7 @@ The admin panel is lightweight, on-demand, and designed for monitoring without a
 ```
 salaryscope/
 │
-├── app_resume.py                        # Main Streamlit application with resume analysis and scenario/what-if analysis
+├── app_resume.py                        # Main Streamlit application
 ├── app-lite.py                          # Lightweight Streamlit application
 │
 ├── app/
@@ -422,45 +505,57 @@ salaryscope/
 │   │   ├── account_management.py        # Account actions (change password, delete account)
 │   │   ├── insights_engine.py           # Insights engine
 │   │   └── resume_analysis.py           # Resume parsing (SpaCy, regex, feature extraction)
+│   │
+│   ├── model_hub/                       # Model Hub package
+│   │   ├── __init__.py                  # Package exports
+│   │   ├── _hf_client.py               # HuggingFace SDK wrapper (download, upload, listing)
+│   │   ├── registry.py                  # Registry read/write (models_registry.json)
+│   │   ├── loader.py                    # Bundle download, deserialization, session cache
+│   │   ├── predictor.py                 # Feature vector construction and model.predict()
+│   │   ├── schema_parser.py             # schema.json → Streamlit widgets
+│   │   ├── uploader.py                  # Bundle validation and upload to HuggingFace
+│   │   └── validator.py                 # Schema and schema–columns consistency checks
+│   │
 │   ├── tabs/
-│   │   ├── manual_prediction_tab.py    # Manual Prediction: Salary prediction, breakdown, insights, reports, adjustments
-│   │   ├── resume_analysis_tab.py      # Resume Prediction: Extract features from resume and predict salary
-│   │   ├── batch_prediction_tab.py     # Batch Prediction: Process files, run predictions, analytics, export results
-│   │   ├── scenario_analysis_tab.py    # Scenario Analysis: Compare scenarios, charts, sensitivity analysis
-│   │   ├── model_analytics_tab.py      # Model Analytics: Metrics, feature importance, residuals, evaluation
-│   │   ├── data_insights_tab.py        # Data Insights: Dataset analysis, distributions, trends
-│   │   ├── user_profile.py             # User profile tab UI and prediction history
-│   │   ├── admin_panel.py              # Admin dashboard for basic system diagnostics, usage insights, and monitoring
-│   │   └── about_tab.py                # About: Project overview and information
+│   │   ├── manual_prediction_tab.py     # Manual Prediction
+│   │   ├── resume_analysis_tab.py       # Resume Prediction
+│   │   ├── batch_prediction_tab.py      # Batch Prediction
+│   │   ├── scenario_analysis_tab.py     # Scenario Analysis
+│   │   ├── model_analytics_tab.py       # Model Analytics
+│   │   ├── data_insights_tab.py         # Data Insights
+│   │   ├── model_hub_tab.py             # Model Hub UI (prediction form, admin controls)
+│   │   ├── user_profile.py              # User profile and prediction history
+│   │   ├── admin_panel.py               # Admin diagnostics and monitoring
+│   │   └── about_tab.py                 # About tab
 │   │
 │   ├── utils/
-│   │   ├── country_utils.py             # Centralized country resolution (ISO-2, aliases, CLDR via Babel)
-│   │   ├── currency_utils.py            # Currency conversion utility (live rates, fallback system, Streamlit UI)
-│   │   ├── tax_utils.py                 # Basic tax estimation utility (country-based effective rates, Streamlit UI)
-│   │   ├── col_utils.py                 # Basic cost-of-living adjustment utility (relative salary normalization)
-│   │   ├── pdf_utils.py                 # ReportLab PDF generation for all report types
-│   │   ├── feedback.py                  # Prediction feedback collection (UI + Firestore save)
+│   │   ├── country_utils.py             # Country resolution (ISO-2, aliases, CLDR)
+│   │   ├── currency_utils.py            # Currency conversion (live rates, fallback)
+│   │   ├── tax_utils.py                 # Basic tax estimation
+│   │   ├── col_utils.py                 # Cost-of-living adjustment
+│   │   ├── pdf_utils.py                 # PDF report generation (ReportLab)
+│   │   ├── feedback.py                  # Prediction feedback UI and Firestore save
 │   │   ├── recommendations.py           # Recommendations engine
-│   │   ├── negotiation_tips.py          # Salary negotiation tips engine
-│   │   ├── ctc_utils.py                 # CTC Breakdown: Splits salary into base, HRA, bonus, PF, gratuity, and allowances
-│   │   ├── takehome_utils.python        # Take-Home Salary: Calculates net salary after tax, PF, and deductions
-│   │   ├── savings_utils.py             # Savings Calculator: Estimates monthly and long-term savings from net income
-│   │   └── loan_utils.python            # Loan Estimator: Calculates maximum loan based on income, EMI limits, and interest
+│   │   ├── negotiation_tips.py          # Negotiation tips engine
+│   │   ├── ctc_utils.py                 # CTC breakdown
+│   │   ├── takehome_utils.py            # Take-home salary estimation
+│   │   ├── savings_utils.py             # Savings potential calculator
+│   │   └── loan_utils.py               # Loan affordability estimator
 │
 ├── model/
 │   ├── rf_model_grid.pkl                # Model 1: Random Forest pipeline + metadata
 │   ├── salary_band_classifier.pkl       # Model 1: Salary level classifier + metadata
 │   ├── career_cluster_pipeline.pkl      # Model 1: KMeans clustering pipeline + metadata
-│   ├── app1_analytics.pkl               # Model 1: Precomputed analytics (residuals, PCA, etc.)
+│   ├── app1_analytics.pkl               # Model 1: Precomputed analytics
 │   ├── ds_xgb_model_grid.pkl            # Model 2: XGBoost pipeline + metadata
-│   └── app2_analytics.pkl               # Model 2: Precomputed analytics (SHAP, residuals, etc.)
+│   └── app2_analytics.pkl               # Model 2: Precomputed analytics
 │
-├── notebooks/                           # Jupyter notebooks for EDA, feature engineering, and model development
-├── powerbi/                             # Power BI dashboards and exported reports
-├── docs/                                # Project documentation (SRS, design, report)
-├── samples/                             # Sample input files (CSV, resumes)
+├── notebooks/                           # Jupyter notebooks for EDA and model development
+├── powerbi/                             # Power BI dashboards
+├── docs/                                # Project documentation
+├── samples/                             # Sample input files
 ├── assets/                              # Branding and visual assets
-├── pdf_outputs/                         # Generated PDF reports (sample outputs)
+├── pdf_outputs/                         # Sample generated PDF reports
 │
 ├── data/
 │   ├── Salary_Streamlit_App.csv         # Model 1 training dataset
@@ -493,6 +588,7 @@ salaryscope/
 * Python 3.13 (recommended)
 * The project may work on lower Python versions, but it has been developed and tested using Python 3.13.
 * A Firebase project with Firestore enabled
+* A HuggingFace dataset repo (required only if using the Model Hub)
 
 
 ### Steps
@@ -541,7 +637,8 @@ SalaryScope is a cross-platform application and has been tested in multiple envi
 
 ## Configuration
 
-Create a `.streamlit/secrets.toml` file in the project root with the following structure:
+Create a `.streamlit/secrets.toml` file in the project root. The base configuration for Firebase is:
+
 ```toml
 FIREBASE_API_KEY = "your_firebase_api_key"
 
@@ -558,6 +655,15 @@ auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
 client_x509_cert_url = "your_cert_url"
 ```
 
+To enable the Model Hub, add the following two keys:
+
+```toml
+HF_TOKEN   = "hf_xxxxxxxxxxxxxxxxxxxx"   # HuggingFace token with write scope
+HF_REPO_ID = "your-username/your-repo"  # Private HuggingFace dataset repo
+```
+
+The Model Hub will not load if these keys are absent, but all other tabs remain unaffected.
+
 > **Note:** Never commit `secrets.toml` to version control. Add it to `.gitignore`.
 
 ## Important Notes
@@ -566,6 +672,7 @@ client_x509_cert_url = "your_cert_url"
 * The application is fully usable without authentication for core features such as manual prediction, scenario analysis, and model analytics.
 * Feedback submission is available to all users including those not logged in.
 * Resume parsing requires spaCy language model installation.
+* The Model Hub tab requires login to access and requires `HF_TOKEN` and `HF_REPO_ID` to be configured in secrets.
 
 ---
 
@@ -606,6 +713,18 @@ client_x509_cert_url = "your_cert_url"
 6. Select a baseline scenario from the sensitivity sweep dropdown to simulate how salary responds to changes in experience or education while everything else stays fixed
 7. Use the export dropdown and download button to save scenario results
 
+### Model Hub
+1. Log in to access the **Model Hub** tab
+2. Select a model from the dropdown — only active, registered models are listed
+3. Click **Load Model** to download the bundle from HuggingFace
+4. Fill in the input form generated from the model's schema
+5. Click **Predict** to run the prediction
+
+**Admin only:**
+- Go to the **Upload Bundle** tab to upload a new model (model.pkl + columns.pkl + schema.json)
+- Use the **Registry Manager** to activate, deactivate, or roll back models
+- Use the **Schema Editor** to build or validate a schema.json visually
+
 ### Model Analytics
 - Navigate to the **Model Analytics** tab to view full model diagnostics, comparison charts, and download the analytics PDF report
 
@@ -630,7 +749,7 @@ client_x509_cert_url = "your_cert_url"
 ### Model 2 Dataset (`ds_salaries.csv`)
 - Data science and AI/ML specific salary dataset
 - Features: experience_level, employment_type, job_title, employee_residence, remote_ratio, company_location, company_size, salary_in_usd
-- Source: [Kaggle — Data Science Salaries 2023 :money_with_wings:](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
+- Source: [Kaggle — Data Science Salaries 2023](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
 
 ---
 
@@ -647,12 +766,13 @@ client_x509_cert_url = "your_cert_url"
 | PDF Generation | ReportLab |
 | Authentication | Firebase Authentication |
 | Database | Firebase Firestore, Firebase Admin SDK |
-| Cloud File Retrieval | Requests |
+| Model Storage | HuggingFace Dataset Repo (via huggingface_hub SDK) |
 | Security | bcrypt |
 | Deployment | Streamlit Cloud |
 | Language | Python 3.13+ |
 | NLP | spaCy, Regex, PhraseMatcher |
 | API Integration | ExchangeRate API (open.er-api.com) |
+
 ---
 
 ## Security Features
@@ -663,6 +783,7 @@ client_x509_cert_url = "your_cert_url"
 * Secure password reset using Firebase email-based system
 * Session management with expiry (24 hours)
 * Firebase-managed authentication (no password storage in application database)
+* Model Hub upload restricted to admin users; model files are size-checked before upload and deserialized only from admin-controlled sources
 
 > Note: These features are implemented for basic application-level security and demonstration purposes.
 
@@ -691,8 +812,6 @@ feedback/
     accuracy_rating, direction, actual_salary, star_rating, created_at,
     extended_data (optional nested object)
 ```
-
----
 
 ---
 
@@ -749,6 +868,8 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Take-home salary estimation uses effective tax rates and simplified deduction models; real payroll calculations may differ.
 - Savings estimates are based on generalized expense ratios and do not account for individual lifestyle or financial obligations.
 - Loan affordability calculations use standard EMI formulas and typical lender norms, but actual loan eligibility depends on credit profile and bank policies.
+- Model Hub bundles are deserialized using joblib (pickle). Only upload model files from sources you control entirely.
+- Model Hub predictions are only as reliable as the model and data used during training — the system does not validate model quality.
 
 ---
 
@@ -762,7 +883,8 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Enhance financial estimation modules (CTC, take-home, savings, loan) with more accurate country-specific rules and real-world datasets.  
 - Integrate detailed tax systems with deductions, exemptions, and region-specific regulations for improved take-home accuracy.  
 - Incorporate investment and wealth growth simulations (e.g., compounding, inflation-adjusted savings projections).  
-- Extend loan analysis with credit score impact, multiple loan types, and real-time interest rate integration.  
+- Extend loan analysis with credit score impact, multiple loan types, and real-time interest rate integration.
+- Extend the Model Hub to support ONNX or other safe serialization formats as an alternative to pickle-based bundles.
 
 ---
 
@@ -773,6 +895,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Scikit-learn Documentation — https://scikit-learn.org  
 - XGBoost Documentation — https://xgboost.readthedocs.io  
 - SHAP Documentation — https://shap.readthedocs.io
+- HuggingFace Hub Documentation — https://huggingface.co/docs/huggingface_hub
 
 ---
 

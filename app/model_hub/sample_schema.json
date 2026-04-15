@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "fields": [
+    {
+      "name": "experience_years",
+      "type": "int",
+      "ui": "slider",
+      "min": 0,
+      "max": 20,
+      "default": 3,
+      "label": "Years of Experience",
+      "help": "Total years of professional experience in the field."
+    },
+    {
+      "name": "job_title",
+      "type": "category",
+      "ui": "selectbox",
+      "values": ["Data Scientist", "ML Engineer", "Software Engineer", "Data Analyst", "Research Scientist"],
+      "default": "Software Engineer",
+      "label": "Job Title"
+    },
+    {
+      "name": "remote_ratio",
+      "type": "int",
+      "ui": "slider",
+      "min": 0,
+      "max": 100,
+      "step": 25,
+      "default": 50,
+      "label": "Remote Work (%)",
+      "help": "0 = fully on-site, 100 = fully remote."
+    },
+    {
+      "name": "company_size",
+      "type": "category",
+      "ui": "selectbox",
+      "values": ["S", "M", "L"],
+      "default": "M",
+      "label": "Company Size",
+      "help": "S = small (<50 employees), M = medium, L = large (>250 employees)."
+    },
+    {
+      "name": "employment_type",
+      "type": "category",
+      "ui": "selectbox",
+      "values": ["FT", "PT", "CT", "FL"],
+      "default": "FT",
+      "label": "Employment Type",
+      "help": "FT = Full-time, PT = Part-time, CT = Contract, FL = Freelance."
+    },
+    {
+      "name": "education_level",
+      "type": "category",
+      "ui": "selectbox",
+      "values": ["Bachelor", "Master", "PhD", "Other"],
+      "default": "Master",
+      "label": "Education Level"
+    }
+  ]
+}
