@@ -257,6 +257,7 @@ def render_about_tab():
     - pdfplumber (PDF text extraction)
     - Plotly / Matplotlib
     - ReportLab (PDF generation)
+    - SHAP (SHapley Additive exPlanations)
     - Firebase Authentication (user login and registration)
     - Firebase Admin SDK / Firestore (user data, prediction storage, and feedback storage)
     - HuggingFace Hub SDK (model bundle storage and retrieval for Model Hub)

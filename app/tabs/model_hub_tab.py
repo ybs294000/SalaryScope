@@ -400,7 +400,7 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
         "info",
     )
     _msg(
-        ":material/warning: Security notice: model.pkl files are deserialized with joblib (pickle). "
+        "Security notice: model.pkl files are deserialized with joblib (pickle). "
         "Only upload bundles you have trained yourself. "
         "Never upload files from untrusted third parties.",
         "warning",

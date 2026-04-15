@@ -44,7 +44,9 @@ _CACHE_TTL_MINUTES = 60
 # Default path for the offline fallback rates file
 # Users can place a file here and it will be loaded when the network is down
 _FALLBACK_FILE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "exchange_rates_fallback.json"
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data",
+    "exchange_rates_fallback.json"
 )
 
 # ---------------------------------------------------------------------------
@@ -539,8 +541,8 @@ def render_currency_converter(
             )
             # Offer to load from file
             st.markdown(
-                "**Tip:** Place a `exchange_rates_fallback.json` file in the same "
-                "folder as `currency_utils.py` to use your own saved rates when offline."
+                "**Tip:** Place a `exchange_rates_fallback.json` file in the `data` "
+                "folder to use your own saved rates when offline."
             )
 
         # Currency selector
