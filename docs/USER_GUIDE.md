@@ -1,341 +1,682 @@
 # SalaryScope — User Guide
-
-> **Version 1.0 · April 2026**  
-> A complete guide to using every feature of SalaryScope.
-
----
-
-## Welcome to SalaryScope
-
-SalaryScope is a salary prediction tool powered by machine learning. It estimates annual salaries based on professional attributes, lets you upload a resume for automatic extraction, analyze multiple scenarios, and understand predictions in real-world financial context.
-
-No installation is required. Open your browser and go to:
-
-- **Full App**: https://salaryscope-app.streamlit.app/
-- **Lite App** (no resume feature): https://salaryscope-lite-app.streamlit.app/
+**Version:** 1.1.0  
+**Project:** SalaryScope — Salary Prediction System using Machine Learning
 
 ---
 
-## Quick Start (30 seconds)
+## Table of Contents
 
-1. Open the app in your browser
-2. From the **model dropdown at the top**, choose Model 1 (general roles) or Model 2 (data science roles)
-3. Go to the **Manual Prediction** tab
-4. Fill in your details and click **Predict Salary**
-5. Your estimated annual salary appears instantly
+1. [Introduction](#1-introduction)
+2. [Getting Started](#2-getting-started)
+3. [Selecting a Model](#3-selecting-a-model)
+4. [Manual Prediction](#4-manual-prediction)
+5. [Resume Analysis](#5-resume-analysis)
+6. [Batch Prediction](#6-batch-prediction)
+7. [Scenario Analysis](#7-scenario-analysis)
+8. [Model Analytics](#8-model-analytics)
+9. [Data Insights](#9-data-insights)
+10. [Model Hub](#10-model-hub)
+11. [Financial Planning Tools](#11-financial-planning-tools)
+12. [User Account and Profile](#12-user-account-and-profile)
+13. [Providing Feedback](#13-providing-feedback)
+14. [Admin Panel](#14-admin-panel)
+15. [Exporting and Downloading Reports](#15-exporting-and-downloading-reports)
+16. [Troubleshooting](#16-troubleshooting)
+17. [Frequently Asked Questions](#17-frequently-asked-questions)
+18. [Important Disclaimers](#18-important-disclaimers)
 
 ---
 
-## Choosing a Model
+## 1. Introduction
 
-At the very top of the page, you will see a dropdown labeled **Select Prediction Model**.
+SalaryScope is a web-based salary prediction tool that uses machine learning to estimate annual salaries based on your professional profile. It supports three ways to get a prediction:
 
-| Model | Best For | Algorithm |
-|---|---|---|
-| **Model 1 — General Salary** | Any industry: finance, engineering, management, etc. | Random Forest |
-| **Model 2 — Data Science Salary** | Data science, ML, AI, data engineering, BI, analytics roles | XGBoost |
+- **Manual Prediction** — fill in a form with your details
+- **Resume Analysis** — upload your PDF resume and let the system extract your details automatically
+- **Batch Prediction** — upload a file with multiple records and get predictions for all of them at once
 
-Your model selection applies across all tabs. You can switch models at any time.
+Beyond salary prediction, SalaryScope includes financial planning tools (tax estimation, cost-of-living comparison, savings potential, loan affordability, and more), dataset exploration dashboards, model performance analytics, and a Model Hub where additional trained models can be accessed.
+
+**Live applications:**
+- Full App (with resume analysis): https://salaryscope-app.streamlit.app/
+- Lite App (without resume analysis): https://salaryscope-lite-app.streamlit.app/
 
 ---
 
-## Tab Overview
+## 2. Getting Started
 
-| Tab | What You Can Do |
+### 2.1 Accessing the Application
+
+Open either link above in a web browser. No installation is required. The application runs entirely in the browser.
+
+### 2.2 Application Layout
+
+The application has two main areas:
+
+**Sidebar (left panel):**
+- Model selector dropdown at the top
+- Login / Register / Logout controls
+
+**Tab area (main content):**
+- A row of tabs across the top for navigating between features
+- Content changes based on which tab is active and which model is selected
+
+### 2.3 Creating an Account (Optional)
+
+An account is not required to use most features. You can make predictions, use financial tools, and view analytics without logging in. Creating an account allows you to:
+
+- Save your prediction history
+- View your prediction timeline in the Profile tab
+- Export your full prediction history
+- Access the Model Hub
+- Change your password or manage your account
+
+**To register:**
+1. In the sidebar, click **Register**.
+2. Enter a display name, email address, and password.
+3. Your password must be at least 12 characters and include an uppercase letter, lowercase letter, digit, and special character.
+4. Click **Register**.
+5. A verification email will be sent to your address. Check your inbox (and spam folder) and click the verification link.
+6. Return to the application and click **I have verified my email**, then sign in.
+
+### 2.4 Logging In
+
+1. In the sidebar, click **Login**.
+2. Enter your registered email and password.
+3. Click **Login**.
+
+If you forget your password, click **Forgot Password**, enter your email, and follow the instructions in the reset email. The reset link expires after 1 hour.
+
+Sessions expire after 24 hours and require re-login.
+
+---
+
+## 3. Selecting a Model
+
+At the top of the sidebar, use the model selector dropdown to choose which model powers your predictions:
+
+| Model | Best For |
 |---|---|
-| **Manual Prediction** | Enter your details and get an instant salary estimate |
-| **Resume Analysis** | Upload a PDF resume and auto-extract your details for prediction |
-| **Batch Prediction** | Upload a file with many records and predict salaries in bulk |
-| **Scenario Analysis** | Compare up to 5 different career profiles side-by-side |
-| **Model Analytics** | Explore model performance, accuracy metrics, and feature importance |
-| **Data Insights** | Explore the training dataset used by each model |
-| **Profile** | View your prediction history (login required) |
-| **About** | Learn about the system, its features, and its limitations |
+| **Model 1 — General Salary (Random Forest)** | Any job role, broad range of countries |
+| **Model 2 — Data Science Salary (XGBoost)** | Data science, ML, analytics, and data engineering roles |
+
+The selected model applies to all tabs — Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, and Data Insights — simultaneously. The Model Hub has its own independent model selector.
+
+You can switch models at any time. Previous results in the current session will be cleared when you switch.
 
 ---
 
-## Manual Prediction
+## 4. Manual Prediction
 
-### Step-by-Step
+Manual prediction is the fastest way to get a salary estimate for a single set of inputs.
 
-**Model 1 inputs:**
-- **Age** — your current age
-- **Years of Experience** — total professional experience in years
-- **Education Level** — select from High School, Bachelor's, Master's, or PhD
-- **Senior Position** — toggle on if your role is a senior-level position
-- **Gender** — select your gender
-- **Job Title** — type or select your job title from the dropdown
-- **Country** — select your country of employment
+### 4.1 Model 1 Inputs
 
-**Model 2 inputs:**
-- **Experience Level** — Entry, Mid, Senior, or Executive
-- **Employment Type** — Full-time, Part-time, Contract, or Freelance
-- **Job Title** — your data science role title
-- **Employee Residence** — your country of residence
-- **Work Mode** — Onsite (0%), Hybrid (50%), or Remote (100%)
-- **Company Location** — country where the company is based
-- **Company Size** — Small, Medium, or Large
+| Field | Description | Range |
+|---|---|---|
+| Age | Your age in years | 18 – 70 |
+| Education Level | Highest degree attained | High School / Bachelor's / Master's / PhD |
+| Gender | Self-reported gender | Male / Female / Other |
+| Job Title | Your job title | Select from the dropdown list |
+| Years of Experience | Total years of professional work experience | 0.0 – 40.0 |
+| Senior Position | Whether your role is a senior position | Yes / No |
+| Country | Country where the role is based | Select from the dropdown list |
 
-Once you have filled in all fields, click **Predict Salary**.
+If your country is not listed, select **Other**.
 
-### Understanding the Results
+### 4.2 Model 2 Inputs
 
-After prediction, you will see:
+| Field | Description | Allowed Values |
+|---|---|---|
+| Experience Level | Career stage | Entry Level / Mid Level / Senior Level / Executive Level |
+| Employment Type | Type of employment | Full Time / Part Time / Contract / Freelance |
+| Job Title | Your data science or ML job title | Select from the dropdown list |
+| Employee Residence | Your country of residence | Select from the dropdown list |
+| Work Mode | On-site, hybrid, or remote | On-site / Hybrid / Fully Remote |
+| Company Location | Country where the company is based | Select from the dropdown list |
+| Company Size | Size of the company | Small / Medium / Large |
 
-- **Predicted Annual Salary** (in USD) — the model's estimate
-- **Salary Breakdown** — monthly, weekly, and hourly equivalents
-- **Salary Level** *(Model 1)* — Early Career Range / Professional Range / Executive Range
-- **Career Stage** *(Model 1)* — Entry Stage / Growth Stage / Leadership Stage
-- **Pattern Insight** *(Model 1)* — a data-derived observation about your profile
-- **Confidence Interval** *(Model 1)* — the 95% lower and upper bounds of the estimate
-- **Negotiation Tips** — practical tips for salary negotiation given your profile
-- **Career Recommendations** — suggested next steps based on your predicted outcome
+### 4.3 Running the Prediction
 
-### Currency Conversion
+After filling in all fields, click **Predict Salary**. Results appear below the form.
 
-Below the prediction result, you can toggle **Currency Conversion** to convert your salary to any of 100+ global currencies. The conversion shows annual, monthly, weekly, and hourly equivalents in the selected currency.
+**Validation:** If the age and years of experience combination is unrealistic (e.g. 20 years old with 15 years of experience), an error will be shown and you will need to correct the inputs before proceeding.
 
-> The default currency is auto-selected based on your country input.
+### 4.4 Reading the Results
 
-### Post-Tax Estimation
+**Predicted Annual Salary:** Displayed as a large figure in USD.
 
-Toggle **Tax Adjustment** to estimate your approximate take-home salary after income tax. The system uses country-specific effective tax rates. You can also enter a custom effective rate if you know your actual tax situation.
+**Salary Breakdown:** Monthly, weekly, and hourly approximations calculated from the annual figure.
 
-> Tax estimates are approximate and do not account for specific deductions or local rules.
+**Model 1 additional outputs:**
+- **Salary Level:** Early Career / Professional / Executive Range.
+- **Career Stage:** Entry / Growth / Leadership Stage (from KMeans clustering).
+- **Pattern Insight:** An association rule observation linking your profile attributes to a salary category.
+- **Confidence Interval:** An estimated likely salary range (95% approximation based on training residuals).
 
-### Cost of Living Adjustment
+**Model 2 additional outputs:**
+- **Smart Insights:** Domain classification (ML/AI, Data Engineering, Analytics, Data Science) and a market comparison (above or below average for your role and experience level in the dataset).
 
-Toggle **Cost of Living Adjustment** to normalize the salary for purchasing power in your country relative to a global baseline. This helps you compare salaries across countries in terms of real-world affordability.
+**Salary Negotiation Tips:** Three targeted tips based on your experience level, seniority, company size, and location.
 
-### Downloading a PDF Report
-
-1. Click **Prepare PDF Report** (a brief computation runs)
-2. Once ready, a **Download** button appears — click it to save your report
-
-The report includes your inputs, prediction results, insights, and charts.
-
-### Submitting Feedback
-
-After seeing your prediction result, an expandable section **Share Feedback on This Prediction** appears at the bottom of the page. You can:
-
-- Rate whether the prediction was accurate (Yes / Somewhat / No)
-- Indicate if the salary seemed too high, about right, or too low
-- Give a star rating (1–5)
-- Optionally enter your actual or expected salary
-
-Feedback helps improve the models over time. Login is not required.
+**Career Recommendations:** A short list of actionable career development suggestions based on your job group and experience level.
 
 ---
 
-## Resume Analysis
+## 5. Resume Analysis
 
-> Available in the Full App only (https://salaryscope-app.streamlit.app/)
+Resume Analysis automatically extracts your professional details from a PDF resume and uses them as inputs for salary prediction.
 
-### Step-by-Step
+> **Note:** Resume Analysis is available in the Full App only. It is not available in the Lite App.
 
-1. Go to the **Resume Analysis** tab
-2. Click **Browse files** and upload your resume in **PDF format**
-3. Click **Extract Resume Features**
-4. The system will automatically extract:
-   - Job Title
-   - Years of Experience
-   - Skills (from a vocabulary of 200+ technical skills)
-   - Education Level
-   - Country
-5. **Review the extracted fields** — they appear in editable form controls. Correct any errors you notice.
-6. Your **Resume Score** (0–100) is displayed, based on your experience, education, and skills breadth.
-7. Click **Predict Salary from Resume** to run the prediction.
-8. Results are identical in format to the Manual Prediction tab.
-9. Click **Prepare PDF Report** then **Download** to export the result.
+### 5.1 Uploading Your Resume
 
-### Tips for Better Extraction
+1. Go to the **Resume Analysis** tab.
+2. Click **Browse files** or drag and drop your PDF resume.
+3. Only PDF format is supported.
+4. Click **Extract Resume Features**.
 
-- Use a standard, text-based PDF resume (not a scanned image)
-- Make sure years of experience are mentioned explicitly (e.g., "5 years of experience")
-- Degree names should be spelled out (e.g., "Bachelor of Science", "Master of Technology")
-- Country name should appear at least once in the resume (address, location, or header)
+The system will extract your job title, years of experience, education level, country, and detected technical skills from the resume text.
 
----
+### 5.2 Reviewing Extracted Features
 
-## Batch Prediction
+After extraction, a form appears showing the detected values. You can:
 
-Batch prediction lets you run predictions on many profiles at once — useful for HR teams, researchers, or anyone with a dataset.
+- Review what was detected for each field.
+- Expand **View Extracted Resume Text** to see the raw text that was parsed.
+- Edit any field where the detected value is incorrect before running the prediction.
 
-### Preparing Your File
+This step is important because extraction accuracy depends on how clearly information is presented in the resume. If a value was not found, a sensible default is used.
 
-1. In the **Batch Prediction** tab, click **Download Sample File** to get the correct column format for the active model
-2. Populate your file following the same column names and value formats as the sample
-3. Supported formats: **CSV, XLSX, JSON, SQL**
-4. Maximum rows: **50,000**
+### 5.3 Resume Score
 
-### Uploading and Running
+A resume score (out of 100) is displayed with breakdowns for Experience, Education, and Skills. This is an indicative rating of how well the resume maps to the model's feature expectations and is not a hiring assessment.
 
-**Option A — Direct upload**: Click **Browse files** and select your prepared file.
+| Range | Level |
+|---|---|
+| 0 – 34 | Basic |
+| 35 – 64 | Moderate |
+| 65 – 100 | Strong |
 
-**Option B — Google Drive link**:
-1. Upload your file to Google Drive
-2. Set sharing to **"Anyone with the link can view"**
-3. Copy the sharing link
-4. Paste the link into the Google Drive URL field
-5. Select the correct file format from the dropdown
+### 5.4 Running the Prediction
 
-Once uploaded, click **Run Batch Prediction**.
+After reviewing and adjusting the extracted fields, click **Predict Salary from Resume**. The prediction pipeline is the same as manual prediction, using the extracted (and optionally edited) values as inputs.
 
-### After Prediction
+### 5.5 Tips for Better Extraction
 
-An analytics dashboard appears with:
-- Salary distribution chart
-- Summary statistics by category
-- A salary leaderboard (top predicted salaries in the dataset)
-
-Use the **Export** dropdown to select your preferred format (CSV, XLSX, JSON, SQL) and click **Download Results**.
-
-You can also click **Download Batch PDF Report** for a formatted multi-page analytics report.
+- Use a plain, well-structured PDF resume (avoid heavy tables, columns, or image-based layouts).
+- State your years of experience explicitly (e.g. "5 years of experience in data engineering").
+- Include your degree title clearly (e.g. "Bachelor of Engineering", "Master of Science").
+- List technical skills in a dedicated skills section.
+- Include your country or city name somewhere in the document.
 
 ---
 
-## Scenario Analysis
+## 6. Batch Prediction
 
-Scenario Analysis lets you compare up to 5 different professional profiles to see how salary changes across different attributes.
+Batch Prediction allows you to run salary predictions for many records at once by uploading a file.
 
-### Setting Up Scenarios
+### 6.1 Supported File Formats
 
-1. Go to the **Scenario Analysis** tab
-2. Each scenario card has a **Name** field and the same input fields as Manual Prediction
-3. All scenarios start with sensible default values — rename them and adjust as needed
-4. Click **Add Scenario** to add up to 5 scenarios
-5. Click **Remove** on a scenario card to delete it
+- CSV (.csv)
+- Excel (.xlsx)
+- JSON (.json)
+- SQL dump (.sql)
+- Public Google Drive sharing link
 
-### Running Scenarios
+### 6.2 Required Column Format
 
-Click **Run All Scenarios** to generate predictions for every scenario simultaneously.
+Download the sample file from the left column of the Batch Prediction tab to see the exact required format. The column names must match exactly (case-sensitive).
 
-### Viewing Results
+**Model 1 required columns:**
 
-- **Comparison Table**: Predicted salary and key attributes for each scenario side-by-side
-- **Salary Bar Chart**: Visual comparison of predicted annual salaries across all scenarios
-- **Confidence Interval Chart** *(Model 1)*: 95% lower and upper bounds per scenario
-- **Experience vs. Salary Bubble Chart** *(Model 1)*: Position of each scenario on an experience-salary plot
+| Column | Type | Allowed Values |
+|---|---|---|
+| Age | Integer | 18 – 70 |
+| Years of Experience | Float | 0.0 – 40.0 |
+| Education Level | Integer | 0, 1, 2, 3 |
+| Senior | Integer | 0 or 1 |
+| Gender | Text | Male, Female, Other |
+| Job Title | Text | Supported titles only |
+| Country | Text | Supported countries only |
 
-### Sensitivity Sweep
+**Model 2 required columns:**
 
-The sensitivity sweep shows how salary changes as a single variable shifts while everything else stays fixed.
+| Column | Type | Allowed Values |
+|---|---|---|
+| experience\_level | Text | EN, MI, SE, EX |
+| employment\_type | Text | FT, PT, CT, FL |
+| job\_title | Text | Supported DS/ML titles only |
+| employee\_residence | Text | ISO-2 country code |
+| remote\_ratio | Integer | 0, 50, 100 |
+| company\_location | Text | ISO-2 country code |
+| company\_size | Text | S, M, L |
 
-1. Select a **Baseline Scenario** from the dropdown
-2. The sweep automatically simulates:
-   - **Model 1**: Salary across 0–40 years of experience (continuous), and salary across all four education levels
-   - **Model 2**: Salary across all four experience levels, and salary across Small/Medium/Large company sizes
-3. The chart shows how sensitive the model's salary prediction is to each variable
+Extra columns in your file are ignored. Maximum file size is 50,000 rows.
 
-### Exporting Scenarios
+### 6.3 Uploading via Google Drive
 
-Use the **Export** dropdown (CSV / XLSX / JSON) and click **Download** to save scenario results.
+1. Upload your file to Google Drive.
+2. Set sharing to **Anyone with the link can view**.
+3. Copy the sharing link.
+4. Paste it into the Google Drive link field in the Batch Prediction tab.
+5. Select the correct file format from the dropdown.
 
----
+### 6.4 Running Batch Predictions
 
-## Model Analytics
+After uploading your file, click **Run Batch Prediction**. A progress indicator shows while predictions are being computed.
 
-The **Model Analytics** tab lets you inspect the inner workings and performance of the active model.
+### 6.5 Batch Analytics
 
-### What's Available
+After prediction, an analytics dashboard appears below the results with:
 
-**Both Models**:
-- Regression performance metrics: R², MAE, RMSE
-- Model comparison table and bar chart
-- Feature importance chart
-- Predicted vs. Actual salary scatter plot
-- Residual distribution chart
-- Prediction uncertainty distribution
+- **Summary Metrics:** Total records, average, minimum, maximum, and standard deviation of predicted salaries.
+- **Salary Leaderboard:** Job roles ranked by average predicted salary. Top 3 roles are highlighted with medals.
+- **Salary Distribution:** Histogram of predicted salaries.
+- **Breakdowns by:** Experience level, company size, work mode, and country.
 
-**Model 1 Only**:
-- Confusion matrix for the salary level classifier
-- Classification model comparison
-- Career stage cluster chart with PCA visualization
-- Association rule analytics (support, confidence, lift values)
+### 6.6 Exporting Results
 
-**Model 2 Only**:
-- SHAP-based grouped feature importance (shows which features most influence predictions)
-
-You can download a full **PDF Model Analytics Report** from this tab.
-
----
-
-## Data Insights
-
-The **Data Insights** tab lets you explore the training data that each model was built on.
-
-Available views include salary distributions by education level, years of experience, seniority, country, and job title. Charts include trend lines and box plots for exploratory comparison.
-
-This tab is useful for understanding the coverage and biases of the training data before interpreting a prediction.
+Use the export dropdown to choose CSV, XLSX, JSON, or SQL format, then click the download button to save the results file containing all input columns plus predicted salary.
 
 ---
 
-## Your Account (Optional)
+## 7. Scenario Analysis
 
-### Why Create an Account?
+Scenario Analysis lets you compare multiple salary predictions side by side by building named scenarios with different inputs.
 
-- Your predictions are saved to your personal history
-- You can view and export your full prediction history from the **Profile** tab
-- Sessions are remembered for 24 hours
+### 7.1 Building Scenarios
 
-### Registering
+1. Go to the **Scenario Analysis** tab.
+2. A first scenario is pre-filled with default values. Rename it and adjust the inputs.
+3. Click **Add Scenario** to add more scenarios (up to 5).
+4. Each scenario can have a custom name and completely independent input values.
+5. To remove a scenario, click **Remove** on its card.
 
-In the **sidebar** (left panel), click **Register**. Enter your name, email, and password. Your account is created instantly via Firebase Authentication.
+### 7.2 Running All Scenarios
 
-### Logging In
+Click **Run All Scenarios** to compute predictions for every scenario simultaneously. Results appear in a comparison table and salary chart.
 
-In the sidebar, click **Login** and enter your email and password.
+### 7.3 Reading the Results
 
-### Profile Tab
+- **Comparison table:** Shows each scenario's inputs and predicted salary side by side.
+- **Salary chart:** Bar or grouped bar chart comparing predicted salaries across all scenarios.
+- **Model 1 additional columns:** Salary level and career stage per scenario.
 
-Once logged in, go to the **Profile** tab to see:
-- Total predictions made
-- Your average predicted salary
-- Your most recent prediction
-- A timeline chart of all your predictions
-- A detailed view of each prediction's inputs
-- Export buttons for CSV, XLSX, or JSON
+### 7.4 Sensitivity Sweep
 
-### Session Expiry
+The Sensitivity Sweep section simulates how salary changes when you vary one parameter while keeping everything else fixed for a selected baseline scenario:
 
-Sessions expire after 24 hours. You will be logged out automatically and asked to log in again.
+- **Model 1:** Sweep across Education Levels or Years of Experience.
+- **Model 2:** Sweep across Experience Levels or Company Sizes.
 
----
+Select a baseline scenario from the dropdown, and the sweep chart will show the salary trajectory.
 
-## Frequently Asked Questions
+### 7.5 Exporting Scenario Results
 
-**Q: Is login required to use the app?**  
-No. All core features (Manual Prediction, Resume Analysis, Batch, Scenario, Analytics, Data Insights) are fully available without an account. Login is only needed to save and revisit your prediction history.
-
-**Q: Why does the salary seem too high or too low?**  
-The models are trained on historical datasets and may not fully reflect current market conditions, specific company policies, or geographic nuances within a country. Use the result as a reference, not an exact figure. You can submit feedback using the feedback form after prediction.
-
-**Q: Can I upload a Word document or image as my resume?**  
-No. The resume parser only supports standard text-based PDF files. Scanned image PDFs, Word documents, and other formats are not supported. If your resume is a scanned image, you will need to enter the details manually.
-
-**Q: Why is Model 2's salary estimate less accurate than Model 1?**  
-Data science salaries vary enormously based on factors like company funding stage, specific technical skills, stock equity, and city-level cost of living — many of which are not captured in the training dataset. This makes the prediction range wider and less precise compared to the general model.
-
-**Q: Is my uploaded resume stored?**  
-No. Uploaded resume files are processed in memory and are not stored anywhere. Only prediction inputs and results (for logged-in users) are saved to Firestore.
-
-**Q: Are currency conversions real-time?**  
-Exchange rates are fetched from a public API (`open.er-api.com`) and cached for approximately 60 minutes. They are close to real-time but may not reflect live trading rates. If the API is unavailable, a fallback rate file is used.
-
-**Q: Can I use this for salary negotiation?**  
-The results can serve as a data-backed reference point for negotiation conversations, but they should be supplemented with market research, industry benchmarks, and knowledge of your specific employer.
+Use the export dropdown to save scenario results in CSV, XLSX, or JSON format. A PDF report is also available via the Prepare PDF Report button.
 
 ---
 
-## Limitations Summary
+## 8. Model Analytics
 
-- Predictions are based on historical datasets and may not reflect current market trends.
-- Some niche job titles, countries, or role combinations may have limited training data coverage.
-- Resume extraction depends on text quality and may not work on all resume layouts.
-- Tax, COL, and currency adjustments are approximate and intended for comparison only.
-- Confidence intervals (Model 1) are estimates based on training residuals, not guaranteed bounds.
+The Model Analytics tab provides detailed information about the performance and internals of the currently selected model.
+
+### 8.1 Model 1 (Random Forest) Analytics Sections
+
+**Salary Regression Model:**
+- Test R², Cross-Validation R², MAE, RMSE.
+- Model comparison table and radar chart across candidate models (Random Forest highlighted as the selected model).
+- Tuned hyperparameters from GridSearchCV.
+- Feature importance chart and cumulative importance.
+- Residual diagnostics: predicted vs actual scatter, residual distribution.
+
+**Salary Level Classifier:**
+- Accuracy, confusion matrix, classification report.
+- Comparison across candidate classifiers.
+
+**Career Stage Clustering:**
+- Silhouette score, Davies-Bouldin score.
+- PCA visualisation of clusters.
+- Cluster centre characteristics.
+
+**Association Rule Mining:**
+- Support, confidence, and lift metrics.
+- Top rules linking career attributes to salary categories.
+
+**Resume NLP Module:**
+- Processing pipeline overview table.
+- Pipeline flow diagram (PDF → features).
+- Design rationale and limitations.
+
+### 8.2 Model 2 (XGBoost) Analytics Sections
+
+- Test R², Cross-Validation R², MAE, RMSE.
+- Model comparison table and radar chart.
+- Residual diagnostics and uncertainty distribution.
+- Grouped feature importance (by feature category).
+- SHAP analysis: top-15 features by mean absolute SHAP value.
+- Resume NLP module (same as Model 1 section).
+
+### 8.3 Downloading the Analytics Report
+
+A **Download Model Analytics Report (PDF)** button is available at the bottom of the tab. This PDF contains all the metrics and charts for the current model.
 
 ---
 
-*SalaryScope — Built with Streamlit · Powered by Firebase · Deployed on Streamlit Community Cloud*  
-*Author: Yash Shah · Gandhinagar Institute of Technology*
+## 9. Data Insights
+
+The Data Insights tab lets you explore the training dataset for the currently selected model through interactive dashboards.
+
+### 9.1 Dashboard Structure
+
+Each model has three dashboards, accessible as collapsible sections:
+
+**Model 1 Dashboards:**
+- Dashboard 1 — Salary Landscape: overall salary distribution, seniority and education breakdowns.
+- Dashboard 2 — Human Capital Dimensions: age, experience, gender, and education relationships.
+- Dashboard 3 — Geographic and Role Patterns: salary by country, job title, and job group.
+
+**Model 2 Dashboards:**
+- Dashboard 1 — Salary Distribution: overall shape, experience level, and employment type.
+- Dashboard 2 — Work Mode and Company: remote ratio, company size, and work mode interactions.
+- Dashboard 3 — Job Roles and Geography: top data science roles and top countries by salary.
+
+### 9.2 Using Filters
+
+Each dashboard has independent filter controls at the top (education level, seniority, experience level, salary cap, etc.). Changing a filter updates only that dashboard's charts.
+
+### 9.3 KPI Tiles
+
+Each dashboard shows key statistics (record count, median salary, mean salary, etc.) for the current filtered view.
+
+---
+
+## 10. Model Hub
+
+The Model Hub allows you to run predictions using additional models uploaded by the admin, beyond the two built-in models.
+
+### 10.1 Accessing the Model Hub
+
+The Model Hub requires you to be **logged in**. Sign in from the sidebar before navigating to this tab.
+
+### 10.2 Running a Prediction
+
+1. Go to the **Model Hub** tab.
+2. From the dropdown, select one of the available models. Only admin-approved, active models appear here.
+3. Review the model information shown (number of input fields, number of features).
+4. Click **Load Model** to download the model bundle. This only needs to be done once per session.
+5. Fill in the input form that appears. Fields are generated automatically from the model's schema.
+6. Click **Predict**.
+
+The predicted value is displayed with the target variable name as defined by the model's creator.
+
+### 10.3 Admin Features
+
+If you are the admin user, additional sections appear below the prediction panel:
+
+**Upload Bundle:** Upload a new model by providing model.pkl, columns.pkl, schema.json, a display name, a description, and the target variable name. The system validates all three files before uploading.
+
+**Registry Manager:** Activate or deactivate models to control which ones appear in the user dropdown. Roll back to a previous version within a model family.
+
+**Schema Editor:** Build a schema.json file interactively using a field-by-field form, or upload an existing schema.json to validate it and preview how the input form will look.
+
+---
+
+## 11. Financial Planning Tools
+
+After a prediction is shown in the Manual Prediction tab, a series of optional financial tools appear below the salary display. Each tool is a toggle — enable it to expand the tool, disable it to collapse it.
+
+All tools are approximate estimates for planning purposes only. They are not financial advice.
+
+### 11.1 Currency Converter
+
+Shows the predicted salary converted to a currency of your choice. Live exchange rates are fetched from open.er-api.com (updated daily, no API key required). Over 100 currencies are supported.
+
+The default currency is auto-detected from your work country when possible.
+
+### 11.2 Tax Adjuster
+
+Estimates post-tax take-home salary based on country-level progressive tax brackets (combined income tax + major social contributions). You can override the rate with a custom effective rate using the slider.
+
+The post-tax figure is also shown in your selected currency if currency conversion is enabled.
+
+### 11.3 Cost-of-Living Adjuster
+
+Shows how much salary you would need in a different country to maintain the same purchasing power, using country-level CoL indices (US = 100 baseline).
+
+Select a comparison country from the dropdown to see the PPP-equivalent salary. You can override the CoL index for either country using the slider.
+
+### 11.4 CTC Breakdown
+
+Breaks down your gross annual salary into estimated CTC components: Base Salary, HRA (if applicable), Bonus, PF/Pension, Gratuity, and Other Allowances. Component fractions are based on typical employer practices in your country.
+
+### 11.5 Take-Home Salary Estimator
+
+Estimates your monthly and annual net in-hand salary after income tax, PF/pension contributions, and other statutory deductions. Uses the tax brackets from the Tax Adjuster module when available.
+
+### 11.6 Savings Potential
+
+Estimates how much you can save each month based on typical household expense ratios for your country. Shows monthly savings, annual savings, expense ratio, and savings rate.
+
+### 11.7 Loan Affordability
+
+Estimates the maximum loan you can service based on your monthly net income, country-typical interest rates, and standard lender EMI-cap norms (typically 40–50% of net income). You can adjust the interest rate, loan tenure, and EMI cap using sliders.
+
+### 11.8 Budget Planner
+
+Breaks down your monthly net income into recommended spending categories: Housing, Food, Transport, Healthcare, Savings/Investments, Entertainment, and Miscellaneous. Based on the 50/30/20 envelope budgeting approach adapted for your country.
+
+### 11.9 Investment Growth Estimator
+
+Projects the future value of your estimated monthly savings under compound growth, using country-adjusted blended investment return benchmarks. Shows projections at 5, 10, 20, and 30 years.
+
+This is a purely illustrative projection. Actual returns depend on market conditions, instrument choice, fees, and timing.
+
+### 11.10 Emergency Fund Planner
+
+Estimates how large an emergency fund you should build (3–6 months of expenses, adjusted for country job-market stability) and how many months it would take to build it at your current savings rate.
+
+### 11.11 Lifestyle Budget Split
+
+Takes your discretionary income (net minus essentials) and splits it across lifestyle tiers (Basic, Comfortable, Premium) and spending categories (dining, entertainment, travel, fitness, subscriptions, personal care, hobbies).
+
+---
+
+## 12. User Account and Profile
+
+### 12.1 Profile Tab
+
+The Profile tab (visible only when logged in) shows:
+
+- **Prediction Summary:** Total number of predictions made, average predicted salary, and most recent prediction.
+- **Prediction History Chart:** Scatter plot of all predictions over time, colour-coded by model type.
+- **Prediction History Table:** Tabular view of the most recent 500 predictions.
+- **View Prediction Inputs:** Select any prediction to see the exact input values that were used.
+- **Export Prediction History:** Download your full history in CSV, XLSX, or JSON format.
+
+### 12.2 Account Management
+
+Below the prediction history, an Account Management section provides:
+
+**Change Password:**
+1. Enter your current password.
+2. Enter and confirm your new password (must meet the password policy).
+3. Click **Change Password**.
+
+**Delete Account:**
+1. Click to expand the Delete Account section.
+2. Enter your current password.
+3. Type exactly `delete my account` in the confirmation field.
+4. Click **Permanently Delete My Account**.
+
+Account deletion removes your login credentials immediately. Your prediction history is retained in anonymised form for dataset purposes.
+
+### 12.3 Logging Out
+
+Click the **Logout** button at the bottom of the Profile tab, or use the logout button in the sidebar.
+
+---
+
+## 13. Providing Feedback
+
+After every salary prediction, a **Share Feedback on This Prediction** section appears at the bottom of the results (in a collapsed expander). Feedback is optional and does not require login.
+
+### 13.1 Basic Feedback
+
+| Field | Required | Description |
+|---|---|---|
+| Was the prediction accurate? | Yes | Yes / Somewhat / No |
+| How did it compare to reality? | Yes | Too High / About Right / Too Low |
+| Overall rating | Yes | 1–5 stars |
+| Your actual / expected salary (USD) | No | Leave at 0 to skip |
+
+### 13.2 Extended Feedback (Optional)
+
+An expandable section allows you to provide additional detail that helps build a richer dataset for future model improvements:
+
+- Compensation structure (base, bonus, equity)
+- Skills and certifications
+- Industry and company context
+- Role details (team size, direct reports, tenure)
+- Work conditions (hours, city tier, visa status)
+- Free-text context (up to 300 characters)
+
+### 13.3 Submitting Feedback
+
+Click **Submit Feedback**. A success message confirms the submission. Feedback is stored anonymously if you are not logged in.
+
+---
+
+## 14. Admin Panel
+
+The Admin Panel tab is visible only to the admin user (the account whose email matches the `ADMIN_EMAIL` secret).
+
+### 14.1 System Diagnostics
+
+Displays runtime information: Python version, OS, architecture, deployment environment (Local or Streamlit Cloud), active model context, RAM usage, and registered user count.
+
+### 14.2 Feedback Analytics
+
+Click **Load Feedback Analytics** to fetch aggregated feedback statistics from Firestore:
+- Total feedback submissions.
+- Accuracy breakdown (% Yes / Somewhat / No).
+- Prediction direction breakdown (Too High / About Right / Too Low).
+- Average star rating.
+- Median actual salary reported by users.
+- Feedback count per model (pie and bar charts).
+
+Click **Show Recent Feedback** to view the 5 most recent individual submissions.
+
+### 14.3 Memory and Cache
+
+- **RAM Usage:** Current process memory consumption.
+- **Run Garbage Collection:** Forces Python garbage collection and shows memory before/after.
+- **Clear Cache:** Clears all `@st.cache_data` caches (forces fresh data loading on next rerun).
+
+### 14.4 Session State Inspector
+
+Shows counts of total session keys and key counts grouped by category (admin, scenario, bulk, resume). An option to display all session keys is available (use with caution for large sessions).
+
+---
+
+## 15. Exporting and Downloading Reports
+
+### 15.1 PDF Reports
+
+Available in the following tabs:
+
+| Tab | Report Contents |
+|---|---|
+| Manual Prediction | Input summary, predicted salary, salary breakdown, insights |
+| Resume Analysis | Resume score, extracted features, predicted salary, recommendations |
+| Batch Prediction | Summary metrics, leaderboard, distribution charts |
+| Scenario Analysis | Scenario comparison table, charts, sensitivity sweeps |
+| Model Analytics | Full model performance report (available immediately) |
+
+**How to download a PDF:**
+1. Click **Prepare PDF Report** to generate the report.
+2. A success message and a **Download** button will appear.
+3. Click **Download** to save the file.
+
+Note: If you navigate away and return, you may need to re-generate the PDF.
+
+### 15.2 Data Exports
+
+| Tab | Formats | Content |
+|---|---|---|
+| Batch Prediction | CSV, XLSX, JSON | All input columns + predicted salaries |
+| Scenario Analysis | CSV, XLSX, JSON | Scenario inputs + predicted salaries |
+| Profile | CSV, XLSX, JSON | Full prediction history |
+
+---
+
+## 16. Troubleshooting
+
+**The application is slow or not loading.**
+Streamlit Cloud free tier has resource limits. Large datasets or heavy computations may take longer. Wait a moment and try again. If the app is asleep due to inactivity, it may take 30–60 seconds to wake up.
+
+**Resume extraction produced incorrect values.**
+The NLP extraction depends on text clarity in the PDF. Heavily formatted, multi-column, or image-based resumes are harder to parse. Use the editable form after extraction to correct any incorrect values before running the prediction.
+
+**My country is not in the list.**
+Select **Other** for Model 1 country inputs. For Model 2, use the closest ISO-2 country code available. The financial tools will use a generic estimate for unsupported countries.
+
+**The verification email did not arrive.**
+Check your spam or junk folder. Firebase verification emails are sometimes filtered there. Click **Resend verification email** in the application if needed. The verification link expires after 24 hours.
+
+**I cannot log in after registering.**
+Ensure you have clicked the verification link in your email. Without email verification, login will prompt you to verify first.
+
+**The currency converter shows "No data available".**
+The live exchange rate API (open.er-api.com) could not be reached. Check your internet connection. A fallback to a local rates file will be used if available.
+
+**Batch prediction is very slow.**
+Files above 10,000 rows will be noticeably slower. Ensure your file format is correct and no validation errors are present. Consider splitting very large files into smaller batches.
+
+**The Model Hub says "Could not load model registry".**
+This indicates a configuration issue with the HuggingFace repository secrets. Contact the admin.
+
+---
+
+## 17. Frequently Asked Questions
+
+**Is my data stored anywhere?**
+Prediction inputs and results are stored in Firestore if you are logged in. Feedback is stored in Firestore regardless of login status, but anonymous feedback contains no personal identifiers. Resume text is processed in memory and not stored anywhere.
+
+**Do I need an account to use the application?**
+No. Manual prediction, batch prediction, scenario analysis, model analytics, and data insights are all available without an account. An account is required for the Model Hub and to access prediction history in the Profile tab.
+
+**How accurate are the salary predictions?**
+Predictions are estimates based on patterns in publicly available historical datasets. They may not reflect current market conditions, company-specific salaries, or regional cost variations. Use predictions as a general reference, not as exact figures. See Section 18 for full disclaimers.
+
+**What is the difference between the Full App and the Lite App?**
+The Full App includes spaCy-based NLP resume analysis. The Lite App does not include this feature. Both apps share the same prediction models and all other features. The split exists due to Streamlit Cloud free-tier memory constraints.
+
+**Can I use the Model Hub to deploy my own models?**
+Yes, if you are the admin. You need to train an sklearn-compatible model, save it with joblib, create a columns list, and define a schema.json file. Upload all three as a bundle through the Model Hub admin interface.
+
+**Why is the confidence interval only shown for Model 1?**
+Model 1 uses a Random Forest Regressor, and the confidence interval is estimated from the standard deviation of training residuals. Model 2 uses XGBoost with a log-transformed target; the back-transformation makes residual-based interval estimation less straightforward, so it is not shown.
+
+**How often is the currency data updated?**
+Exchange rates are fetched from open.er-api.com once per 60 minutes (cached in memory). The provider updates rates daily.
+
+---
+
+## 18. Important Disclaimers
+
+- Salary predictions are based on publicly available historical datasets and may not reflect current real-world salary trends or company-specific compensation.
+- Predictions do not account for real-time market conditions, economic changes, or negotiation outcomes.
+- Resume analysis uses NLP-based extraction which may not accurately handle all resume formats. Always review extracted values before accepting predictions.
+- Tax estimation uses approximate effective rates and does not model detailed national tax rules, deductions, filing status, or local regulations.
+- Cost-of-living adjustments are based on country-level indices and may not represent city-level variations or individual lifestyle differences.
+- Currency conversion uses publicly available exchange rates and may not reflect real-time market rates or transaction fees.
+- Financial tools (savings, loans, investments, emergency funds, lifestyle) are illustrative benchmarks for a typical middle-income urban household. Individual circumstances vary significantly. These tools are not financial advice.
+- Investment projections are entirely illustrative. Actual returns depend on market conditions, fees, taxes, and timing. Past performance does not guarantee future results.
+- Model Hub predictions are only as reliable as the model and dataset used during training. The system does not validate model quality.
+- Model Hub bundles use joblib (pickle) serialisation. Only upload bundles from sources you control entirely.
+
+---
+
+*End of User Guide*

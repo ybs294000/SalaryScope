@@ -1,535 +1,1283 @@
-# SalaryScope — Module & API Reference
-
-> **Version 1.0 · April 2026**  
-> Internal reference for developers working with the SalaryScope codebase.
-
----
-
-## Overview
-
-SalaryScope is composed of a main Streamlit application (`app_resume.py`) and a set of supporting Python modules. This document describes the public interface (functions, parameters, return values) of each module, intended for developers who wish to extend, maintain, or integrate parts of the system.
+# SalaryScope — Module Reference
+**Version:** 1.1.0  
+**Project:** SalaryScope — Salary Prediction System using Machine Learning  
+**Author:** Yash Shah  
+**Document Type:** Module Reference / API Documentation
 
 ---
 
-## Module Index
+## Table of Contents
 
-| Module | File | Purpose |
+1. [Entry Point](#1-entry-point)
+2. [Tab Modules — app/tabs/](#2-tab-modules--apptabs)
+3. [Core Modules — app/core/](#3-core-modules--appcore)
+4. [Utility Modules — app/utils/](#4-utility-modules--apputils)
+5. [Model Hub Modules — app/model_hub/](#5-model-hub-modules--appmodel_hub)
+6. [Module Dependency Map](#6-module-dependency-map)
+
+---
+
+## Conventions
+
+**Parameters listed as** `name (type)` — required. `name (type, default)` — optional with default.  
+**Returns** — described as the return type and key fields.  
+**Side effects** — any Streamlit UI rendered, Firestore writes, or network calls.  
+**Raises** — exceptions the caller should handle.
+
+---
+
+## 1. Entry Point
+
+### `app_resume.py`
+
+**Purpose:** Single Streamlit entry point. Orchestrates resource loading, sidebar rendering, and tab mounting. Contains no business logic.
+
+**Startup sequence:**
+1. `init_db()` + `create_prediction_table()` — Firestore init stubs (idempotent, guarded by `db_initialized` session flag).
+2. `st.set_page_config()` — sets page title and wide layout.
+3. Dark professional CSS theme injected via `st.markdown()`.
+4. All ML models, datasets, and lookup tables loaded with `@st.cache_resource` / `@st.cache_data`.
+5. Sidebar rendered: model selector dropdown, auth widgets (`login_ui`, `register_ui`, `forgot_password_ui`).
+6. Tab list constructed dynamically; Profile and Admin tabs appended conditionally.
+7. Each tab renderer called with full dependency injection.
+
+**Key globals available to tabs (passed as arguments):**
+
+| Symbol | Type | Description |
 |---|---|---|
-| [Resume Analysis](#resume_analysispy) | `resume_analysis.py` | spaCy + regex + phrase-matching based resume parsing and scoring |
-| [Authentication](#authpy) | `auth.py` | Firebase Authentication (login, register, session) |
-| [Database](#databasepy) | `database.py` | Firestore read/write operations |
-| [Feedback](#feedbackpy) | `feedback.py` | Prediction feedback UI and storage |
-| [Insights Engine](#insights_enginepy) | `insights_engine.py` | Salary insights generation |
-| [Recommendations](#recommendationspy) | `recommendations.py` | Career recommendation engine |
-| [Negotiation Tips](#negotiation_tipspy) | `negotiation_tips.py` | Salary negotiation tips engine |
-| [PDF Utils](#pdf_utilspy) | `pdf_utils.py` | ReportLab PDF generation |
-| [Currency Utils](#currency_utilspy) | `currency_utils.py` | Currency conversion and UI |
-| [Tax Utils](#tax_utilspy) | `tax_utils.py` | Post-tax estimation and UI |
-| [COL Utils](#col_utilspy) | `col_utils.py` | Cost-of-living adjustment and UI |
-| [User Profile](#user_profilepy) | `user_profile.py` | Profile tab UI and prediction history |
-| [Admin Panel](#admin_panelpy) | `admin_panel.py` | Admin diagnostics dashboard |
+| `IS_APP1` | bool | True if Model 1 (RF) is selected |
+| `app1_model` | sklearn estimator | Loaded Random Forest Regressor |
+| `app2_model` | XGBoost estimator | Loaded XGBoost Regressor |
+| `df_app1` | DataFrame | App 1 training dataset |
+| `df_app2` | DataFrame | App 2 training dataset |
+| `COUNTRY_NAME_MAP` | dict | ISO-2 → country name mapping |
+| `title_features` | callable | `title_features(job_title)` → (is\_junior, is\_senior, is\_exec, is\_mgmt, domain) |
 
 ---
 
-## `resume_analysis.py`
+## 2. Tab Modules — app/tabs/
 
-Handles resume feature extraction using spaCy (NER + PhraseMatcher) combined with rule-based methods (regex and keyword matching).
+### `manual_prediction_tab.py`
 
----
+#### `render_manual_prediction_tab(**kwargs)`
 
-### `extract_text_from_pdf(file) -> str`
+Renders the Manual Prediction tab for both App 1 and App 2 based on `IS_APP1`.
 
-Extracts all text content from an uploaded PDF file using `pdfplumber`.
+**Parameters (selected key params):**
 
-**Parameters**:
-- `file` — a file-like object (e.g., Streamlit `UploadedFile`)
-
-**Returns**: A single string containing all extracted text, with page breaks normalized.
-
-**Behavior**: Returns an empty string if no text can be extracted.
-
----
-
-### `extract_resume_features(raw_text: str, allowed_job_titles: list[str], allowed_countries: list[str]) -> dict`
-
-Extracts structured professional features from raw resume text for **Model 1** (General Salary).
-
-**Parameters**:
-- `text` — raw text string from `extract_text_from_pdf()`
-
-**Returns**: A dictionary with keys:
-
-| Key | Type | Description |
+| Parameter | Type | Description |
 |---|---|---|
-| `job_title` | str | Detected job title |
-| `years_experience` | float | Years of professional experience |
-| `skills` | list[str] | List of detected technical/professional skills |
-| `education_level` | int | 0 = High School, 1 = Bachelor's, 2 = Master's, 3 = PhD |
-| `country` | str | Detected country name |
+| `IS_APP1` | bool | Controls which model branch is rendered |
+| `app1_model` | estimator | RF model (None if App 2) |
+| `app2_model` | estimator | XGBoost model (None if App 1) |
+| `app1_metadata` | dict | Includes `residual_std` for CI calculation |
+| `app1_salary_band_model` | estimator | Salary band classifier (App 1 only) |
+| `app1_cluster_model_a1` | estimator | KMeans model (App 1 only) |
+| `assoc_rules_a1_v2` | DataFrame | Apriori rules (App 1 only) |
+| `df_app2` | DataFrame | App 2 dataset for market comparison |
+| `title_features` | callable | Job title feature extractor |
+| `app1_generate_manual_pdf` | callable | PDF generator for App 1 results |
+| `app2_generate_manual_pdf` | callable | PDF generator for App 2 results |
 
-**Notes**: Uses spaCy NER (for country), PhraseMatcher (for skills), and regex patterns (for experience and education keywords).
+**Side effects:** Renders full prediction form and results. Calls `save_prediction()` if logged in. Calls `feedback_ui()`. Calls all financial tool renderers. Generates PDF on button click.
 
 ---
 
-### `extract_resume_features_a2(raw_text: str, allowed_job_titles_a2: list[str], allowed_iso_codes_a2: list[str]) -> dict`
+### `resume_analysis_tab.py`
 
-Extracts features from resume text for **Model 2** (Data Science Salary).
+#### `render_resume_tab(**kwargs)`
 
-**Parameters**:
-- `text` — raw text string
+Renders the Resume Analysis tab for both App 1 and App 2.
 
-**Returns**: A dictionary with Model 2-compatible keys:
+**Key parameters:**
 
-| Key | Type | Description |
+| Parameter | Type | Description |
 |---|---|---|
-| `job_title` | str | Detected job title |
-| `experience_level` | str | EN / MI / SE / EX |
-| `employee_residence` | str | ISO country code |
-| `employment_type` | str | FT / PT / CT / FL |
-| `remote_ratio` | int | 0 / 50 / 100 |
-| `company_size` | str | S / M / L |
-| `company_location` | str | ISO country code |
+| `IS_APP1` | bool | Controls which NLP pipeline and model branch is used |
+| `app1_model` | estimator | RF model (App 1) |
+| `app2_model` | estimator | XGBoost model (App 2) |
+| `app1_job_titles` | list | Allowed App 1 job titles (for PhraseMatcher) |
+| `app2_job_titles` | list | Allowed App 2 job titles |
+| `app1_generate_resume_pdf` | callable | PDF generator |
+| `app2_generate_resume_pdf` | callable | PDF generator |
+
+**Internal `@st.fragment` functions (App 1):**
+- `render_resume_editor()` — editable extracted feature form
+- `render_resume_score()` — score display
+- `render_resume_prediction()` — prediction trigger
+- `render_resume_results()` — results display with tools
+
+**Session state keys managed:** `resume_features`, `resume_text`, `resume_score_data`, `resume_prediction_result`, `resume_pdf_ready`, `resume_pdf_buffer`, `last_resume_name`.
 
 ---
 
-### `calculate_resume_score(features: dict) -> dict`
+### `batch_prediction_tab.py`
 
-Computes a resume quality score (0–100) for Model 1 features.
+#### `render_batch_prediction_tab(**kwargs)`
 
-**Parameters**:
-- `features` — output dictionary from `extract_resume_features()`
+Renders the Batch Prediction tab for both App 1 and App 2.
 
-**Returns**: A float in the range [0, 100].
+**Key parameters:**
 
-**Scoring Components**:
-- Experience: proportional to years (max contribution at ~15+ years)
-- Education: mapped by level (0→10, 1→25, 2→35, 3→40 points)
-- Skills: based on unique skill count (capped)
-
----
-
-### `calculate_resume_score_a2(features: dict) -> dict`
-
-Computes a resume quality score for Model 2 features.
-
-**Parameters**:
-- `features` — output dictionary from `extract_resume_features_a2()`
-
-**Returns**: A float in the range [0, 100].
-
----
-
-### `education_label(level: int) -> str`
-
-Converts an integer education level to a human-readable label.
-
-**Parameters**:
-- `level` — integer (0, 1, 2, or 3)
-
-**Returns**: One of `"High School"`, `"Bachelor's"`, `"Master's"`, `"PhD"`.
-
----
-
-### `APP2_ALLOWED_ISO_CODES_A2`
-
-A module-level set containing all valid ISO country codes accepted by Model 2's input pipeline. Used for validation in the resume extraction pipeline.
-
----
-
-## `auth.py`
-
-Handles user registration, login, session management, and admin verification via Firebase Authentication.
-
----
-
-### `register_ui() -> None`
-
-Renders the registration form in the Streamlit sidebar. Handles form submission, Firebase user creation, and Firestore profile initialization.
-
----
-
-### `login_ui() -> None`
-
-Renders the login form in the Streamlit sidebar. On successful authentication, sets `st.session_state.logged_in_user` and `st.session_state.login_time`.
-
----
-
-### `logout() -> None`
-
-Clears `st.session_state.logged_in_user` and related session data, effectively ending the user session.
-
----
-
-### `get_logged_in_user() -> str | None`
-
-Returns the email of the currently logged-in user, or `None` if no user is authenticated.
-
-Also checks session expiry (24-hour limit) and calls `logout()` automatically if expired.
-
-**Returns**: Email string or `None`.
-
----
-
-### `is_admin(email: str) -> bool`
-
-Checks whether the provided email belongs to an authorized administrator.
-
-**Parameters**:
-- `email` — user's email address
-
-**Returns**: `True` if admin, `False` otherwise.
-
----
-
-## `database.py`
-
-Manages Firestore database initialization and all data persistence operations.
-
----
-
-### `init_db() -> None`
-
-Initializes the Firebase Admin SDK using credentials from `st.secrets["FIREBASE_SERVICE_ACCOUNT"]`. Safe to call multiple times — subsequent calls are no-ops if the SDK is already initialized.
-
----
-
-### `create_prediction_table() -> None`
-
-Ensures the required Firestore collection structure exists. Creates placeholder documents if collections are empty.
-
----
-
-### `save_prediction(email: str, model_used: str, input_data: dict, predicted_salary: float) -> None`
-
-Saves a prediction record to Firestore under `predictions/{email}/records/`.
-
-**Parameters**:
-- `email` — user's email
-- `model_used` — `"Model 1"` or `"Model 2"`
-- `input_data` — dictionary of all input features used for the prediction
-- `predicted_salary` — the predicted annual salary in USD
-
----
-
-### `get_predictions(email: str) -> list[dict]`
-
-Retrieves all prediction records for a given user from Firestore.
-
-**Parameters**:
-- `email` — user's email
-
-**Returns**: A list of prediction dictionaries, each containing `model_used`, `input_data`, `predicted_salary`, and `created_at`.
-
----
-
-### `delete_expired_sessions() -> None`
-
-Cleans up stale session entries from Firestore (if session data is persisted). Called on application startup.
-
----
-
-## `feedback.py`
-
-Provides the feedback collection UI and storage functionality.
-
----
-
-### `feedback_ui(model_used: str, input_data: dict, predicted_salary: float) -> None`
-
-Renders the complete feedback form as a Streamlit `st.expander`. Handles form submission and writes data to the `feedback/` Firestore collection.
-
-**Parameters**:
-- `model_used` — `"Model 1"` or `"Model 2"`
-- `input_data` — dictionary of prediction inputs (stored alongside feedback for traceability)
-- `predicted_salary` — the predicted annual salary for this prediction
-
-**Behavior**:
-- Uses a session state flag to prevent double submission in the same session.
-- Optionally displays an extended feedback form for richer data collection.
-- Stores `extended_data` as a nested map in Firestore if extended form is filled.
-
----
-
-## `insights_engine.py`
-
-Generates human-readable salary insights based on prediction context.
-
----
-
-### `generate_insights_app1(input_data: dict, predicted_salary: float, salary_level: str, career_stage: str) -> str`
-
-Generates a contextual insight string for a Model 1 prediction.
-
-**Parameters**:
-- `input_data` — prediction input features
-- `predicted_salary` — predicted annual salary (USD)
-- `salary_level` — one of `"Early Career Range"`, `"Professional Range"`, `"Executive Range"`
-- `career_stage` — one of `"Entry Stage"`, `"Growth Stage"`, `"Leadership Stage"`
-
-**Returns**: A formatted markdown string with salary context and interpretation.
-
----
-
-### `generate_insights_app2(input_data: dict, predicted_salary: float) -> str`
-
-Generates a contextual insight string for a Model 2 prediction.
-
-**Parameters**:
-- `input_data` — Model 2 input features
-- `predicted_salary` — predicted annual salary (USD)
-
-**Returns**: A formatted markdown string with domain-specific salary context.
-
----
-
-## `recommendations.py`
-
-Generates career recommendation text based on prediction context.
-
----
-
-### `generate_recommendations_app1(input_data: dict, salary_level: str, career_stage: str) -> list[str]`
-
-Generates career development recommendations for a Model 1 prediction.
-
-**Returns**: A list of recommendation strings.
-
----
-
-### `generate_recommendations_app2(input_data: dict, predicted_salary: float) -> list[str]`
-
-Generates recommendations for a Model 2 prediction.
-
-**Returns**: A list of recommendation strings.
-
----
-
-### `render_recommendations(recommendations: list[str]) -> None`
-
-Renders a list of recommendation strings as formatted Streamlit UI elements.
-
----
-
-## `negotiation_tips.py`
-
-Generates salary negotiation tips based on prediction context.
-
----
-
-### `generate_negotiation_tips_app1(input_data: dict, salary_level: str, career_stage: str) -> list[str]`
-
-Generates negotiation tips for a Model 1 prediction context.
-
-**Returns**: A list of tip strings.
-
----
-
-### `generate_negotiation_tips_app2(input_data: dict, predicted_salary: float) -> list[str]`
-
-Generates negotiation tips for a Model 2 prediction context.
-
-**Returns**: A list of tip strings.
-
----
-
-### `render_negotiation_tips(tips: list[str]) -> None`
-
-Renders negotiation tips as formatted Streamlit UI elements.
-
----
-
-## `pdf_utils.py`
-
-Generates multi-page PDF reports using ReportLab. All functions return a `BytesIO` object for direct use with `st.download_button`.
-
----
-
-### `app1_generate_manual_pdf(input_data, result, insights, recommendations, tips, currency_info, tax_info, col_info) -> BytesIO`
-
-Generates a Model 1 manual prediction PDF report.
-
----
-
-### `app1_generate_resume_pdf(input_data, result, resume_score, insights, recommendations, tips) -> BytesIO`
-
-Generates a Model 1 resume-based prediction PDF report.
-
----
-
-### `app1_generate_bulk_pdf(batch_df, summary_stats) -> BytesIO`
-
-Generates a Model 1 batch prediction analytics PDF report.
-
----
-
-### `app1_generate_scenario_pdf(scenarios, scenario_results) -> BytesIO`
-
-Generates a Model 1 scenario comparison PDF report.
-
----
-
-### `cached_app1_model_analytics_pdf() -> BytesIO`
-
-Generates and caches the Model 1 model analytics PDF. Caching avoids redundant generation on each Streamlit rerun.
-
----
-
-All `app2_*` equivalents follow identical signatures and return types but are tailored to Model 2's output schema.
-
----
-
-## `currency_utils.py`
-
-Handles live and fallback currency conversion.
-
----
-
-### `get_active_currency() -> str`
-
-Returns the currently selected currency code from session state (e.g., `"EUR"`, `"INR"`).
-
----
-
-### `get_active_rates() -> dict`
-
-Returns the currently active exchange rate dictionary. Attempts live fetch, then local fallback, then built-in rates.
-
-**Returns**: A dictionary mapping ISO currency codes to exchange rates relative to USD.
-
----
-
-### `render_currency_converter(predicted_salary: float, country: str) -> None`
-
-Renders the full currency conversion UI panel (toggle, currency selector, converted salary display) in Streamlit.
-
-**Parameters**:
-- `predicted_salary` — gross annual salary in USD
-- `country` — user's country (used for default currency selection)
-
----
-
-## `tax_utils.py`
-
-Handles post-tax salary estimation.
-
----
-
-### `render_tax_adjuster(predicted_salary: float, country: str) -> None`
-
-Renders the tax adjustment UI panel in Streamlit.
-
-**Parameters**:
-- `predicted_salary` — gross annual salary in USD
-- `country` — user's country (used for default tax rate lookup)
-
-**Behavior**: Displays toggle to enable/disable, country-derived effective rate with custom override option, and net salary breakdown.
-
----
-
-## `col_utils.py`
-
-Handles cost-of-living salary normalization.
-
----
-
-### `render_col_adjuster(predicted_salary: float, country: str) -> None`
-
-Renders the COL adjustment UI panel in Streamlit.
-
-**Parameters**:
-- `predicted_salary` — gross annual salary in USD
-- `country` — user's country (used for COL index lookup)
-
----
-
-## `user_profile.py`
-
-Handles the user profile tab UI and prediction history display.
-
----
-
-### `show_profile(email: str) -> None`
-
-Renders the complete Profile tab for a logged-in user.
-
-**Parameters**:
-- `email` — email of the logged-in user
-
-**Behavior**: Fetches prediction history from Firestore, renders summary dashboard, timeline chart, per-prediction detail viewer, and export buttons.
-
----
-
-## `admin_panel.py`
-
-Provides system diagnostics and monitoring for administrator users.
-
----
-
-### `show_admin_panel() -> None`
-
-Renders the complete admin panel. Includes:
-- System info (OS, Python version, deployment environment)
-- Firebase project status and user count
-- Feedback analytics (distribution, model-wise breakdown, ratings)
-- Recent activity feed
-- RAM usage and cache controls
-- Extended local diagnostics (when running locally)
-
-**Access Control**: This function should only be called after confirming `is_admin(email) == True`.
-
----
-
-## Session State Key Reference
-
-The following `st.session_state` keys are used across the application:
-
-| Key | Type | Description |
+| Parameter | Type | Description |
 |---|---|---|
-| `db_initialized` | bool | DB initialization guard |
-| `logged_in_user` | str | Email of authenticated user |
-| `login_time` | datetime | Timestamp of login (for expiry check) |
-| `model_choice` | int | 1 or 2 (active model) |
-| `app1_result` | dict | Last Model 1 prediction output |
-| `app2_result` | dict | Last Model 2 prediction output |
-| `app1_inputs` | dict | Last Model 1 input snapshot |
-| `app2_inputs` | dict | Last Model 2 input snapshot |
-| `scenarios` | list[dict] | List of scenario input dicts |
-| `scenario_results` | list[dict] | List of scenario prediction outputs |
-| `batch_df` | DataFrame | Batch prediction results |
-| `feedback_submitted_{hash}` | bool | Per-prediction feedback guard |
-| `exchange_rates` | dict | Cached exchange rate data |
-| `exchange_rates_time` | datetime | Timestamp of last rate fetch |
+| `is_app1` | bool | Model branch selector |
+| `APP1_REQUIRED_COLUMNS` | list | Required column names for App 1 |
+| `APP2_REQUIRED_COLUMNS` | list | Required column names for App 2 |
+| `app1_validate_bulk_dataframe` | callable | Validation function for App 1 uploads |
+| `app2_validate_bulk_dataframe` | callable | Validation function for App 2 uploads |
+| `convert_drive_link` | callable | Google Drive link → direct download URL |
+| `generate_salary_leaderboard` | callable | Produces ranked leaderboard DataFrame |
+| `get_plot_df` | callable | Shared helper for plot data preparation |
+| `apply_theme` | callable | Applies dark theme to Plotly figures |
+| `app1_generate_bulk_pdf` | callable | PDF generator |
+| `app2_generate_bulk_pdf` | callable | PDF generator |
+
+**Session state keys managed:** `bulk_result_df`, `bulk_pdf_buffer`.
 
 ---
 
-## Model Artifact Loading
+### `scenario_analysis_tab.py`
 
-Models are loaded using `joblib.load()` at application startup:
+#### `render_scenario_tab(**kwargs)`
 
-```python
-import joblib
+Renders the Scenario Analysis tab.
 
-rf_pipeline    = joblib.load("model/rf_model_grid.pkl")
-classifier     = joblib.load("model/salary_band_classifier.pkl")
-cluster_pipe   = joblib.load("model/career_cluster_pipeline.pkl")
-app1_analytics = joblib.load("model/app1_analytics.pkl")
+**Key parameters:**
 
-xgb_pipeline   = joblib.load("model/ds_xgb_model_grid.pkl")
-app2_analytics = joblib.load("model/app2_analytics.pkl")
+| Parameter | Type | Description |
+|---|---|---|
+| `is_app1` | bool | Model branch |
+| `app1_model` / `app2_model` | estimator | Active model |
+| `apply_theme` | callable | Plotly dark theme applier |
+| `colorway` | list | Colour sequence for charts |
+| `title_features` | callable | Title feature extractor (App 2) |
+| `app1_generate_scenario_pdf` | callable | PDF generator |
+| `app2_generate_scenario_pdf` | callable | PDF generator |
+
+**Session state keys managed:** `scenarios_a1`, `scenarios_a2`, `scenario_results_a1`, `scenario_results_a2`, `scenario_pdf_buffer_a1`, `scenario_pdf_buffer_a2`, `scenario_pdf_ready_a1`, `scenario_pdf_ready_a2`.
+
+---
+
+### `model_analytics_tab.py`
+
+#### `render_model_analytics_tab(**kwargs)`
+
+Renders the Model Analytics tab. Internally delegates to `@st.fragment` sub-renderers.
+
+**Internal fragment functions (App 1):**
+- `_render_app1_section1_regression(app1_metadata, APP1_MODEL_COMPARISON, apply_theme, model_colors)`
+- `_render_app1_section2_diagnostics(analytics_data, apply_theme)`
+- `_render_app1_section3_classifier(app1_classifier_metadata, APP1_CLASSIFIER_MODEL_COMPARISON, apply_theme, model_colors)`
+- `_render_app1_section4_clustering_assoc(app1_cluster_metadata, analytics_data, df_app1, assoc_rules, apply_theme)`
+
+**Internal fragment functions (App 2):**
+- `_render_app2_section1_regression(app2_metadata, APP2_MODEL_COMPARISON, apply_theme, model_colors)`
+- `_render_app2_section2_diagnostics(analytics_data, apply_theme)`
+- `_render_app2_section3_features(analytics_data, apply_theme)`
+
+**Shared:**
+- `_render_resume_nlp_section()` — displayed for both models
+
+**PDF:** `cached_app1_model_analytics_pdf` / `cached_app2_model_analytics_pdf` are `@st.cache_data` functions passed in and called directly.
+
+---
+
+### `data_insights_tab.py`
+
+#### `render_data_insights_tab(is_app1, df_app1, df_app2, country_name_map, apply_theme_fn=None)`
+
+Renders the Data Insights tab. All theming is managed internally; `apply_theme_fn` is accepted for API compatibility but unused.
+
+**Internal `@st.fragment` dashboard functions (App 1):**
+- `_app1_dash1(df)` — Salary Landscape and Distribution
+- `_app1_dash2(df)` — Human Capital Dimensions
+- `_app1_dash3(df)` — Geographic and Role Patterns
+
+**Internal `@st.fragment` dashboard functions (App 2):**
+- `_app2_dash1(df)` — Salary Distribution
+- `_app2_dash2(df)` — Work Mode and Company Interactions
+- `_app2_dash3(df, country_map)` — Job Roles and Geographic Patterns
+
+---
+
+### `model_hub_tab.py`
+
+#### `render_model_hub_tab(user=None, is_admin_user=False)`
+
+Renders the Model Hub tab.
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `user` | dict or None | None | Logged-in user dict with `username` key; None = not logged in |
+| `is_admin_user` | bool | False | Whether to show admin sections |
+
+**Internal `@st.fragment` functions:**
+- `_render_prediction_panel(active_models, user)` — model selector + dynamic form + predict button
+- `_render_upload_section(registry, user)` — admin bundle upload
+- `_render_registry_manager(registry)` — activate/deactivate/rollback
+- `_render_schema_editor()` — visual schema builder + upload/validate
+
+**Registry cache:** Session key `mh_registry_cache` with 120-second TTL. `_get_registry(force=False)` manages the cache. `_invalidate_registry_cache()` forces a fresh fetch on next access.
+
+---
+
+### `user_profile.py`
+
+#### `show_profile()`
+
+Renders the User Profile tab. No parameters — reads from `st.session_state`.
+
+**Sections rendered:** Prediction Summary KPIs, Prediction History Chart (scatter, up to 500 points), Prediction History Table, View Prediction Inputs (selectbox + field display), Export Prediction History (CSV/XLSX/JSON), Account Management section (`render_account_management_section()`), Logout button.
+
+**Session state keys read:** `username`, `logged_in`.
+
+---
+
+### `admin_panel.py`
+
+#### `show_admin_panel(username)`
+
+Renders the Admin Panel tab.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `username` | str | Email of the current admin user |
+
+**Internal cached functions:**
+
+| Function | TTL | Description |
+|---|---|---|
+| `_get_feedback_stats()` | 300s | Aggregates all feedback from Firestore into scalar metrics |
+| `_get_recent_feedback(limit=5)` | 120s | Returns the N most recent feedback documents |
+
+**Helper functions:**
+
+| Function | Returns | Description |
+|---|---|---|
+| `_get_os_info()` | str | OS name and version |
+| `_get_arch()` | str | CPU architecture (x86\_64 or ARM64) |
+| `_mem_mb()` | float | Current process RSS memory in MB (requires psutil) |
+| `_count_users()` | int | Number of documents in Firestore `users` collection |
+| `_is_local()` | bool | True if running in local development environment |
+| `_get_deployment_label()` | str | "Local" or "Streamlit Cloud" |
+
+---
+
+### `about_tab.py`
+
+#### `render_about_tab()`
+
+Renders the static About tab. No parameters. Contains only `st.markdown` and `st.expander` calls. No business logic.
+
+---
+
+## 3. Core Modules — app/core/
+
+### `auth.py`
+
+#### `login_ui()`
+
+Renders the login form and handles the full authentication flow.
+
+**Side effects:** On success — sets `st.session_state.logged_in = True`, `username`, `_firebase_id_token`, `_session_expiry`. On pending verification — calls `render_verification_pending_ui()`. Calls `check_rate_limit()` before attempting Firebase sign-in. Calls `record_attempt()` on failure, `clear_attempts()` on success.
+
+---
+
+#### `register_ui()`
+
+Renders the registration form and handles account creation.
+
+**Side effects:** On success — calls `_firebase_sign_up_email()`, `ensure_firestore_user()`, `send_verification_email()`, `set_pending_verification()`, `save_pending_verification()`. Calls `check_rate_limit()` and `record_attempt()`.
+
+---
+
+#### `forgot_password_ui()`
+
+Renders the password reset request form.
+
+**Side effects:** Calls Firebase `sendOobCode` (PASSWORD\_RESET). Returns the same success message regardless of whether the email exists (account enumeration protection). Rate limited.
+
+---
+
+#### `logout()`
+
+Clears auth session state and triggers a Streamlit rerun.
+
+**Side effects:** Calls `destroy_session()`. Sets `logged_in = False`, `username = None`. Calls `st.rerun()`.
+
+---
+
+#### `is_admin() → bool`
+
+Checks whether the current session belongs to the admin user.
+
+**Returns:** True if `st.session_state.username.lower() == ADMIN_EMAIL.lower()` and both are non-empty strings.
+
+---
+
+#### `get_logged_in_user() → str or None`
+
+Returns the username (email) of the currently logged-in user, or None.
+
+---
+
+#### `destroy_session()`
+
+Clears all authentication-related session state keys: `logged_in`, `username`, `_firebase_id_token`, `_session_expiry`, `is_admin`, `auth_loading`.
+
+---
+
+### `database.py`
+
+#### `_get_firestore_client() → firestore.Client`
+
+`@st.cache_resource`. Initialises Firebase Admin SDK from `st.secrets["FIREBASE_SERVICE_ACCOUNT"]` and returns a Firestore client. Idempotent — safe to call multiple times.
+
+---
+
+#### `ensure_firestore_user(username, email, display_name=None)`
+
+Creates a Firestore user document at `users/{username}` if it does not already exist. Idempotent.
+
+---
+
+#### `save_prediction(username, model_used, input_data, predicted_salary)`
+
+Writes a prediction record to `predictions/{username}/records/{auto-id}`.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `username` | str | Email of the logged-in user |
+| `model_used` | str | e.g. "Random Forest", "XGBoost" |
+| `input_data` | dict | Input fields used for the prediction |
+| `predicted_salary` | float | Annual salary in USD |
+
+---
+
+#### `get_user_predictions(username) → list[tuple]`
+
+Returns up to 500 prediction records for the user, ordered oldest-first.
+
+**Returns:** List of tuples `(prediction_id, model_used, input_data_json, predicted_salary, created_at)`.
+
+---
+
+#### `save_pending_verification(email, id_token)`
+
+Stores a pending verification record in `pending_verifications/{email}`. Idempotent.
+
+---
+
+#### `get_pending_verification_db(email) → dict or None`
+
+Returns the pending verification record for the email, or None.
+
+---
+
+#### `clear_pending_verification_db(email)`
+
+Deletes the pending verification record for the email.
+
+---
+
+#### Stub functions (no-ops for legacy compatibility)
+
+`init_db()`, `create_prediction_table()`, `delete_expired_sessions()`, `get_user(username)`, `create_user(username, email, password_hash)`, `create_session(...)`, `get_session(...)`, `delete_session(...)`.
+
+---
+
+### `resume_analysis.py`
+
+#### `load_spacy_model() → spacy.Language`
+
+`@st.cache_resource`. Loads `en_core_web_sm` with `parser` and `textcat` disabled.
+
+---
+
+#### `extract_text_from_pdf(file) → str`
+
+Extracts plain text from an uploaded PDF file using pdfplumber.
+
+**Parameters:** `file` — a Streamlit `UploadedFile` object.  
+**Returns:** Concatenated text from all pages.
+
+---
+
+#### `preprocess_resume_text(raw_text) → str`
+
+Cleans extracted PDF text: lowercasing, regex-based noise removal, whitespace normalisation.
+
+---
+
+#### `extract_experience_years(text) → float`
+
+Extracts years of experience from preprocessed resume text using regex patterns. Returns 0.0 if no match found.
+
+---
+
+#### `extract_education_level(text) → int`
+
+Detects education level from keyword matching. Returns 0 (High School), 1 (Bachelor's), 2 (Master's), or 3 (PhD).
+
+---
+
+#### `extract_job_title(text, allowed_job_titles) → tuple[str, str]`
+
+Matches job title using spaCy PhraseMatcher against `JOB_TITLE_ALIASES`.
+
+**Returns:** `(canonical_title, source_label)` where source\_label describes the extraction method.
+
+---
+
+#### `extract_skills(text) → list[str]`
+
+Detects technical skills using spaCy PhraseMatcher against `SKILL_PATTERNS` (~80 skills).
+
+**Returns:** Sorted list of matched skill strings.
+
+---
+
+#### `calculate_resume_score(features) → dict`
+
+Computes App 1 resume score.
+
+**Parameters:** `features` — dict with `years_of_experience`, `education_level`, `skills`.  
+**Returns:** Dict with keys `total_score`, `level` ("Basic"/"Moderate"/"Strong"), `experience_score`, `education_score`, `skills_score`, `skills_detected`.
+
+---
+
+#### `extract_resume_features(raw_text, allowed_job_titles, allowed_countries) → dict`
+
+Full App 1 feature extraction pipeline.
+
+**Returns:** Dict with `job_title`, `years_of_experience`, `education_level`, `senior`, `gender`, `country`, `skills`.
+
+---
+
+#### `extract_resume_features_a2(raw_text, allowed_job_titles_a2, allowed_iso_codes_a2) → dict`
+
+Full App 2 feature extraction pipeline.
+
+**Returns:** Dict with `experience_level_a2`, `employment_type_a2`, `job_title_a2`, `employee_residence_a2`, `company_location_a2`, `remote_ratio_a2`, `company_size_a2`, `years_of_experience_a2`, `skills_a2`, `sources_a2`.
+
+---
+
+#### `calculate_resume_score_a2(features_a2) → dict`
+
+Computes App 2 resume score (DS/ML-weighted).
+
+**Returns:** Dict with `total_score_a2`, `level_a2`, `experience_score_a2`, `skills_score_a2`, `title_score_a2`, `ds_skill_count_a2`, `skills_detected_a2`.
+
+---
+
+### `insights_engine.py`
+
+#### `generate_insights_app2(input_dict, prediction, df_app2, title_features_func) → dict`
+
+Generates smart insights for App 2 predictions.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `input_dict` | dict | Must have keys: "Job Title", "Experience Level", "Company Location" |
+| `prediction` | float | Predicted salary in USD |
+| `df_app2` | DataFrame | App 2 training dataset for market comparison |
+| `title_features_func` | callable | `title_features(job_title)` → (jr, sr, exec\_, is\_mgmt, domain) |
+
+**Returns:** Dict with `role` (str), `market_msg` (str), `market_type` ("success"/"warning"/"info").
+
+---
+
+#### `generate_insights_app1(input_dict) → dict`
+
+Generates insights for App 1 predictions.
+
+**Parameters:** `input_dict` — must have "Job Title", "Years of Experience", "Senior Position".  
+**Returns:** Dict with `job_group` (str), `experience_category` (str).
+
+---
+
+#### `detect_domain_from_title(job_title) → str`
+
+Classifies a job title into one of: "ml\_ai", "analytics", "data\_eng", "scientist", "other". Priority order is applied: ml\_ai → analytics → data\_eng → scientist → other.
+
+---
+
+#### `classify_job_group_app1(job_title) → str`
+
+Classifies an App 1 job title into one of: "Tech", "Management", "Marketing\_Sales", "HR", "Finance", "Design", "Operations".
+
+---
+
+#### `compute_market_insight(job_title, company_location, experience_label, domain, prediction, df_app2) → tuple[str, str]`
+
+Performs hierarchical market comparison against the App 2 dataset (minimum 15 samples required per subset).
+
+**Returns:** `(message_string, type_string)` where type is "success", "warning", or "info".
+
+---
+
+### `email_verification.py`
+
+#### `send_verification_email(id_token) → tuple[bool, str or None]`
+
+Sends a Firebase email verification link.
+
+**Returns:** `(success, error_message)`. `error_message` is None on success.
+
+---
+
+#### `check_email_verified(id_token) → tuple[bool or None, str or None]`
+
+Checks whether the Firebase account's email is verified.
+
+**Returns:** `(verified, error_message)`. `verified` is None if the check could not complete (network issue).
+
+---
+
+#### `render_verification_pending_ui(email, id_token)`
+
+Renders the "check your inbox" screen with resend and check buttons.
+
+---
+
+#### `set_pending_verification(email, id_token)` / `get_pending_verification() → tuple` / `clear_pending_verification()` / `is_verification_pending() → bool`
+
+Session state helpers for persisting pending verification across Streamlit reruns.
+
+---
+
+### `password_policy.py`
+
+#### `validate_password_strength(password) → list[str]`
+
+Validates a password against all policy rules.
+
+**Returns:** List of human-readable failure messages. Empty list means the password passed all checks.
+
+**Rules applied:** min 12 chars, max 128 chars, uppercase, lowercase, digit, special char, no leading/trailing whitespace, no 3+ identical consecutive chars, not in common-password blocklist (~60 entries).
+
+---
+
+#### `password_strength_hint() → str`
+
+Returns a concise one-line hint string suitable for display below a password input field.
+
+---
+
+### `rate_limiter.py`
+
+#### `check_rate_limit(action, identifier) → tuple[bool, str or None]`
+
+Checks whether the action-identifier pair is rate-limited.
+
+**Parameters:** `action` — one of "login", "register", "resend\_verify", "change\_password", "delete\_account", "forgot\_password". `identifier` — email address.  
+**Returns:** `(allowed, error_message)`. Fails open on any error.
+
+---
+
+#### `record_attempt(action, identifier)`
+
+Records a failed attempt. Call after a failed operation. Does not raise on any error.
+
+---
+
+#### `clear_attempts(action, identifier)`
+
+Resets the attempt counter after a successful authentication event. Does not raise on any error.
+
+---
+
+### `account_management.py`
+
+#### `render_account_management_section()`
+
+Single entry point called from `user_profile.show_profile()`. Renders a divider, an "Account Management" subheader, then calls `render_change_password_ui()` and `render_delete_account_ui()`.
+
+---
+
+#### `render_change_password_ui()`
+
+Renders a change-password expander. Re-authenticates via Firebase, validates new password against policy, calls Firebase `update` endpoint to change the password. Rate limited.
+
+---
+
+#### `render_delete_account_ui()`
+
+Renders a delete-account expander. Re-authenticates via Firebase, requires typed confirmation phrase "delete my account", calls Firebase `delete` endpoint, cleans up Firestore documents, clears session state. Rate limited. Prediction history is intentionally retained.
+
+---
+
+## 4. Utility Modules — app/utils/
+
+### `country_utils.py`
+
+#### `get_country_name(iso2) → str`
+
+Returns the English display name for an ISO-3166-1 alpha-2 country code using Babel CLDR data with application-level overrides (e.g. "Hong Kong" instead of CLDR's verbose form).
+
+**Parameters:** `iso2` — ISO-2 code (case-insensitive) or None.  
+**Returns:** Country name string. Returns the input unchanged if not found.
+
+---
+
+#### `resolve_iso2(location) → str or None`
+
+Resolves a country name, alias, or ISO-2 code to a canonical uppercase ISO-2 code.
+
+**Lookup order:** (1) direct ISO-2 match via CLDR, (2) exact `_ALIAS_TABLE` match, (3) case-insensitive alias match, (4) case-insensitive CLDR territory name match.  
+**Returns:** Uppercase ISO-2 code, or None if resolution fails.
+
+---
+
+### `currency_utils.py`
+
+#### `get_exchange_rates() → dict`
+
+Fetches live USD-based exchange rates from `open.er-api.com`. Cached in-memory for 60 minutes. Falls back to a local JSON file if the network is unavailable.
+
+**Returns:** Dict mapping currency code → rate (float, where 1 USD = rate units of currency).
+
+---
+
+#### `convert_currency(amount_usd, target_currency, rates) → float`
+
+Converts a USD amount to the target currency using the provided rates dict.
+
+---
+
+#### `render_currency_converter(usd_amount, location_hint, widget_key)`
+
+Renders the currency converter toggle + expander widget.
+
+**Parameters:** `usd_amount` (float) — salary in USD. `location_hint` (str) — country name or ISO-2 for default currency selection. `widget_key` (str) — unique widget key prefix.
+
+---
+
+#### `get_active_currency(widget_key) → str`
+
+Returns the currently selected currency code for the given widget instance. Used by downstream modules (e.g. `tax_utils`) to display post-tax figures in the same currency.
+
+---
+
+#### `get_active_rates() → dict`
+
+Returns the currently loaded exchange rates dict (or empty dict if not yet loaded).
+
+---
+
+### `tax_utils.py`
+
+#### `compute_post_tax(gross_usd, country, custom_rate=None) → dict`
+
+Calculates estimated post-tax annual salary.
+
+**Parameters:** `gross_usd` (float), `country` (str — name or ISO-2), `custom_rate` (float or None — override effective rate as a decimal, e.g. 0.25 for 25%).  
+**Returns:** Dict with `net_annual`, `net_monthly`, `effective_rate`, `tax_usd`, `country_used`.
+
+---
+
+#### `get_effective_rate(gross_usd, country) → float`
+
+Returns the estimated effective tax rate for the given gross salary and country.
+
+---
+
+#### `render_tax_adjuster(gross_usd, location_hint, widget_key, converted_currency=None, rates=None)`
+
+Renders the tax adjuster toggle + expander. Shows post-tax in USD and optionally in the converted currency if `converted_currency` and `rates` are provided.
+
+---
+
+### `col_utils.py`
+
+#### `get_col_index(location_hint, custom_overrides=None) → tuple[float, str]`
+
+Returns the CoL index for a location.
+
+**Returns:** `(index_value, source_label)` where source is "built-in", "custom", or "default (unknown country)".
+
+---
+
+#### `compute_col_adjusted(gross_usd, work_country, compare_country, custom_work_index=None, custom_compare_index=None, custom_overrides=None) → dict`
+
+Computes the PPP-equivalent salary for the comparison country.
+
+**Returns:** Dict with `ppp_equivalent_usd`, `adjustment_factor`, `work_col_index`, `compare_col_index`.
+
+---
+
+#### `render_col_adjuster(gross_usd, work_country, widget_key, net_usd=None)`
+
+Renders the CoL adjuster toggle + expander.
+
+---
+
+### `ctc_utils.py`
+
+#### `compute_ctc_breakdown(gross_usd, country, custom_rates=None) → dict`
+
+Breaks down gross CTC into components using country-specific rate tables.
+
+**Returns:** Dict with `basic`, `hra`, `bonus`, `pf_employee`, `gratuity`, `other_allowances`, `total` (all in USD/year).
+
+---
+
+#### `render_ctc_adjuster(gross_usd, location_hint, widget_key)`
+
+Renders the CTC breakdown toggle + expander.
+
+---
+
+### `takehome_utils.py`
+
+#### `compute_take_home(gross_usd, country, net_usd=None) → dict`
+
+Estimates monthly and annual net take-home salary after tax, PF, and statutory deductions. Uses `tax_utils` bracket engine if available; falls back to internal tiered estimates.
+
+**Parameters:** `net_usd` — if provided, uses this as the post-tax annual figure instead of recomputing tax.  
+**Returns:** Dict with `net_annual`, `net_monthly`, `effective_rate`, `pf_deduction`, `total_deductions`.
+
+---
+
+#### `render_takehome_adjuster(gross_usd, location_hint, widget_key, net_usd=None) → dict`
+
+Renders the take-home adjuster toggle + expander.
+
+**Returns:** Dict with `net_monthly_{widget_key suffix}` for downstream modules.
+
+---
+
+### `savings_utils.py`
+
+#### `compute_savings_potential(net_monthly_usd, country, custom_expense_ratio=None) → dict`
+
+Estimates monthly savings from net income using country-level expense ratios.
+
+**Returns:** Dict with `savings` (monthly), `annual_savings`, `expense_ratio`, `savings_rate`, `monthly_expenses`.
+
+---
+
+#### `render_savings_adjuster(net_monthly_usd, location_hint, widget_key, gross_usd=None) → dict`
+
+Renders the savings estimator toggle + expander.
+
+**Returns:** Dict with `savings` key for downstream use by `investment_utils`.
+
+---
+
+### `loan_utils.py`
+
+#### `compute_loan_affordability(net_monthly_usd, country, custom_rate=None, custom_tenure=None, custom_emi_cap=None) → dict`
+
+Estimates maximum affordable loan using the reducing-balance EMI formula.
+
+**Formula:** `EMI = P × r × (1+r)^n / ((1+r)^n - 1)` where r = monthly rate, n = months.  
+**Returns:** Dict with `max_loan`, `affordable_emi`, `loan_rate`, `tenure_years`, `emi_cap_fraction`.
+
+---
+
+#### `render_loan_adjuster(net_monthly_usd, location_hint, widget_key, gross_usd=None)`
+
+Renders the loan affordability toggle + expander with adjustable rate, tenure, and EMI cap sliders.
+
+---
+
+### `budget_utils.py`
+
+#### `compute_budget_allocation(net_monthly_usd, country) → dict`
+
+Computes monthly budget category allocations using country-adjusted envelope budgeting.
+
+**Returns:** Dict with `categories` — list of `{label, amount_usd, pct}` dicts. Categories: Housing, Food, Transport, Healthcare, Savings/Investments, Entertainment/Lifestyle, Miscellaneous.
+
+---
+
+#### `render_budget_planner(net_monthly_usd, location_hint, widget_key, gross_usd=None)`
+
+Renders the budget planner toggle + expander.
+
+---
+
+### `investment_utils.py`
+
+#### `compute_investment_growth(monthly_savings_usd, country, custom_rate=None) → dict`
+
+Projects future value of monthly savings under compound growth.
+
+**Formula:** `FV = PMT × ((1+r)^n - 1) / r` where r = monthly rate, n = months.  
+**Returns:** Dict with `value_5yr`, `value_10yr`, `value_20yr`, `value_30yr`, `annual_return_rate`.
+
+---
+
+#### `render_investment_estimator(monthly_savings_usd, location_hint, widget_key, net_monthly_usd=None)`
+
+Renders the investment growth estimator toggle + expander.
+
+---
+
+### `emergency_fund_utils.py`
+
+#### `compute_emergency_fund(net_monthly_usd, country, monthly_contribution=None) → dict`
+
+Estimates emergency fund targets and build timeline.
+
+**Returns:** Dict with `monthly_expense`, `target_3mo`, `target_6mo`, `months_to_3mo`, `months_to_6mo`, `stability_factor`.
+
+---
+
+#### `render_emergency_fund_planner(net_monthly_usd, location_hint, widget_key, gross_usd=None)`
+
+Renders the emergency fund planner toggle + expander.
+
+---
+
+### `lifestyle_utils.py`
+
+#### `compute_lifestyle_split(net_monthly_usd, country) → dict`
+
+Splits discretionary income across lifestyle tiers and spending categories.
+
+**Returns:** Dict with `discretionary` (amount after essentials), `tiers` (list of `{label, monthly_cost, feasibility}`), `discretionary_categories` (list of `{label, amount_usd}`).
+
+---
+
+#### `render_lifestyle_split(net_monthly_usd, location_hint, widget_key, gross_usd=None)`
+
+Renders the lifestyle budget split toggle + expander.
+
+---
+
+### `recommendations.py`
+
+#### `generate_recommendations_app2(input_dict, prediction, df_app2, title_features_func) → list[str]`
+
+Generates career recommendations for App 2 predictions.
+
+**Pipeline:** domain detection → role classification → market type computation → base recs + role tip + market tip.  
+**Returns:** List of recommendation strings.
+
+---
+
+#### `generate_recommendations_app1(input_dict) → list[str]`
+
+Generates career recommendations for App 1 predictions.
+
+**Pipeline:** job group classification → experience category → base recs + role tip + senior boost.  
+**Returns:** List of recommendation strings.
+
+---
+
+#### `render_recommendations(recommendations)`
+
+Renders a list of recommendation strings as a markdown bullet list. Displays `st.info("No recommendations available.")` for empty input.
+
+---
+
+### `negotiation_tips.py`
+
+#### `generate_negotiation_tips_app1(prediction, salary_band_label, career_stage_label, experience, job_title, country, senior, market_type) → list[str]`
+
+Generates 3 salary negotiation tips for App 1 predictions. Tips are driven by: experience years (numeric), senior flag, country.
+
+---
+
+#### `generate_negotiation_tips_app2(prediction, experience_label, company_size_label, remote_label, company_location, job_title, role, market_type) → list[str]`
+
+Generates 3 salary negotiation tips for App 2 predictions. Tips are driven by: experience level label, company size label, work mode label.
+
+---
+
+#### `render_negotiation_tips(tips)`
+
+Renders a list of tip strings as markdown bullet points.
+
+---
+
+### `feedback.py`
+
+#### `save_feedback(username, model_used, input_data, predicted_salary, accuracy_rating, direction, actual_salary, star_rating, extended=None)`
+
+Writes a feedback document to `feedback/{auto-id}` in Firestore.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `username` | str | Yes | Email or "anonymous" |
+| `model_used` | str | Yes | e.g. "Random Forest", "XGBoost" |
+| `input_data` | dict | Yes | Input fields used for the prediction |
+| `predicted_salary` | float | Yes | Predicted salary in USD |
+| `accuracy_rating` | str | Yes | "Yes", "Somewhat", or "No" |
+| `direction` | str | Yes | "Too High", "About Right", or "Too Low" |
+| `actual_salary` | float or None | No | User-reported actual salary |
+| `star_rating` | int | Yes | 1–5 |
+| `extended` | dict or None | No | Optional extended data block |
+
+---
+
+#### `feedback_ui(predicted_salary, model_used, input_data)`
+
+Renders the collapsible feedback expander. Internally manages a session-keyed submission flag to prevent duplicate submissions within a session.
+
+---
+
+### `pdf_utils.py`
+
+All PDF generation functions return a `BytesIO` buffer containing the complete PDF.
+
+#### `app1_generate_manual_pdf(input_details, prediction, salary_band, career_stage, metadata) → BytesIO`
+
+#### `app2_generate_manual_pdf(input_details, prediction, lower_bound, upper_bound, metadata) → BytesIO`
+
+#### `app1_generate_resume_pdf(result_dict) → BytesIO`
+
+#### `app2_generate_resume_pdf(input_details, prediction, lower_bound, upper_bound, metadata) → BytesIO`
+
+#### `app1_generate_bulk_pdf(result_df) → BytesIO`
+
+#### `app2_generate_bulk_pdf(result_df, country_name_map) → BytesIO`
+
+#### `app1_generate_scenario_pdf(scenario_df) → BytesIO`
+
+#### `app2_generate_scenario_pdf(scenario_df) → BytesIO`
+
+#### `cached_app1_model_analytics_pdf(metadata, model_comparison, classifier_metadata, analytics_data, cluster_metadata, assoc_rules, model, salary_band_model) → BytesIO`
+
+`@st.cache_data` — generated once, served from cache on subsequent calls.
+
+#### `cached_app2_model_analytics_pdf(metadata, model_comparison, analytics_data, model) → BytesIO`
+
+`@st.cache_data` — generated once, served from cache on subsequent calls.
+
+**Internal helpers:**
+
+| Function | Description |
+|---|---|
+| `_fig_to_image(fig, dpi=150) → ImageReader` | Renders a matplotlib figure to a ReportLab ImageReader; closes the figure immediately to prevent memory leaks |
+| `_get_numbered_canvas()` | Lazily creates and caches the `NumberedCanvas` class with "Page X of Y" footer support |
+
+---
+
+## 5. Model Hub Modules — app/model_hub/
+
+### `_hf_client.py`
+
+Low-level HuggingFace SDK wrapper. All other Model Hub modules import from this file for HF operations.
+
+**Configuration (resolved at import time):**
+
+| Variable | Source | Description |
+|---|---|---|
+| `HF_TOKEN` | `st.secrets["HF_TOKEN"]` or `os.environ["HF_TOKEN"]` | HuggingFace write-scope access token |
+| `HF_REPO_ID` | `st.secrets["HF_REPO_ID"]` or `os.environ["HF_REPO_ID"]` | Dataset repo in the form "owner/repo-name" |
+| `REGISTRY_PATH` | hardcoded | `"models_registry.json"` |
+| `MAX_MODEL_FILE_BYTES` | hardcoded | `200 * 1024 * 1024` (200 MB) |
+
+#### `download_file_bytes(path_in_repo) → bytes`
+
+Downloads a file from the HuggingFace dataset repo using `hf_hub_download`.
+
+**Raises:** `FileNotFoundError` if the file does not exist. `PermissionError` on 401/403. `RuntimeError` on other failures.
+
+---
+
+#### `upload_file_bytes(path_in_repo, data, commit_message="Upload via Model Hub")`
+
+Uploads raw bytes to the repo using `HfApi.create_commit` with `CommitOperationAdd`.
+
+**Raises:** `PermissionError` if token is missing or lacks write scope. `RuntimeError` on upload failure.
+
+---
+
+#### `file_size_bytes(path_in_repo) → int or None`
+
+Returns the file size in bytes using `HfApi.get_paths_info`. Returns None if unavailable (non-blocking).
+
+---
+
+#### `list_repo_paths(prefix="models/") → list[str]`
+
+Lists all file paths under a prefix using `HfApi.list_repo_tree`. Returns empty list on any error.
+
+---
+
+### `registry.py`
+
+#### `fetch_registry(raw=False) → dict`
+
+Fetches and parses `models_registry.json` from HuggingFace. Returns an empty `{"models": []}` if the file does not exist. Validates each entry and skips malformed ones (logs a warning).
+
+**Raises:** `RuntimeError` if the file cannot be fetched or parsed.
+
+---
+
+#### `get_active_models(registry) → list[dict]`
+
+Returns models with `"active": true` from the registry dict.
+
+---
+
+#### `get_model_by_id(registry, model_id) → dict or None`
+
+Returns the registry entry for a given model ID, or None.
+
+---
+
+#### `add_model_to_registry(registry, model_entry) → dict`
+
+Returns a new registry dict with `model_entry` appended. Does not push to HuggingFace.
+
+**Raises:** `ValueError` if the model ID already exists or the entry is invalid.
+
+---
+
+#### `set_model_active(registry, model_id, active) → dict`
+
+Returns a new registry dict with the model's `active` flag updated.
+
+**Raises:** `ValueError` if the model ID is not found.
+
+---
+
+#### `rollback_to_version(registry, model_id) → dict`
+
+Activates `model_id` and deactivates all other models in the same family (`family_id` or `display_name` match).
+
+**Raises:** `ValueError` if the model ID is not found.
+
+---
+
+#### `push_registry(registry)`
+
+Serialises and uploads `models_registry.json` to HuggingFace.
+
+**Raises:** `RuntimeError` on upload failure.
+
+---
+
+### `loader.py`
+
+#### `load_bundle(model_meta, force_reload=False) → ModelBundle`
+
+Downloads and deserialises a model bundle from HuggingFace. Checks session cache first; downloads on miss. Enforces size limits pre- and post-download. Logs a security notice on every deserialisation.
+
+**Parameters:** `model_meta` — registry entry dict with `id` and `path` keys. `force_reload` — bypass session cache.  
+**Returns:** `ModelBundle` instance.  
+**Raises:** `RuntimeError` on size limit breach, missing files, or deserialisation failure.
+
+---
+
+#### `clear_bundle_cache(model_id=None)`
+
+Clears the session cache for one model (if `model_id` provided) or all models.
+
+---
+
+#### `ModelBundle`
+
+Dataclass with `__slots__`:
+
+| Attribute | Type | Description |
+|---|---|---|
+| `model_id` | str | Registry ID |
+| `model` | Any | Deserialised sklearn-compatible estimator |
+| `columns` | list[str] | Ordered feature column names |
+| `schema` | dict | Parsed schema dict |
+| `model_meta` | dict | Raw registry entry |
+
+---
+
+### `predictor.py`
+
+#### `predict(bundle, raw_input) → PredictionResult`
+
+Runs a prediction using a loaded `ModelBundle`.
+
+**Parameters:** `bundle` — `ModelBundle` instance. `raw_input` — `{field_name: value}` dict from `render_schema_form()`.  
+**Raises:** `RuntimeError` if the model fails to predict or returns a non-finite value. `ValueError` if the feature vector length mismatches the column count.
+
+---
+
+#### `PredictionResult`
+
+Dataclass with `__slots__`:
+
+| Attribute | Type | Description |
+|---|---|---|
+| `value` | float | Predicted scalar value |
+| `model_id` | str | Registry ID of the model |
+| `target` | str | Name of the predicted variable |
+| `warnings` | list[str] | Any feature vector construction warnings |
+| `raw_input` | dict | Original form input values |
+| `feature_vector` | list[float] | Aligned numeric feature vector |
+
+---
+
+### `schema_parser.py`
+
+#### `render_schema_form(schema, key_prefix="mh_form") → dict`
+
+Renders Streamlit input widgets for all fields in `schema["fields"]`.
+
+**Parameters:** `schema` — validated schema dict. `key_prefix` — unique string prefix for all widget keys (use a stable, model-specific prefix).  
+**Returns:** `{field_name: value}` dict with typed values.
+
+**Widget dispatch table:**
+
+| `ui` value | Handler function |
+|---|---|
+| `"slider"` | `_widget_slider()` |
+| `"selectbox"` | `_widget_selectbox()` |
+| `"number_input"` | `_widget_number_input()` |
+| `"text_input"` | `_widget_text_input()` |
+| `"checkbox"` | `_widget_checkbox()` |
+
+Unknown `ui` values fall back to `_widget_text_input()` with a warning.
+
+---
+
+### `uploader.py`
+
+#### `upload_bundle(model_bytes, columns_bytes, schema_bytes, display_name, description="", target="prediction", uploaded_by="admin", family_id=None) → UploadResult`
+
+Validates and uploads a complete model bundle to HuggingFace.
+
+**Returns:** `UploadResult` with `folder_name`, `folder_path`, `registry_entry`, `warnings`.  
+**Raises:** `ValueError` on validation failures. `RuntimeError` on upload failures.
+
+---
+
+#### `upload_schema_only(schema_bytes, model_id, bundle_path) → list[str]`
+
+Uploads only `schema.json` to an existing bundle path.
+
+**Returns:** List of warnings (empty on success).  
+**Raises:** `ValueError` on schema validation failure. `RuntimeError` on upload failure.
+
+---
+
+#### `UploadResult`
+
+Dataclass with `__slots__`:
+
+| Attribute | Type | Description |
+|---|---|---|
+| `folder_name` | str | Generated folder name: `model_{timestamp}_{6-char-random}` |
+| `folder_path` | str | Full path: `models/{folder_name}/` |
+| `registry_entry` | dict | Complete registry entry dict ready for `add_model_to_registry()` |
+| `warnings` | list[str] | Schema-column consistency warnings |
+
+---
+
+### `validator.py`
+
+Pure Python — no Streamlit dependency. Safe to use in offline tools or CI pipelines.
+
+#### `validate_schema(schema) → list[str]`
+
+Validates the structure of a parsed schema dict. Returns a list of issue strings; empty list = valid.
+
+**Checks:** Top-level `fields` key present and is a list; each field has `name`, `type`, `ui`; no duplicate names; allowed `type` and `ui` values; per-widget constraints (slider min/max, selectbox values non-empty, number\_input min < max); default within [min, max] for sliders.
+
+---
+
+#### `validate_schema_vs_columns(schema, columns) → list[str]`
+
+OHE-aware consistency check between schema fields and `columns.pkl`.
+
+**OHE matching:** A `selectbox` field named `job_title` with values `["A", "B"]` is matched if columns contains `job_title_A` and `job_title_B`.  
+**Returns:** List of issues including truly missing fields and informational notes about unaccounted extra columns.
+
+---
+
+#### `validate_bundle_files(file_names) → list[str]`
+
+Returns a sorted list of missing required file names from `{"model.pkl", "columns.pkl", "schema.json"}`.
+
+---
+
+#### `parse_schema_json(raw) → tuple[dict, list[str]]`
+
+Parses raw JSON bytes/string and validates it.
+
+**Returns:** `(schema_dict, issues_list)`. `schema_dict` is `{}` if JSON is invalid.
+
+---
+
+## 6. Module Dependency Map
+
+```
+app_resume.py
+    ├── app/tabs/manual_prediction_tab.py
+    │       ├── app/core/insights_engine.py
+    │       ├── app/utils/recommendations.py
+    │       ├── app/utils/negotiation_tips.py
+    │       ├── app/utils/currency_utils.py
+    │       ├── app/utils/tax_utils.py
+    │       ├── app/utils/col_utils.py
+    │       ├── app/utils/ctc_utils.py
+    │       ├── app/utils/takehome_utils.py
+    │       ├── app/utils/savings_utils.py
+    │       ├── app/utils/loan_utils.py
+    │       ├── app/utils/budget_utils.py
+    │       ├── app/utils/investment_utils.py
+    │       ├── app/utils/emergency_fund_utils.py
+    │       ├── app/utils/lifestyle_utils.py
+    │       ├── app/utils/feedback.py
+    │       └── app/core/database.py (save_prediction)
+    │
+    ├── app/tabs/resume_analysis_tab.py
+    │       ├── app/core/resume_analysis.py
+    │       ├── app/core/insights_engine.py
+    │       ├── app/utils/recommendations.py
+    │       ├── app/utils/negotiation_tips.py
+    │       ├── app/utils/currency_utils.py
+    │       ├── app/utils/tax_utils.py
+    │       ├── app/utils/col_utils.py
+    │       └── app/core/database.py (save_prediction)
+    │
+    ├── app/tabs/batch_prediction_tab.py  (no core/util imports)
+    ├── app/tabs/scenario_analysis_tab.py (no core/util imports)
+    │
+    ├── app/tabs/model_analytics_tab.py   (no core/util imports)
+    ├── app/tabs/data_insights_tab.py     (no core/util imports)
+    │
+    ├── app/tabs/model_hub_tab.py
+    │       └── app/model_hub/* (self-contained)
+    │               └── app/model_hub/_hf_client.py
+    │
+    ├── app/tabs/user_profile.py
+    │       ├── app/core/auth.py
+    │       ├── app/core/database.py
+    │       └── app/core/account_management.py
+    │               ├── app/core/auth.py (lazy)
+    │               ├── app/core/database.py (lazy)
+    │               ├── app/core/rate_limiter.py (lazy)
+    │               └── app/core/password_policy.py
+    │
+    ├── app/tabs/admin_panel.py
+    │       └── app/core/database.py
+    │
+    ├── app/tabs/about_tab.py             (stdlib + streamlit only)
+    │
+    ├── app/core/auth.py
+    │       ├── app/core/email_verification.py
+    │       ├── app/core/password_policy.py
+    │       ├── app/core/rate_limiter.py
+    │       └── app/core/database.py (lazy import)
+    │
+    └── app/utils/pdf_utils.py            (lazy imports, no core deps)
+
+All financial utils (currency, tax, col, ctc, takehome, savings,
+loan, budget, investment, emergency_fund, lifestyle):
+    └── app/utils/country_utils.py        (Babel CLDR, no app deps)
 ```
 
-Each `.pkl` file contains a scikit-learn/XGBoost pipeline or a dictionary of pre-computed analytics objects (residuals, SHAP values, feature importances, PCA coordinates, association rules).
-
 ---
 
-## Error Handling Conventions
-
-- All external API calls (Firebase, ExchangeRate API) are wrapped in `try/except` blocks.
-- User-facing errors are rendered with `st.error()`.
-- Informational messages use `st.info()` or `st.warning()`.
-- Fallback chains handle degraded operation gracefully (e.g., currency fallback).
-- Model loading errors disable the affected feature and display a descriptive message rather than crashing the application.
-
----
-
-*End of Module & API Reference*
+*End of Module Reference*
