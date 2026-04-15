@@ -38,8 +38,8 @@ SalaryScope is a web-based salary prediction tool that uses machine learning to 
 Beyond salary prediction, SalaryScope includes financial planning tools (tax estimation, cost-of-living comparison, savings potential, loan affordability, and more), dataset exploration dashboards, model performance analytics, and a Model Hub where additional trained models can be accessed.
 
 **Live applications:**
-- Full App (with resume analysis): https://salaryscope-app.streamlit.app/
-- Lite App (without resume analysis): https://salaryscope-lite-app.streamlit.app/
+- Full App (all features including resume analysis, scenario analysis, Model Hub, and financial tools): https://salaryscope-app.streamlit.app/
+- Lite App (Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile): https://salaryscope-lite-app.streamlit.app/
 
 ---
 
@@ -651,7 +651,7 @@ No. Manual prediction, batch prediction, scenario analysis, model analytics, and
 Predictions are estimates based on patterns in publicly available historical datasets. They may not reflect current market conditions, company-specific salaries, or regional cost variations. Use predictions as a general reference, not as exact figures. See Section 18 for full disclaimers.
 
 **What is the difference between the Full App and the Lite App?**
-The Full App includes spaCy-based NLP resume analysis. The Lite App does not include this feature. Both apps share the same prediction models and all other features. The split exists due to Streamlit Cloud free-tier memory constraints.
+The Lite App is a substantially reduced version of the Full App. It includes Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. It does not include Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, or any of the 11 financial planning tools (currency converter, tax estimator, CoL adjuster, etc.). The split exists to keep the Lite App within Streamlit Cloud free-tier memory limits. Both apps share the same Firebase project so prediction history is shared across them.
 
 **Can I use the Model Hub to deploy my own models?**
 Yes, if you are the admin. You need to train an sklearn-compatible model, save it with joblib, create a columns list, and define a schema.json file. Upload all three as a bundle through the Model Hub admin interface.

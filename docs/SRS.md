@@ -101,7 +101,7 @@ At the highest level, SalaryScope provides:
 ### 2.5 Design and Implementation Constraints
 
 - The application must run within Streamlit Cloud free-tier memory and compute limits.
-- The full app (with resume analysis) and the lite app (without it) must be maintained as separate deployments due to spaCy and pdfplumber memory consumption.
+- The full app (`app_resume.py`) and the lite app (`app.py`) must be maintained as separate deployments. The lite app is a substantially reduced version — it excludes Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, all 11 financial tools, and the feedback system. It does not depend on spaCy, pdfplumber, or HuggingFace Hub. Only `FIREBASE_API_KEY` and `FIREBASE_SERVICE_ACCOUNT` are required secrets for the lite app.
 - All persistent data must be stored in Firebase Firestore; SQLite is not persistent across Streamlit Cloud restarts.
 - All secrets (API keys, Firebase credentials, HuggingFace token) must be managed through Streamlit Cloud secrets and never hardcoded.
 - Model artefacts must be stored in a private HuggingFace dataset repository.
@@ -151,8 +151,8 @@ The system shall compute and display a resume score (out of 100) with component 
 #### FR-R06 — Resume-Based Prediction
 After reviewing the extracted features, the user shall be able to run a salary prediction using the same pipeline as manual prediction.
 
-#### FR-R07 — Resume Analysis Availability
-Resume Analysis shall be available only in the Full App deployment. The Lite App shall not include this feature.
+#### FR-R07 — Lite App Scope
+The lite app deployment (`app.py`) shall include only the following tabs: Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. The Resume Analysis, Scenario Analysis, Model Hub, and Admin Panel tabs shall not be present. The 11 financial planning tools, the prediction feedback system, and the HuggingFace Hub dependency shall be excluded from the lite app. The lite app's About tab shall be rendered inline with simplified content reflecting its reduced feature set.
 
 ### 3.3 Batch Prediction
 

@@ -312,14 +312,14 @@ After saving secrets, click **Reboot app** to ensure the new secrets take effect
 
 The following table lists all secrets used by the application.
 
-| Key | Type | Required | Description |
-|---|---|---|---|
-| `FIREBASE_API_KEY` | String | Yes | Firebase project web API key (from Project Settings → General → Web API Key) |
-| `FIREBASE_SERVICE_ACCOUNT` | TOML table | Yes | Full Firebase service account JSON as a TOML table. All fields from the downloaded JSON must be present |
-| `ADMIN_EMAIL` | String | Yes | Email address that receives admin privileges. Case-insensitive comparison |
-| `HF_TOKEN` | String | Yes | HuggingFace access token with write scope. Required for model uploads and registry updates |
-| `HF_REPO_ID` | String | Yes | HuggingFace dataset repository in the form `"owner/repo-name"` |
-| `IS_LOCAL` | Boolean | No | Set to `true` in local development to enable disk-based CoL index override save/reset. Omit or set `false` on Streamlit Cloud |
+| Key | Type | Required (Full App) | Required (Lite App) | Description |
+|---|---|---|---|---|
+| `FIREBASE_API_KEY` | String | Yes | Yes | Firebase project web API key (from Project Settings → General → Web API Key) |
+| `FIREBASE_SERVICE_ACCOUNT` | TOML table | Yes | Yes | Full Firebase service account JSON as a TOML table. All fields from the downloaded JSON must be present |
+| `ADMIN_EMAIL` | String | Yes | No | Email address that receives admin privileges. Only needed for the Admin Panel tab (full app only) |
+| `HF_TOKEN` | String | Yes | No | HuggingFace access token with write scope. Only needed for model artefact loading and Model Hub (full app only) |
+| `HF_REPO_ID` | String | Yes | No | HuggingFace dataset repository in the form `"owner/repo-name"`. Only needed for full app |
+| `IS_LOCAL` | Boolean | No | No | Set to `true` in local development to enable disk-based CoL index override save/reset. Omit or set `false` on Streamlit Cloud |
 
 ### 7.1 FIREBASE\_SERVICE\_ACCOUNT Format
 
@@ -469,32 +469,51 @@ The application is deployed as two separate Streamlit Cloud apps from the same G
 
 ### 9.1 Why Two Apps
 
-spaCy (`en_core_web_sm`) and pdfplumber are memory-intensive. On Streamlit Cloud's free tier, running them alongside the full ML stack (scikit-learn, XGBoost, SHAP, MLxtend, Plotly, ReportLab) risks hitting memory limits, causing the app to restart or fail unexpectedly.
+The lite app (`app.py`) is a substantially stripped-down version of the full app, not just a version without resume analysis. It was built to run comfortably within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, the 11 financial utility modules, and several entire tabs).
 
-The lite app (`app.py`) excludes the resume analysis feature and its dependencies, resulting in a significantly lower memory footprint.
+The full app (`app_resume.py`) requires more RAM due to spaCy's `en_core_web_sm` model, pdfplumber, and the full financial tools chain, and is more appropriate for users who need all features.
 
 ### 9.2 Deploying Both Apps
 
-Repeat the steps in Section 6 twice — once pointing to `app_resume.py` (full app) and once pointing to `app.py` (lite app). Both deployments use identical secrets.
+Repeat the steps in Section 6 twice — once pointing to `app_resume.py` (full app) and once pointing to `app.py` (lite app).
+
+**Secrets for the Lite App:** The lite app does not use HuggingFace at all. `HF_TOKEN` and `HF_REPO_ID` can be omitted from the lite app's Streamlit Cloud secrets. `ADMIN_EMAIL` can also be omitted since there is no Admin Panel. Only `FIREBASE_API_KEY` and `FIREBASE_SERVICE_ACCOUNT` are strictly required for the lite app.
 
 ### 9.3 Shared Resources
 
 Both apps share:
 - The same Firebase project (Authentication + Firestore)
-- The same HuggingFace repository
-- The same model artefacts
-- The same secrets values (copy identical secrets to both apps)
+- The same model artefacts (downloaded from HuggingFace on the full app; the lite app loads them the same way)
+- The same Firestore collections (`users`, `predictions`) — prediction history made on either app appears in the same Profile tab
 
-### 9.4 Resource Differences
+### 9.4 Feature Differences (Full App vs Lite App)
 
-| Feature | Full App | Lite App |
+| Feature / Tab | Full App (`app_resume.py`) | Lite App (`app.py`) |
 |---|---|---|
-| Resume Analysis tab | Yes | No (tab hidden) |
-| spaCy dependency | Yes | No |
-| pdfplumber dependency | Yes | No |
-| Memory usage | Higher | Lower |
+| Manual Prediction | ✅ | ✅ |
+| Batch Prediction | ✅ | ✅ |
+| Model Analytics | ✅ | ✅ |
+| Data Insights | ✅ | ✅ |
+| Profile tab | ✅ | ✅ |
+| About tab | ✅ (modular, from `about_tab.py`) | ✅ (inline, simplified) |
+| Resume Analysis tab | ✅ | ❌ |
+| Scenario Analysis tab | ✅ | ❌ |
+| Model Hub tab | ✅ | ❌ |
+| Admin Panel tab | ✅ | ❌ |
+| Financial tools (11 modules) | ✅ | ❌ |
+| Prediction feedback system | ✅ | ❌ |
+| Salary negotiation tips | ✅ | ✅ |
+| Career recommendations | ✅ | ✅ |
+| spaCy / pdfplumber | ✅ | ❌ |
+| HuggingFace Hub dependency | ✅ | ❌ |
+| `ADMIN_EMAIL` secret required | Yes | No |
+| `HF_TOKEN` / `HF_REPO_ID` required | Yes | No |
+| Memory usage | Higher | Significantly lower |
 | Startup time | Slower | Faster |
-| All other features | Identical | Identical |
+
+> **Note on the Lite App About tab:** The lite app renders its About content inline in `app.py` rather than importing `about_tab.py`. The content is a simplified version — it omits resume analysis, scenario analysis, Model Hub, and financial tools from the feature list.
+
+> **Note on text input styling:** The lite app applies CSS styling to `.stTextInput` elements (which is commented out in the full app). This is a minor cosmetic difference with no functional impact.
 
 ---
 

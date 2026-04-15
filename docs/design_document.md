@@ -720,12 +720,14 @@ Feedback submitted by unauthenticated users is stored with `username = "anonymou
 
 The application is deployed on Streamlit Cloud (free tier) as two separate apps:
 
-| App | URL | Description |
-|---|---|---|
-| Full App | `salaryscope-app.streamlit.app` | Includes spaCy NLP resume analysis |
-| Lite App | `salaryscope-lite-app.streamlit.app` | Lightweight version without resume analysis |
+| App | URL | Entry Point | Description |
+|---|---|---|---|
+| Full App | `salaryscope-app.streamlit.app` | `app_resume.py` | Complete feature set including resume analysis, scenario analysis, Model Hub, Admin Panel, and all 11 financial tools |
+| Lite App | `salaryscope-lite-app.streamlit.app` | `app.py` | Lightweight version with Manual Prediction, Batch Prediction, Model Analytics, Data Insights, and Profile only |
 
-The split is necessary because spaCy's `en_core_web_sm` model and `pdfplumber` are memory-intensive, and Streamlit Cloud free tier has strict memory and resource limits.
+The split is driven by Streamlit Cloud free-tier memory limits. The lite app removes not only spaCy and pdfplumber but also the HuggingFace Hub dependency, the entire Model Hub subsystem, all 11 financial utility modules, the feedback system, and the Scenario Analysis and Admin Panel tabs — resulting in a significantly smaller memory footprint and faster startup.
+
+The lite app's About tab is also simplified and rendered inline in `app.py` rather than importing `about_tab.py`, reflecting its reduced feature set.
 
 ### 15.2 Secrets Configuration
 
@@ -757,7 +759,7 @@ Streamlit Cloud runs each user session in an isolated Python process. There is n
 | Pre-computed analytics | SHAP values and clustering analytics are expensive; pre-computing in notebooks eliminates startup latency |
 | Dependency injection for tabs | Prevents circular imports; ensures cached resources are loaded once; makes tabs independently testable |
 | Rule-based NLP over supervised model | No labeled resume dataset available; deterministic and interpretable; suitable for Streamlit Cloud memory constraints |
-| Two separate deployments (full vs lite) | Streamlit Cloud free-tier memory limit; spaCy + pdfplumber consume significant RAM |
+| Two separate deployments (full vs lite) | The lite app is a substantially reduced build (no resume analysis, scenario analysis, Model Hub, Admin Panel, financial tools, or feedback) primarily to stay within Streamlit Cloud free-tier memory limits but also to offer a simpler entry point |
 | joblib over pickle directly | Better compression and cross-version compatibility for sklearn/XGBoost models |
 | Log-transform target for Model 2 | Salary distributions are right-skewed; log transform improves model fit and reduces influence of extreme values |
 
@@ -765,6 +767,7 @@ Streamlit Cloud runs each user session in an isolated Python process. There is n
 
 ## 17. Known Limitations and Constraints
 
+- The lite app (`app.py`) is a substantially reduced deployment — it excludes Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, all 11 financial tools, and the feedback system. This is by design to fit within Streamlit Cloud free-tier memory limits, not a missing feature.
 - Streamlit Cloud free tier has memory limits; large batch files (>10,000 rows) may be slower or cause timeouts.
 - spaCy resume parsing is sensitive to PDF formatting; heavily formatted or image-heavy PDFs may produce poor extraction.
 - Tax and CoL data is static (updated periodically in code), not real-time.
