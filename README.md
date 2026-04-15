@@ -576,6 +576,8 @@ salaryscope/
 │   └── config.toml                      # Streamlit configuration
 │
 ├── requirements.txt
+├── CHANGELOG.md
+├── LICENSE
 └── README.md
 ```
 
