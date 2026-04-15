@@ -508,7 +508,7 @@ salaryscope/
 │   │
 │   ├── model_hub/                       # Model Hub package
 │   │   ├── __init__.py                  # Package exports
-│   │   ├── _hf_client.py               # HuggingFace SDK wrapper (download, upload, listing)
+│   │   ├── _hf_client.py                # HuggingFace SDK wrapper (download, upload, listing)
 │   │   ├── registry.py                  # Registry read/write (models_registry.json)
 │   │   ├── loader.py                    # Bundle download, deserialization, session cache
 │   │   ├── predictor.py                 # Feature vector construction and model.predict()
@@ -540,7 +540,7 @@ salaryscope/
 │   │   ├── ctc_utils.py                 # CTC breakdown
 │   │   ├── takehome_utils.py            # Take-home salary estimation
 │   │   ├── savings_utils.py             # Savings potential calculator
-│   │   └── loan_utils.py               # Loan affordability estimator
+│   │   └── loan_utils.py                # Loan affordability estimator
 │
 ├── model/
 │   ├── rf_model_grid.pkl                # Model 1: Random Forest pipeline + metadata
