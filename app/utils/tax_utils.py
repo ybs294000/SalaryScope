@@ -826,7 +826,7 @@ def render_tax_adjuster(
     file_load_key = f"{widget_key}_load_file"
 
     show_tax = st.toggle(
-        ":material/receipt_long: Show Tax Adjustment",
+        ":material/receipt_long: Tax Adjustment",
         help="Show estimated post-tax salary based on country-specific tax rates.",
         key=toggle_key,
         value=False,
