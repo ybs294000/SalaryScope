@@ -424,13 +424,25 @@ def render_col_adjuster(
             work_built_in, work_src = get_col_index(work_country, custom_overrides=saved_overrides)
 
             if work_country and work_country not in ("Other", ""):
-                st.info(
-                    f"**Salary earned in:** {get_country_name(work_country)}\n\n"
-                    f"**CoL index:** {work_built_in:.0f} / 100\n\n"
-                    f"_Source: {work_src}_"
+                st.markdown(
+                    f"<div style='background:#1E2D40;border-left:4px solid #3B82F6;"
+                    f"border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#C8D6E8;'>"
+                    f"<span style='font-weight:700;color:#E6EAF0;'>Salary earned in:</span> "
+                    f"{get_country_name(work_country)}<br>"
+                    f"<span style='color:#9CA6B5;'>CoL index:</span> <b>{work_built_in:.0f} / 100</b>"
+                    f" &nbsp;·&nbsp; "
+                    f"<span style='color:#9CA6B5;'>Source:</span> <b>{work_src}</b>"
+                    f"</div>",
+                    unsafe_allow_html=True,
                 )
             else:
-                st.info("No work country detected. Assuming US CoL (100).")
+                st.markdown(
+                    "<div style='background:#1E2D40;border-left:4px solid #6B7585;"
+                    "border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#9CA6B5;'>"
+                    "No work country detected — assuming US CoL (100)."
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
 
             use_custom_work = st.toggle(
                 "Override work country CoL index",
@@ -489,10 +501,16 @@ def render_col_adjuster(
             cmp_code = parse_col_option(selected_cmp)
             cmp_built_in, cmp_src = get_col_index(cmp_code, custom_overrides=saved_overrides)
 
-            st.info(
-                f"**Comparison country:** {get_country_name(cmp_code)}\n\n"
-                f"**CoL index:** {cmp_built_in:.0f} / 100\n\n"
-                f"_Source: {cmp_src}_"
+            st.markdown(
+                f"<div style='background:#1E2D40;border-left:4px solid #3B82F6;"
+                f"border-radius:6px;padding:12px 16px;margin:6px 0;font-size:13px;color:#C8D6E8;'>"
+                f"<span style='font-weight:700;color:#E6EAF0;'>Comparison country:</span> "
+                f"{get_country_name(cmp_code)}<br>"
+                f"<span style='color:#9CA6B5;'>CoL index:</span> <b>{cmp_built_in:.0f} / 100</b>"
+                f" &nbsp;·&nbsp; "
+                f"<span style='color:#9CA6B5;'>Source:</span> <b>{cmp_src}</b>"
+                f"</div>",
+                unsafe_allow_html=True,
             )
 
             use_custom_cmp = st.toggle(
