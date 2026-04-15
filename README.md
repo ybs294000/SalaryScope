@@ -55,9 +55,11 @@ SalaryScope is a machine learning-based web application developed as a Final Yea
 - [Usage](#usage)
 - [Dataset Information](#dataset-information)
 - [Technologies Used](#technologies-used)
+- [Security Features](#security-features)
 - [Authentication & Database](#authentication--database)
 - [Limitations](#limitations)
 - [Future Scope](#future-scope)
+- [Documentation](#documentation)
 - [References](#references)
 - [License](#license)
 - [Author](#author)
@@ -92,7 +94,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Firebase-based authentication and feedback system
 - Basic post-tax salary estimation with country-specific effective rates
 - Basic cost-of-living (COL) adjustment for contextual salary comparison
-- Basic financial analysis tools: CTC breakdown, take-home salary estimation, savings potential, and loan affordability analysis
+- Financial planning tools: CTC breakdown, take-home salary, savings potential, loan affordability, budget allocation, investment growth projection, emergency fund planning, lifestyle budget split
 - Model Hub: upload and serve additional trained models with dynamic schema-driven prediction UI
 
 ---
@@ -101,17 +103,31 @@ The application runs in a web browser, making it platform-independent and easily
 
 :link: SalaryScope is deployed on Streamlit Cloud with two versions:
 
-- **Full App (Includes Resume Analysis):**  
+- **Full App (Complete Feature Set):**  
   https://salaryscope-app.streamlit.app/
 
-- **Lite App (Lightweight Version):**  
+- **Lite App (Core Prediction Features):**  
   https://salaryscope-lite-app.streamlit.app/
 
+### Full App vs Lite App
 
-### Notes
-- The full version includes **spaCy-based NLP resume parsing**, which is more resource-intensive.
-- Due to Streamlit Cloud free-tier limitations (memory and performance), the applications are deployed separately for stability.
-- The repository contains the complete implementation, including the resume-based pipeline (`app_resume.py`).
+| Feature | Full App | Lite App |
+|---|---|---|
+| Manual Prediction | ✅ | ✅ |
+| Batch Prediction | ✅ | ✅ |
+| Model Analytics | ✅ | ✅ |
+| Data Insights | ✅ | ✅ |
+| User Profile | ✅ | ✅ |
+| Resume Analysis (NLP) | ✅ | ❌ |
+| Scenario Analysis | ✅ | ❌ |
+| Model Hub | ✅ | ❌ |
+| Admin Panel | ✅ | ❌ |
+| Financial Planning Tools (11 modules) | ✅ | ❌ |
+| Prediction Feedback System | ✅ | ❌ |
+
+The lite app was built to stay within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, and the full financial tools chain). Both apps share the same Firebase project, so prediction history is unified across them.
+
+The repository contains the complete implementation in `app_resume.py`. The lite app entry point is `app.py`.
 
 ---
 
@@ -313,16 +329,25 @@ The application runs in a web browser, making it platform-independent and easily
 - COL values are approximate and may vary by city, lifestyle, and time
 - Intended for comparison and insight, not exact financial planning
 
-### Financial Insights Layer
+### Financial Planning Tools
 
-- Provides extended salary interpretation beyond raw predictions
-- Includes:
-  - Take-home salary estimation
-  - CTC structure breakdown
-  - Savings potential analysis
-  - Loan affordability estimation
-- Designed as modular utilities with toggle-based UI integration
-- Works alongside prediction outputs
+A suite of 11 modular, toggle-based financial planning tools that appear below prediction results. Each tool is independently toggleable and operates on the predicted salary:
+
+| Tool | What it answers |
+|---|---|
+| **Currency Converter** | What is my salary in another currency? |
+| **Post-Tax Estimator** | What do I take home after income tax? |
+| **Cost-of-Living Adjuster** | What salary would give equivalent purchasing power elsewhere? |
+| **CTC Breakdown** | What are the components of my gross compensation package? |
+| **Take-Home Estimator** | What is my net monthly in-hand after all deductions? |
+| **Savings Potential** | How much can I realistically save each month? |
+| **Loan Affordability** | How large a loan can I service on my income? |
+| **Budget Planner** | How should I allocate my monthly net income? |
+| **Investment Growth Estimator** | What will my savings be worth in 5, 10, 20, 30 years? |
+| **Emergency Fund Planner** | How large a safety net do I need and how long to build it? |
+| **Lifestyle Budget Split** | How should I split my discretionary income? |
+
+All tools use country-specific data (tax brackets, CoL indices, expense ratios, loan rates, expected investment returns) sourced from Numbeo, OECD, World Bank, and government portals (2023/24). Results are approximate estimates intended for planning purposes, not financial advice.
 
 ### Admin Panel (Diagnostics & Monitoring)
 
@@ -492,22 +517,22 @@ HF_REPO_ID = "your-username/your-repo"  # dataset repo
 ```
 salaryscope/
 │
-├── app_resume.py                        # Main Streamlit application
-├── app-lite.py                          # Lightweight Streamlit application
+├── app_resume.py                        # Full app entry point (all features)
+├── app.py                               # Lite app entry point (core features only)
 │
 ├── app/
 │   ├── core/
 │   │   ├── auth.py                      # Firebase Authentication (login, register, session)
 │   │   ├── database.py                  # Firestore client, user and prediction functions
 │   │   ├── email_verification.py        # Email verification flow and UI handling
-│   │   ├── password_policy.py           # Password validation
-│   │   ├── rate_limiter.py              # Brute-force protection (per-action rate limiting)
+│   │   ├── password_policy.py           # NIST SP 800-63B password validation
+│   │   ├── rate_limiter.py              # Two-layer brute-force protection (session + Firestore)
 │   │   ├── account_management.py        # Account actions (change password, delete account)
-│   │   ├── insights_engine.py           # Insights engine
-│   │   └── resume_analysis.py           # Resume parsing (SpaCy, regex, feature extraction)
+│   │   ├── insights_engine.py           # Domain detection, market comparison, recommendations
+│   │   └── resume_analysis.py           # Resume parsing (spaCy, regex, feature extraction)
 │   │
 │   ├── model_hub/                       # Model Hub package
-│   │   ├── __init__.py                  # Package exports
+│   │   ├── __init__.py
 │   │   ├── _hf_client.py                # HuggingFace SDK wrapper (download, upload, listing)
 │   │   ├── registry.py                  # Registry read/write (models_registry.json)
 │   │   ├── loader.py                    # Bundle download, deserialization, session cache
@@ -518,42 +543,56 @@ salaryscope/
 │   │
 │   ├── tabs/
 │   │   ├── manual_prediction_tab.py     # Manual Prediction
-│   │   ├── resume_analysis_tab.py       # Resume Prediction
+│   │   ├── resume_analysis_tab.py       # Resume Prediction (full app only)
 │   │   ├── batch_prediction_tab.py      # Batch Prediction
-│   │   ├── scenario_analysis_tab.py     # Scenario Analysis
+│   │   ├── scenario_analysis_tab.py     # Scenario Analysis (full app only)
 │   │   ├── model_analytics_tab.py       # Model Analytics
 │   │   ├── data_insights_tab.py         # Data Insights
-│   │   ├── model_hub_tab.py             # Model Hub UI (prediction form, admin controls)
+│   │   ├── model_hub_tab.py             # Model Hub UI (full app only)
 │   │   ├── user_profile.py              # User profile and prediction history
-│   │   ├── admin_panel.py               # Admin diagnostics and monitoring
-│   │   └── about_tab.py                 # About tab
+│   │   ├── admin_panel.py               # Admin diagnostics and monitoring (full app only)
+│   │   └── about_tab.py                 # About tab (full app; lite app uses inline version)
 │   │
 │   ├── utils/
-│   │   ├── country_utils.py             # Country resolution (ISO-2, aliases, CLDR)
+│   │   ├── country_utils.py             # Centralised country/ISO-2 resolution (Babel CLDR)
 │   │   ├── currency_utils.py            # Currency conversion (live rates, fallback)
-│   │   ├── tax_utils.py                 # Basic tax estimation
-│   │   ├── col_utils.py                 # Cost-of-living adjustment
+│   │   ├── tax_utils.py                 # Post-tax salary estimation (progressive brackets)
+│   │   ├── col_utils.py                 # Cost-of-living adjustment (PPP comparison)
+│   │   ├── ctc_utils.py                 # CTC structure breakdown
+│   │   ├── takehome_utils.py            # Net take-home salary estimation
+│   │   ├── savings_utils.py             # Savings potential calculator
+│   │   ├── loan_utils.py                # Loan affordability estimator (EMI formula)
+│   │   ├── budget_utils.py              # Monthly budget allocation planner
+│   │   ├── investment_utils.py          # Investment growth projection (compound FV)
+│   │   ├── emergency_fund_utils.py      # Emergency fund target and build timeline
+│   │   ├── lifestyle_utils.py           # Lifestyle budget split (discretionary spending)
 │   │   ├── pdf_utils.py                 # PDF report generation (ReportLab)
 │   │   ├── feedback.py                  # Prediction feedback UI and Firestore save
-│   │   ├── recommendations.py           # Recommendations engine
-│   │   ├── negotiation_tips.py          # Negotiation tips engine
-│   │   ├── ctc_utils.py                 # CTC breakdown
-│   │   ├── takehome_utils.py            # Take-home salary estimation
-│   │   ├── savings_utils.py             # Savings potential calculator
-│   │   └── loan_utils.py                # Loan affordability estimator
+│   │   ├── recommendations.py           # Career recommendations engine
+│   │   └── negotiation_tips.py          # Salary negotiation tips engine
 │
-├── model/
-│   ├── rf_model_grid.pkl                # Model 1: Random Forest pipeline + metadata
-│   ├── salary_band_classifier.pkl       # Model 1: Salary level classifier + metadata
-│   ├── career_cluster_pipeline.pkl      # Model 1: KMeans clustering pipeline + metadata
+├── model/                               # Model artefacts (loaded from HuggingFace at runtime)
+│   ├── rf_model_grid.pkl                # Model 1: Random Forest
+│   ├── salary_band_classifier.pkl       # Model 1: Salary level classifier
+│   ├── career_cluster_pipeline.pkl      # Model 1: KMeans clustering
 │   ├── app1_analytics.pkl               # Model 1: Precomputed analytics
-│   ├── ds_xgb_model_grid.pkl            # Model 2: XGBoost pipeline + metadata
+│   ├── ds_xgb_model_grid.pkl            # Model 2: XGBoost
 │   └── app2_analytics.pkl               # Model 2: Precomputed analytics
 │
 ├── notebooks/                           # Jupyter notebooks for EDA and model development
 ├── powerbi/                             # Power BI dashboards
+│
 ├── docs/                                # Project documentation
-├── samples/                             # Sample input files
+│   ├── data_dictionary.md               # All data schemas, field definitions, encodings
+│   ├── design_document.md               # Architecture, module design, data flows
+│   ├── user_guide.md                    # Step-by-step user instructions
+│   ├── srs.md                           # Software Requirements Specification
+│   ├── module_reference.md              # All public functions documented
+│   ├── deployment.md                    # Deployment and operations guide
+│   ├── testing.md                       # Test plan, unit tests, manual test cases
+│   └── CONTRIBUTING.md                  # Contributor guide
+│
+├── samples/                             # Sample input files for batch prediction
 ├── assets/                              # Branding and visual assets
 ├── pdf_outputs/                         # Sample generated PDF reports
 │
@@ -561,9 +600,7 @@ salaryscope/
 │   ├── Salary_Streamlit_App.csv         # Model 1 training dataset
 │   ├── ds_salaries_Streamlit_App.csv    # Model 2 training dataset
 │   ├── association_rules.csv            # Precomputed Apriori association rules
-│   └── exchange_rates_fallback.json           
-│
-├── static/                              # Icons, favicons, and web assets
+│   └── exchange_rates_fallback.json     # Offline currency rate fallback
 │
 ├── screenshots/
 │   ├── manual_prediction.png
@@ -573,7 +610,7 @@ salaryscope/
 │   └── model_analytics.png
 │
 ├── .streamlit/
-│   └── config.toml                      # Streamlit configuration
+│   └── config.toml
 │
 ├── requirements.txt
 ├── CHANGELOG.md
@@ -639,10 +676,11 @@ SalaryScope is a cross-platform application and has been tested in multiple envi
 
 ## Configuration
 
-Create a `.streamlit/secrets.toml` file in the project root. The base configuration for Firebase is:
+Create a `.streamlit/secrets.toml` file in the project root. The full configuration is:
 
 ```toml
 FIREBASE_API_KEY = "your_firebase_api_key"
+ADMIN_EMAIL      = "admin@yourdomain.com"   # Email that receives admin privileges
 
 [FIREBASE_SERVICE_ACCOUNT]
 type = "service_account"
@@ -657,14 +695,20 @@ auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
 client_x509_cert_url = "your_cert_url"
 ```
 
-To enable the Model Hub, add the following two keys:
+To enable the Model Hub (full app only), add:
 
 ```toml
 HF_TOKEN   = "hf_xxxxxxxxxxxxxxxxxxxx"   # HuggingFace token with write scope
 HF_REPO_ID = "your-username/your-repo"  # Private HuggingFace dataset repo
 ```
 
-The Model Hub will not load if these keys are absent, but all other tabs remain unaffected.
+For local development, optionally add:
+
+```toml
+IS_LOCAL = true   # Enables local-only features (e.g. CoL index save/reset to disk)
+```
+
+The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all other tabs remain unaffected. `ADMIN_EMAIL` is required for the Admin Panel tab; without it, no user has admin access.
 
 > **Note:** Never commit `secrets.toml` to version control. Add it to `.gitignore`.
 
@@ -773,21 +817,24 @@ The Model Hub will not load if these keys are absent, but all other tabs remain 
 | Deployment | Streamlit Cloud |
 | Language | Python 3.13+ |
 | NLP | spaCy, Regex, PhraseMatcher |
+| Country Resolution | Babel (Unicode CLDR territory data) |
 | API Integration | ExchangeRate API (open.er-api.com) |
 
 ---
 
 ## Security Features
 
-* Email verification before account activation
-* Password validation with minimum length and basic strength checks
-* Rate limiting for login, registration, and password reset actions
-* Secure password reset using Firebase email-based system
-* Session management with expiry (24 hours)
-* Firebase-managed authentication (no password storage in application database)
-* Model Hub upload restricted to admin users; model files are size-checked before upload and deserialized only from admin-controlled sources
+* Email verification before account activation (Firebase email link)
+* Password policy aligned with NIST SP 800-63B (2024) and OWASP Authentication Cheat Sheet: minimum 12 characters, uppercase, lowercase, digit, special character, no consecutive identical characters, common-password blocklist
+* Two-layer rate limiting for all authentication actions (login, registration, password reset, password change, account deletion, email resend): session-state layer (per-tab) + Firestore layer (cross-session) — fails open on any error
+* Secure password reset using Firebase email-based OOB code system
+* Session management with 24-hour expiry enforced via `st.session_state`
+* Firebase-managed authentication — no passwords stored in Firestore or application code
+* Rate limit records in Firestore keyed by SHA-256 hash prefix of user email — PII is never stored in document IDs
+* Model Hub upload restricted to admin users; file size limits enforced pre- and post-download (model.pkl ≤ 200 MB); joblib deserialisation audited on every load
+* Admin role determined by server-side email comparison only (case-insensitive, from `st.secrets`)
 
-> Note: These features are implemented for basic application-level security and demonstration purposes.
+> Note: These features are implemented for application-level security and demonstration purposes. For production systems, additional hardening would be appropriate.
 
 ## Authentication & Database
 
@@ -813,6 +860,16 @@ feedback/
     username, model_used, input_data, predicted_salary,
     accuracy_rating, direction, actual_salary, star_rating, created_at,
     extended_data (optional nested object)
+
+pending_verifications/
+  {email}/
+    email, id_token, created_at
+    (temporary — deleted after email verification is confirmed)
+
+rate_limits/
+  {action}__{sha256_prefix}/
+    attempts, window_start
+    (keyed by hash of email — PII never stored in document IDs)
 ```
 
 ---
@@ -878,15 +935,32 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 ## Future Scope
 
 - Improve model performance by training on larger and more recent datasets.
-- Enhance resume parsing using more advanced NLP techniques for better accuracy.
+- Enhance resume parsing using more advanced NLP techniques (e.g. transformer-based models) for better accuracy across diverse resume formats.
 - Expand the system to support additional job roles and domains beyond current datasets.
-- Add more interactive analysis features to help users better understand prediction behavior.
 - Use collected feedback data to retrain or calibrate models over time.
-- Enhance financial estimation modules (CTC, take-home, savings, loan) with more accurate country-specific rules and real-world datasets.  
-- Integrate detailed tax systems with deductions, exemptions, and region-specific regulations for improved take-home accuracy.  
-- Incorporate investment and wealth growth simulations (e.g., compounding, inflation-adjusted savings projections).  
-- Extend loan analysis with credit score impact, multiple loan types, and real-time interest rate integration.
+- Enhance financial estimation modules (CTC, take-home, savings, loan) with more accurate country-specific rules and real-world datasets.
+- Integrate detailed tax systems with deductions, exemptions, and region-specific regulations for improved take-home accuracy.
 - Extend the Model Hub to support ONNX or other safe serialization formats as an alternative to pickle-based bundles.
+- Add city-level cost-of-living data to improve the granularity of COL adjustments beyond country averages.
+- Implement real-time salary market data integration for more current predictions.
+- Add Google OAuth as an alternative authentication method (infrastructure is partially scaffolded).
+
+---
+
+## Documentation
+
+Detailed project documentation is available in the `docs/` directory:
+
+| Document | Description |
+|---|---|
+| [`data_dictionary.md`](docs/data_dictionary.md) | All data schemas, Firestore collections, model artefacts, field definitions, and encodings |
+| [`design_document.md`](docs/design_document.md) | Software architecture, module design, data flows, design decisions |
+| [`user_guide.md`](docs/user_guide.md) | Step-by-step instructions for every feature |
+| [`srs.md`](docs/srs.md) | Software Requirements Specification (functional and non-functional requirements) |
+| [`module_reference.md`](docs/module_reference.md) | Every public function documented with parameters, returns, and side effects |
+| [`deployment.md`](docs/deployment.md) | Firebase setup, HuggingFace setup, Streamlit Cloud deployment, secrets reference |
+| [`testing.md`](docs/testing.md) | Test plan, unit test code, manual test cases, and test results log template |
+| [`CONTRIBUTING.md`](docs/CONTRIBUTING.md) | Contributor guide: architecture rules, adding new features, code style, PR checklist |
 
 ---
 
