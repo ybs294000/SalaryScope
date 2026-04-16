@@ -222,6 +222,10 @@ Renders the Model Hub tab.
 
 **Registry cache:** Session key `mh_registry_cache` with 120-second TTL. `_get_registry(force=False)` manages the cache. `_invalidate_registry_cache()` forces a fresh fetch on next access.
 
+**Prediction result persistence:** After a successful prediction, the result is stored in `st.session_state[f"mh_pred_result_{model_id}"]` as a plain dict. This allows the result card and currency toggle to remain visible when the `@st.fragment` reruns due to widget interactions (e.g. the currency toggle being clicked) without re-submitting the form.
+
+**Currency conversion:** `render_currency_converter()` from `app.utils.currency_utils` is shown below the result card if the module is importable. The import is guarded in a `try/except` so the tab works even if `currency_utils` is absent (e.g. lite app). Location hint for default currency is derived from the raw input dict by checking common field names: `country`, `location`, `employee_residence`, `company_location`, `country_code`.
+
 ---
 
 ### `user_profile.py`
@@ -1067,8 +1071,9 @@ Serialises and uploads `models_registry.json` to HuggingFace.
 Downloads and deserialises a model bundle from HuggingFace. Checks session cache first; downloads on miss. Enforces size limits pre- and post-download. Logs a security notice on every deserialisation.
 
 **Parameters:** `model_meta` — registry entry dict with `id` and `path` keys. `force_reload` — bypass session cache.  
-**Returns:** `ModelBundle` instance.  
-**Raises:** `RuntimeError` on size limit breach, missing files, or deserialisation failure.
+**Returns:** `ModelBundle` instance with aliases merged into schema if `aliases.json` is present in the bundle folder.  
+**Raises:** `RuntimeError` on size limit breach, missing files, or deserialisation failure.  
+**Cache note:** `schema.json` and `aliases.json` are always fetched with `force_download=True` to pick up any in-place updates pushed via the Schema Editor or aliases push. `model.pkl` and `columns.pkl` use the SDK disk cache (immutable once written).
 
 ---
 
@@ -1087,8 +1092,9 @@ Dataclass with `__slots__`:
 | `model_id` | str | Registry ID |
 | `model` | Any | Deserialised sklearn-compatible estimator |
 | `columns` | list[str] | Ordered feature column names |
-| `schema` | dict | Parsed schema dict |
+| `schema` | dict | Parsed schema dict (aliases already merged in if `aliases.json` was found) |
 | `model_meta` | dict | Raw registry entry |
+| `has_aliases` | bool | True if `aliases.json` was found and merged at load time |
 
 ---
 
@@ -1124,8 +1130,8 @@ Dataclass with `__slots__`:
 
 Renders Streamlit input widgets for all fields in `schema["fields"]`.
 
-**Parameters:** `schema` — validated schema dict. `key_prefix` — unique string prefix for all widget keys (use a stable, model-specific prefix).  
-**Returns:** `{field_name: value}` dict with typed values.
+**Parameters:** `schema` — validated schema dict (aliases already merged in by `loader.py`). `key_prefix` — unique string prefix for all widget keys (use a stable, model-specific prefix).  
+**Returns:** `{field_name: model_value}` dict. For aliased selectbox fields, the user sees display labels but the returned values are always the underlying model values.
 
 **Widget dispatch table:**
 
@@ -1139,15 +1145,23 @@ Renders Streamlit input widgets for all fields in `schema["fields"]`.
 
 Unknown `ui` values fall back to `_widget_text_input()` with a warning.
 
+**Alias helper functions (internal):**
+
+| Function | Description |
+|---|---|
+| `_build_alias_map(field)` | Returns `{model_value: display_label}` dict, or `{}` if no aliases defined |
+| `_display_options(field)` | Returns list of strings to show in selectbox — alias labels where defined, raw values otherwise |
+| `_resolve_to_model_value(field, display_label)` | Inverts the alias map to return the model value for a selected display label |
+
 ---
 
 ### `uploader.py`
 
-#### `upload_bundle(model_bytes, columns_bytes, schema_bytes, display_name, description="", target="prediction", uploaded_by="admin", family_id=None) → UploadResult`
+#### `upload_bundle(model_bytes, columns_bytes, schema_bytes, display_name, description="", target="prediction", uploaded_by="admin", family_id=None, aliases_bytes=None) → UploadResult`
 
-Validates and uploads a complete model bundle to HuggingFace.
+Validates and uploads a complete model bundle to HuggingFace. If `aliases_bytes` is provided, it is validated against the schema and uploaded as `aliases.json` in the same bundle folder.
 
-**Returns:** `UploadResult` with `folder_name`, `folder_path`, `registry_entry`, `warnings`.  
+**Returns:** `UploadResult` with `folder_name`, `folder_path`, `registry_entry`, `warnings`. Registry entry includes `has_aliases` boolean.  
 **Raises:** `ValueError` on validation failures. `RuntimeError` on upload failures.
 
 ---
@@ -1158,6 +1172,15 @@ Uploads only `schema.json` to an existing bundle path.
 
 **Returns:** List of warnings (empty on success).  
 **Raises:** `ValueError` on schema validation failure. `RuntimeError` on upload failure.
+
+---
+
+#### `upload_aliases_only(aliases_bytes, model_id, bundle_path, schema) → None`
+
+Uploads or replaces `aliases.json` in an existing bundle folder. Validates the aliases against the provided schema before uploading and clears the session bundle cache for `model_id` so the next Load Model picks up the new aliases.
+
+**Parameters:** `aliases_bytes` — raw bytes of the new `aliases.json`. `model_id` — registry id (used for cache clearing). `bundle_path` — bundle folder path. `schema` — parsed schema dict for validation.  
+**Raises:** `ValueError` on validation failure. `RuntimeError` on upload failure.
 
 ---
 
@@ -1195,9 +1218,18 @@ OHE-aware consistency check between schema fields and `columns.pkl`.
 
 ---
 
+#### `validate_aliases(aliases, schema) → list[str]`
+
+Validates an `aliases.json` dict against a parsed schema.
+
+**Checks:** Top-level must be a dict. Every field name must exist in the schema. Every model value in each alias sub-dict must exist in the field's `values` list. Labels must be non-empty strings. Duplicate display labels within a single field are flagged (they break the reverse lookup used by `schema_parser.py`).  
+**Returns:** List of issue strings; empty = valid.
+
+---
+
 #### `validate_bundle_files(file_names) → list[str]`
 
-Returns a sorted list of missing required file names from `{"model.pkl", "columns.pkl", "schema.json"}`.
+Returns a sorted list of missing required file names from `{"model.pkl", "columns.pkl", "schema.json"}`. (`aliases.json` is optional and not checked here.)
 
 ---
 

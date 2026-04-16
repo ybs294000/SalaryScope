@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 MAX_SCHEMA_UPLOAD_BYTES  = 512  * 1024          # 512 KB
 MAX_COLUMNS_UPLOAD_BYTES = 10   * 1024 * 1024   # 10  MB
+MAX_ALIASES_UPLOAD_BYTES = 512  * 1024          # 512 KB — alias maps are text-only
 # MAX_MODEL_FILE_BYTES imported from _hf_client (200 MB)
 
 
@@ -82,6 +83,7 @@ def upload_bundle(
     target: str = "prediction",
     uploaded_by: str = "admin",
     family_id: Optional[str] = None,
+    aliases_bytes: Optional[bytes] = None,
 ) -> UploadResult:
     """
     Validate and upload a complete model bundle to HuggingFace.
@@ -96,6 +98,8 @@ def upload_bundle(
     target        : Name of the predicted variable (e.g. 'salary_in_usd')
     uploaded_by   : Username of the admin performing the upload
     family_id     : Optional group ID for rollback/versioning grouping
+    aliases_bytes : Optional raw bytes of aliases.json. If provided, validated
+                    against the schema and uploaded to the same bundle folder.
 
     Returns
     -------
@@ -139,6 +143,22 @@ def upload_bundle(
         warnings.extend(sv_issues)
         logger.warning("[Uploader] Schema–column warnings: %s", sv_issues)
 
+    # --- Validate aliases if provided ---
+    if aliases_bytes is not None:
+        _check_size(aliases_bytes, MAX_ALIASES_UPLOAD_BYTES, "aliases.json")
+        try:
+            import json as _json
+            aliases_parsed = _json.loads(aliases_bytes.decode("utf-8"))
+        except Exception as exc:
+            raise ValueError(f"aliases.json is not valid JSON: {exc}") from exc
+        from app.model_hub.validator import validate_aliases
+        alias_issues = validate_aliases(aliases_parsed, schema)
+        if alias_issues:
+            raise ValueError(
+                "aliases.json has validation errors:\n"
+                + "\n".join(f"  - {i}" for i in alias_issues)
+            )
+
     # --- Generate unique folder ---
     folder_name = _generate_folder_name()
     folder_path = f"models/{folder_name}/"
@@ -147,6 +167,8 @@ def upload_bundle(
     _upload_one(folder_path + "schema.json",  schema_bytes,  "schema.json")
     _upload_one(folder_path + "columns.pkl",  columns_bytes, "columns.pkl")
     _upload_one(folder_path + "model.pkl",    model_bytes,   "model.pkl")
+    if aliases_bytes is not None:
+        _upload_one(folder_path + "aliases.json", aliases_bytes, "aliases.json")
 
     # --- Build registry entry ---
     now_iso = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -164,6 +186,7 @@ def upload_bundle(
         "schema_version": schema.get("version", "1.0"),
         "num_features":   len(columns),
         "num_inputs":     len(schema.get("fields", [])),
+        "has_aliases":    aliases_bytes is not None,
     }
     if family_id:
         registry_entry["family_id"] = family_id.strip()
@@ -203,6 +226,53 @@ def upload_schema_only(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def upload_aliases_only(
+    aliases_bytes: bytes,
+    model_id: str,
+    bundle_path: str,
+    schema: dict,
+) -> None:
+    """
+    Upload or replace aliases.json in an existing bundle folder.
+    Validates the aliases against the provided schema before uploading.
+    Clears the session bundle cache for model_id so next load picks up
+    the new aliases.
+
+    Parameters
+    ----------
+    aliases_bytes : Raw bytes of the new aliases.json
+    model_id      : Registry id of the target bundle (used for cache clearing)
+    bundle_path   : Bundle folder path (e.g. 'models/model_20260415_abc123/')
+    schema        : Parsed schema dict for this bundle (used for validation)
+    """
+    _check_size(aliases_bytes, MAX_ALIASES_UPLOAD_BYTES, "aliases.json")
+
+    try:
+        import json as _json
+        aliases_parsed = _json.loads(aliases_bytes.decode("utf-8"))
+    except Exception as exc:
+        raise ValueError(f"aliases.json is not valid JSON: {exc}") from exc
+
+    from app.model_hub.validator import validate_aliases
+    issues = validate_aliases(aliases_parsed, schema)
+    if issues:
+        raise ValueError(
+            "aliases.json has validation errors:\n"
+            + "\n".join(f"  - {i}" for i in issues)
+        )
+
+    if not bundle_path.endswith("/"):
+        bundle_path += "/"
+    _upload_one(bundle_path + "aliases.json", aliases_bytes, "aliases.json")
+
+    # Clear session cache so the next Load Model picks up the updated aliases
+    try:
+        from app.model_hub.loader import clear_bundle_cache
+        clear_bundle_cache(model_id)
+    except Exception:
+        pass
+
 
 def _generate_folder_name() -> str:
     """Generate model_<timestamp>_<short_id> — guaranteed unique."""

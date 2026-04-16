@@ -109,6 +109,7 @@ Before beginning tests, prepare the following:
 | Sample PDF resume | A plain-text PDF resume with clearly stated job title, experience, education, and skills |
 | Large CSV | A valid CSV with 1,000+ rows for performance testing |
 | Model Hub bundle | `model.pkl`, `columns.pkl`, `schema.json` prepared from a simple trained sklearn model |
+| Model Hub bundle with aliases | Same as above plus `aliases.json` mapping at least one selectbox field's model values to display labels |
 | Broken PDF | A PDF that contains images only (no extractable text) |
 
 ### 2.3 Running Unit Tests
@@ -1029,6 +1030,58 @@ If a `tests/` directory does not yet exist, the unit test cases in Sections 17�
 2. Verify the field count and preview.
 
 **Expected Result:** The schema is parsed, field count is shown, and a UI preview renders correctly.
+
+---
+
+### MHUB-011 — Aliases Display Labels Shown in Form
+
+**Precondition:** A model bundle with `aliases.json` has been uploaded and loaded.
+
+**Steps:**
+1. Load the model and observe the input form.
+
+**Expected Result:** Selectbox fields for which aliases are defined show human-readable labels (e.g. "Oncology" instead of "ONCO", "Junior (0-4 years)" instead of "JNR"). Fields without aliases show raw values.
+
+---
+
+### MHUB-012 — Alias Model Value Round-Trip
+
+**Precondition:** A model bundle with `aliases.json` is loaded. At least one selectbox field has aliases.
+
+**Steps:**
+1. Select an aliased display label from a dropdown (e.g. "Oncology").
+2. Click **Predict**.
+3. Expand the **Input Summary**.
+
+**Expected Result:** The Input Summary shows the model value (e.g. "ONCO"), not the display label. The prediction runs without error, confirming the alias was correctly resolved before being passed to the model.
+
+---
+
+### MHUB-013 — Currency Toggle Does Not Lose Prediction Result
+
+**Precondition:** A model bundle is loaded and a prediction has been made.
+
+**Steps:**
+1. Observe the prediction result card.
+2. Click the **Show Currency Conversion** toggle to enable it.
+3. Select a non-USD currency from the dropdown.
+
+**Expected Result:** The prediction result card remains visible while the currency toggle is on. The currency conversion shows a converted value. Disabling the toggle hides the currency section but the prediction result card is still visible. No rerun causes the result to disappear.
+
+---
+
+### MHUB-014 — Push Aliases to Existing Bundle
+
+**Precondition:** Logged in as admin. A model bundle without `aliases.json` is in the registry.
+
+**Steps:**
+1. Go to Model Hub → Schema Editor → **Upload / Validate** tab.
+2. Upload a valid `aliases.json` for the bundle.
+3. Enter the bundle path and model ID.
+4. Click **Push aliases.json to bundle**.
+5. Go back to the prediction panel, select the model, and click **Load Model**.
+
+**Expected Result:** Upload succeeds with a success message. After loading, the selectbox fields show the display labels defined in the pushed aliases file.
 
 ---
 
@@ -2179,6 +2232,62 @@ class TestParseSchemaJson(unittest.TestCase):
         self.assertIsInstance(parsed, dict)
 
 
+
+
+class TestValidateAliases(unittest.TestCase):
+
+    def _schema_with_selectbox(self):
+        return {
+            "fields": [
+                {"name": "role", "type": "category", "ui": "selectbox",
+                 "values": ["CRA", "PV", "RA"]},
+                {"name": "years", "type": "int", "ui": "slider", "min": 0, "max": 30},
+            ]
+        }
+
+    def test_valid_aliases_no_issues(self):
+        from app.model_hub.validator import validate_aliases
+        aliases = {"role": {"CRA": "Clinical Research Associate", "PV": "Pharmacovigilance"}}
+        issues = validate_aliases(aliases, self._schema_with_selectbox())
+        self.assertEqual(issues, [])
+
+    def test_unknown_field_name_flagged(self):
+        from app.model_hub.validator import validate_aliases
+        aliases = {"nonexistent_field": {"X": "Y"}}
+        issues = validate_aliases(aliases, self._schema_with_selectbox())
+        self.assertTrue(any("nonexistent_field" in i for i in issues))
+
+    def test_unknown_model_value_flagged(self):
+        from app.model_hub.validator import validate_aliases
+        aliases = {"role": {"UNKNOWN_CODE": "Some Label"}}
+        issues = validate_aliases(aliases, self._schema_with_selectbox())
+        self.assertTrue(any("UNKNOWN_CODE" in i for i in issues))
+
+    def test_duplicate_display_label_flagged(self):
+        from app.model_hub.validator import validate_aliases
+        aliases = {"role": {"CRA": "Same Label", "PV": "Same Label"}}
+        issues = validate_aliases(aliases, self._schema_with_selectbox())
+        self.assertTrue(any("duplicate" in i.lower() for i in issues))
+
+    def test_empty_label_flagged(self):
+        from app.model_hub.validator import validate_aliases
+        aliases = {"role": {"CRA": ""}}
+        issues = validate_aliases(aliases, self._schema_with_selectbox())
+        self.assertTrue(len(issues) > 0)
+
+    def test_non_dict_aliases_flagged(self):
+        from app.model_hub.validator import validate_aliases
+        issues = validate_aliases("not a dict", self._schema_with_selectbox())
+        self.assertTrue(len(issues) > 0)
+
+    def test_partial_aliases_valid(self):
+        from app.model_hub.validator import validate_aliases
+        # Only aliasing some values is allowed
+        aliases = {"role": {"CRA": "Clinical Research Associate"}}
+        issues = validate_aliases(aliases, self._schema_with_selectbox())
+        self.assertEqual(issues, [])
+
+
 if __name__ == '__main__':
     unittest.main()
 ```
@@ -2218,16 +2327,19 @@ if __name__ == '__main__':
 
 ### INT-003 — Model Hub Upload → Registry → Predict
 
-**Description:** Verifies the complete admin upload flow through to user prediction.
+**Description:** Verifies the complete admin upload flow through to user prediction, including the aliases path.
 
 **Steps:**
 1. Log in as admin.
-2. Prepare and upload a valid bundle via the Model Hub Upload section.
-3. Verify the model appears in the Registry Manager.
+2. Prepare and upload a valid bundle (model.pkl + columns.pkl + schema.json + aliases.json) via the Model Hub Upload section.
+3. Verify the model appears in the Registry Manager with correct Input Fields and Model Features counts.
 4. Verify it appears as active in the user-facing model dropdown.
 5. Load the model and make a prediction.
+6. Verify aliased selectbox fields show display labels in the form.
+7. Verify the Input Summary shows model values (not display labels).
+8. Verify the currency converter toggle appears after prediction.
 
-**Expected Result:** Upload succeeds, registry is updated, model is accessible, prediction produces a numeric result.
+**Expected Result:** Upload succeeds, registry is updated, model is accessible, aliased dropdowns show human-readable labels, prediction produces a numeric result, currency conversion works.
 
 ---
 
@@ -2485,6 +2597,10 @@ Copy this table for each test session to record results.
 | MHUB-008 | Registry activate/deactivate | | | |
 | MHUB-009 | Schema editor visual build | | | |
 | MHUB-010 | Schema upload validate | | | |
+| MHUB-011 | Aliases display labels shown | | | |
+| MHUB-012 | Alias model value round-trip | | | |
+| MHUB-013 | Currency toggle persists result | | | |
+| MHUB-014 | Push aliases to existing bundle | | | |
 | FEED-001 | Feedback form appears | | | |
 | FEED-002 | Submit minimal feedback | | | |
 | FEED-003 | Feedback with actual salary | | | |

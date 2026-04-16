@@ -243,16 +243,16 @@ The system shall fetch the model registry from HuggingFace and display only mode
 The registry shall be cached in session state with a 120-second TTL to avoid unnecessary network requests on every Streamlit rerun.
 
 #### FR-H04 — Bundle Loading
-When the user clicks Load Model, the system shall download the three-file bundle (model.pkl, columns.pkl, schema.json) from HuggingFace, validate all three files, and cache the loaded bundle in session state for the duration of the session.
+When the user clicks Load Model, the system shall download the required three-file bundle (model.pkl, columns.pkl, schema.json) from HuggingFace. If an optional `aliases.json` file is present in the bundle folder, it shall also be downloaded and its alias mappings merged into the schema before the form is rendered. The loaded bundle (with aliases merged) shall be cached in session state for the duration of the session. `schema.json` and `aliases.json` shall always be fetched fresh from HuggingFace (bypassing local disk cache) to reflect any in-place updates.
 
 #### FR-H05 — Dynamic Prediction Form
-The system shall generate a Streamlit input form dynamically from the schema.json of the loaded model. Supported widget types are: slider, selectbox, number\_input, text\_input, checkbox.
+The system shall generate a Streamlit input form dynamically from the schema.json of the loaded model. Supported widget types are: slider, selectbox, number\_input, text\_input, checkbox. For selectbox fields with defined aliases, the dropdown shall display the alias labels to the user. The form shall return underlying model values (not display labels) to the prediction pipeline regardless of whether aliases are active.
 
 #### FR-H06 — Hub Prediction
 The system shall build a feature vector from the form values aligned to columns.pkl ordering, handling direct column matches, OHE column expansion (sklearn get\_dummies convention), and zero-fill for unmatched columns. The system shall call `model.predict()` and display the scalar result.
 
 #### FR-H07 — Admin Bundle Upload
-Admin users shall be able to upload a new model bundle consisting of model.pkl, columns.pkl, and schema.json. The system shall validate all three files before uploading and shall generate a unique versioned folder name for each upload.
+Admin users shall be able to upload a new model bundle consisting of model.pkl, columns.pkl, and schema.json. An optional `aliases.json` file may also be uploaded with the bundle. The system shall validate all files before uploading and shall generate a unique versioned folder name for each upload.
 
 #### FR-H08 — Admin Registry Management
 Admin users shall be able to activate or deactivate any model in the registry, and roll back to a previous version within a model family.
@@ -262,6 +262,12 @@ Admin users shall have access to a visual schema editor for building schema.json
 
 #### FR-H10 — Schema-Only Update
 Admin users shall be able to upload a new schema.json to an existing bundle path without re-uploading model.pkl or columns.pkl.
+
+#### FR-H11 — Aliases Sidecar Support
+The system shall support an optional `aliases.json` file in a bundle folder that provides display labels for selectbox model values. Admin users shall be able to upload or replace `aliases.json` for an existing bundle without re-uploading any other file. The aliases file shall be validated against the bundle's schema before upload.
+
+#### FR-H12 — Currency Conversion in Hub
+After a Model Hub prediction result is displayed, a currency conversion widget shall be shown if the currency utility module is available. The widget shall auto-detect a default currency from the prediction inputs when a country field is present.
 
 ### 3.8 Financial Tools
 

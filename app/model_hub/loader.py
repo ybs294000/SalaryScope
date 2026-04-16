@@ -2,6 +2,28 @@
 loader.py
 =========
 Loads model bundles (model.pkl, columns.pkl, schema.json) from HuggingFace.
+Optionally loads aliases.json if present in the same bundle folder.
+
+aliases.json — optional sidecar
+--------------------------------
+Provides display labels for selectbox model values without polluting schema.json.
+Useful when a field has many values (e.g. 118 countries) where inline aliases
+would make schema.json unreadable and hard to maintain.
+
+Format:
+    {
+        "field_name": {
+            "model_value": "Display Label",
+            ...
+        }
+    }
+
+Aliases are merged into the relevant schema fields at load time.
+After merging, the rest of the system (schema_parser, predictor) needs no
+knowledge of aliases.json — they work entirely through the enriched schema dict.
+
+If aliases.json is absent from the bundle folder, loading continues normally.
+No error is raised — the file is purely optional.
 
 Security
 --------
@@ -39,6 +61,7 @@ logger = logging.getLogger(__name__)
 MAX_MODEL_FILE_BYTES = 200 * 1024 * 1024   # 200 MB — per pkl file
 MAX_SCHEMA_BYTES     = 512 * 1024           # 512 KB — schema should be tiny
 MAX_COLUMNS_BYTES    = 10  * 1024 * 1024   # 10 MB  — columns list
+MAX_ALIASES_BYTES    = 512 * 1024           # 512 KB — alias maps are text-only
 
 BUNDLE_CACHE_KEY = "mh_bundle_cache"  # session_state key
 
@@ -59,7 +82,7 @@ class ModelBundle:
     model_meta  : Raw registry entry dict for this model
     """
 
-    __slots__ = ("model_id", "model", "columns", "schema", "model_meta")
+    __slots__ = ("model_id", "model", "columns", "schema", "model_meta", "has_aliases")
 
     def __init__(
         self,
@@ -68,12 +91,14 @@ class ModelBundle:
         columns: list[str],
         schema: dict,
         model_meta: dict,
+        has_aliases: bool = False,
     ) -> None:
-        self.model_id   = model_id
-        self.model      = model
-        self.columns    = columns
-        self.schema     = schema
-        self.model_meta = model_meta
+        self.model_id    = model_id
+        self.model       = model
+        self.columns     = columns
+        self.schema      = schema        # aliases already merged in if present
+        self.model_meta  = model_meta
+        self.has_aliases = has_aliases   # True if aliases.json was found and merged
 
 
 def load_bundle(model_meta: dict, force_reload: bool = False) -> ModelBundle:
@@ -110,22 +135,41 @@ def load_bundle(model_meta: dict, force_reload: bool = False) -> ModelBundle:
     if not bundle_path.endswith("/"):
         bundle_path += "/"
 
-    # --- Download raw bytes ---
-    schema_bytes  = _download_checked(bundle_path + "schema.json",  MAX_SCHEMA_BYTES,  "schema.json")
-    columns_bytes = _download_checked(bundle_path + "columns.pkl",  MAX_COLUMNS_BYTES, "columns.pkl")
-    model_bytes   = _download_checked(bundle_path + "model.pkl",    MAX_MODEL_FILE_BYTES, "model.pkl")
+    # --- Download required files ---
+    # schema.json and aliases.json: force=True — these may be updated after the
+    # initial upload (push_schema_only / push_aliases_only) so we must never
+    # serve a stale disk-cached copy.
+    # model.pkl / columns.pkl: force=False — bundle folders are immutable once
+    # written, so the HF local cache is always valid and avoids re-downloading
+    # large files unnecessarily.
+    schema_bytes  = _download_checked(bundle_path + "schema.json",  MAX_SCHEMA_BYTES,       "schema.json", force=True)
+    columns_bytes = _download_checked(bundle_path + "columns.pkl",  MAX_COLUMNS_BYTES,      "columns.pkl", force=False)
+    model_bytes   = _download_checked(bundle_path + "model.pkl",    MAX_MODEL_FILE_BYTES,   "model.pkl",   force=False)
+
+    # --- Download optional aliases.json ---
+    # force=True for the same reason as schema.json — it may be pushed separately.
+    aliases_bytes = _download_optional(bundle_path + "aliases.json", MAX_ALIASES_BYTES, force=True)
 
     # --- Deserialize ---
     schema  = _parse_schema(schema_bytes,  model_id)
     columns = _parse_columns(columns_bytes, model_id)
     model   = _parse_model(model_bytes,    model_id)
 
+    # --- Merge aliases into schema (if present) ---
+    has_aliases = False
+    if aliases_bytes is not None:
+        aliases = _parse_aliases(aliases_bytes, model_id)
+        schema  = _merge_aliases_into_schema(schema, aliases, model_id)
+        has_aliases = True
+        logger.info("[ModelHub] aliases.json merged into schema for '%s'.", model_id)
+
     bundle = ModelBundle(
-        model_id   = model_id,
-        model      = model,
-        columns    = columns,
-        schema     = schema,
-        model_meta = model_meta,
+        model_id    = model_id,
+        model       = model,
+        columns     = columns,
+        schema      = schema,
+        model_meta  = model_meta,
+        has_aliases = has_aliases,
     )
 
     # Store in cache
@@ -154,8 +198,18 @@ def clear_bundle_cache(model_id: Optional[str] = None) -> None:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _download_checked(path_in_repo: str, max_bytes: int, label: str) -> bytes:
-    """Download file and enforce size limit before returning bytes."""
+def _download_checked(path_in_repo: str, max_bytes: int, label: str,
+                      force: bool = False) -> bytes:
+    """
+    Download file and enforce size limit before returning bytes.
+
+    Parameters
+    ----------
+    force : Passed through to download_file_bytes. Set True for small metadata
+            files (schema.json, aliases.json) that may be updated after initial
+            upload. Leave False for large binaries (model.pkl, columns.pkl)
+            that are immutable once written to a versioned bundle folder.
+    """
     from app.model_hub._hf_client import download_file_bytes, file_size_bytes
 
     # Pre-flight size check (best-effort; HF API may not always return size)
@@ -168,7 +222,7 @@ def _download_checked(path_in_repo: str, max_bytes: int, label: str) -> bytes:
         )
 
     try:
-        data = download_file_bytes(path_in_repo)
+        data = download_file_bytes(path_in_repo, force=force)
     except FileNotFoundError:
         raise RuntimeError(
             f"Bundle is incomplete: '{label}' is missing at '{path_in_repo}'. "
@@ -183,6 +237,99 @@ def _download_checked(path_in_repo: str, max_bytes: int, label: str) -> bytes:
         )
 
     return data
+
+
+def _download_optional(path_in_repo: str, max_bytes: int,
+                       force: bool = False) -> Optional[bytes]:
+    """
+    Attempt to download a file that may not exist.
+    Returns bytes if found, None if the file is absent (404).
+    Raises RuntimeError for auth errors or oversized files.
+    """
+    from app.model_hub._hf_client import download_file_bytes
+    try:
+        data = download_file_bytes(path_in_repo, force=force)
+    except FileNotFoundError:
+        return None   # file is optional — absence is fine
+    if len(data) > max_bytes:
+        raise RuntimeError(
+            f"Optional file at '{path_in_repo}' exceeds size limit "
+            f"({len(data) // 1024} KB > {max_bytes // 1024} KB)."
+        )
+    return data
+
+
+def _parse_aliases(data: bytes, model_id: str) -> dict:
+    """
+    Parse aliases.json bytes into a dict.
+
+    Expected format:
+        {
+            "field_name": {
+                "model_value": "Display Label",
+                ...
+            }
+        }
+
+    Returns the parsed dict. Raises RuntimeError if JSON is invalid.
+    """
+    try:
+        aliases = json.loads(data.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise RuntimeError(
+            f"aliases.json for '{model_id}' is not valid JSON: {exc}"
+        ) from exc
+    if not isinstance(aliases, dict):
+        raise RuntimeError(
+            f"aliases.json for '{model_id}' must be a JSON object "
+            "mapping field names to alias dicts. Got: "
+            f"{type(aliases).__name__}"
+        )
+    return aliases
+
+
+def _merge_aliases_into_schema(schema: dict, aliases: dict, model_id: str) -> dict:
+    """
+    Merge alias mappings from aliases.json into the schema fields in-place
+    (returns a new schema dict — original is not mutated).
+
+    For each field named in aliases, the field's 'aliases' key is set to the
+    alias sub-dict. Any aliases already defined inline in schema.json for that
+    field are overwritten by the sidecar — the sidecar wins, because it is
+    the dedicated place for large alias sets.
+
+    Unknown field names in aliases.json are logged as warnings and ignored.
+    """
+    import copy
+    schema = copy.deepcopy(schema)
+
+    field_index = {
+        f["name"]: i
+        for i, f in enumerate(schema.get("fields", []))
+        if isinstance(f, dict) and "name" in f
+    }
+
+    for field_name, alias_map in aliases.items():
+        if not isinstance(alias_map, dict):
+            logger.warning(
+                "[ModelHub] aliases.json for '%s': field '%s' has a non-dict alias map — skipped.",
+                model_id, field_name,
+            )
+            continue
+        if field_name not in field_index:
+            logger.warning(
+                "[ModelHub] aliases.json for '%s': field '%s' not found in schema — skipped.",
+                model_id, field_name,
+            )
+            continue
+        idx = field_index[field_name]
+        schema["fields"][idx]["aliases"] = alias_map
+        logger.debug(
+            "[ModelHub] Merged %d aliases into field '%s' for model '%s'.",
+            len(alias_map), field_name, model_id,
+        )
+
+    return schema
 
 
 def _parse_schema(data: bytes, model_id: str) -> dict:

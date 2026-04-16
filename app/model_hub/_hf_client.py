@@ -105,10 +105,19 @@ def _check_token_configured() -> None:
 # Download
 # ---------------------------------------------------------------------------
 
-def download_file_bytes(path_in_repo: str) -> bytes:
+def download_file_bytes(path_in_repo: str, force: bool = False) -> bytes:
     """
     Download a single file from the HuggingFace dataset repo.
     Returns raw bytes.
+
+    Parameters
+    ----------
+    path_in_repo : Path within the repo (e.g. 'models/model_abc/schema.json').
+    force        : If True, bypass the huggingface_hub local disk cache and
+                   always fetch from the remote. Use for small metadata files
+                   (schema.json, aliases.json) that may be updated in-place.
+                   Leave False for large binary files (model.pkl) that are
+                   immutable once written to a versioned bundle folder.
 
     Raises:
         FileNotFoundError -- file does not exist (404)
@@ -125,10 +134,11 @@ def download_file_bytes(path_in_repo: str) -> bytes:
 
     try:
         local_path = hf_hub_download(
-            repo_id   = HF_REPO_ID,
-            filename  = path_in_repo,
-            repo_type = "dataset",
-            token     = HF_TOKEN or None,
+            repo_id        = HF_REPO_ID,
+            filename       = path_in_repo,
+            repo_type      = "dataset",
+            token          = HF_TOKEN or None,
+            force_download = force,
         )
         with open(local_path, "rb") as f:
             return f.read()

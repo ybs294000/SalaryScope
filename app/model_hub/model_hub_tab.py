@@ -312,55 +312,29 @@ def _render_prediction_panel(active_models: list[dict], user: dict) -> None:
             type="primary",
         )
 
-    # On form submit: run prediction and store result in session_state so it
-    # survives reruns triggered by the currency toggle (or any other widget
-    # inside this fragment) without losing the displayed result.
-    _result_key = f"mh_pred_result_{active_bundle.model_id}"
-
     if submitted:
-        try:
-            _stored = predict(active_bundle, raw_input)
-            st.session_state[_result_key] = {
-                "value":     _stored.value,
-                "model_id":  _stored.model_id,
-                "target":    selected_meta.get("target", "Predicted Value"),
-                "warnings":  _stored.warnings,
-                "raw_input": _stored.raw_input,
-            }
-        except (RuntimeError, ValueError) as exc:
-            _msg(f"Prediction failed: {exc}", "error")
-            st.session_state.pop(_result_key, None)
-
-    # Render result on every fragment rerun as long as it is in session_state.
-    # This keeps the result card and currency toggle visible after the toggle
-    # is clicked, since clicking it reruns the fragment without re-submitting.
-    if _result_key in st.session_state:
-        _render_prediction_result(st.session_state[_result_key])
+        _run_and_display_prediction(active_bundle, raw_input, selected_meta)
 
 
-def _render_prediction_result(stored: dict) -> None:
-    """
-    Render a stored prediction result dict.
+def _run_and_display_prediction(
+    bundle,
+    raw_input: dict[str, Any],
+    model_meta: dict,
+) -> None:
+    """Run prediction and render result."""
+    try:
+        result = predict(bundle, raw_input)
+    except (RuntimeError, ValueError) as exc:
+        _msg(f"Prediction failed: {exc}", "error")
+        return
 
-    Called on every fragment rerun (form submit OR toggle click) so the
-    result card and currency toggle stay visible after any widget interaction.
-
-    Parameters
-    ----------
-    stored : dict with keys value, model_id, target, warnings, raw_input.
-             Written to session_state by the form submit handler.
-    """
-    value     = stored["value"]
-    model_id  = stored["model_id"]
-    target    = stored.get("target", "Predicted Value")
-    warnings  = stored.get("warnings", [])
-    raw_input = stored.get("raw_input", {})
+    target = model_meta.get("target", "Predicted Value")
 
     st.divider()
     st.subheader(":material/insights: Prediction Result")
 
     # Primary result card
-    formatted = _format_prediction(value, target)
+    formatted = _format_prediction(result.value, target)
     st.markdown(
         f"<div style='background:{_BG_INPUT};border:1px solid {_BORDER};"
         f"border-left:5px solid {_ACCENT};border-radius:10px;"
@@ -374,12 +348,12 @@ def _render_prediction_result(stored: dict) -> None:
     )
 
     # Warnings from prediction
-    for w in warnings:
+    for w in result.warnings:
         _msg(w, "warning")
 
     # Input summary
     with st.expander(":material/list: Input Summary", expanded=False):
-        for k, v in raw_input.items():
+        for k, v in result.raw_input.items():
             st.text(f"{k}: {v}")
 
     # Currency conversion — shown only when result is available and
@@ -387,19 +361,20 @@ def _render_prediction_result(stored: dict) -> None:
     # without affecting anything else: just delete from here to END_CURRENCY.
     # START_CURRENCY
     if _CURRENCY_AVAILABLE:
+        st.divider()
         # Try to derive a location hint from the raw inputs so the converter
         # pre-selects a sensible default currency. Checks common field names.
         _location_hint = None
         for _field_name in ("country", "location", "employee_residence",
                             "company_location", "country_code"):
-            if _field_name in raw_input:
-                _location_hint = str(raw_input[_field_name])
+            if _field_name in result.raw_input:
+                _location_hint = str(result.raw_input[_field_name])
                 break
         render_currency_converter(
-            usd_amount    = value,
-            location_hint = _location_hint,
-            widget_key    = f"mh_currency_{model_id}",
-            show_breakdown= True,
+            usd_amount   = result.value,
+            location_hint= _location_hint,
+            widget_key   = f"mh_currency_{result.model_id}",
+            show_breakdown=True,
         )
     # END_CURRENCY
 
@@ -769,11 +744,15 @@ def _render_visual_schema_editor() -> None:
             raw_aliases = st.text_area(
                 "Aliases — display labels (optional)",
                 key="mh_se_aliases",
-                placeholder="S: Small (< 50 employees)\nM: Medium (50-250 employees)\nL: Large (> 250 employees)",
+                placeholder="S: Small (< 50 employees)
+M: Medium (50-250 employees)
+L: Large (> 250 employees)",
                 height=90,
                 help=(
-                    "One entry per line in the format   model_value: Display Label. "
-                    "Leave blank to show model values as-is. "
+                    "One entry per line in the format   model_value: Display Label
+"
+                    "Leave blank to show model values as-is.
+"
                     "Example: US: United States  |  GB: United Kingdom"
                 ),
             )

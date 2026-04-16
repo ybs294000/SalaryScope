@@ -137,6 +137,31 @@ def _check_selectbox(field: dict, prefix: str, issues: list[str]) -> None:
             issues.append(f"{prefix} (selectbox): all values must be strings, got {type(v).__name__}.")
             break
 
+    # Alias validation — aliases must map known model values to display labels
+    aliases = field.get("aliases")
+    if aliases is not None:
+        if not isinstance(aliases, dict):
+            issues.append(
+                f"{prefix} (selectbox): 'aliases' must be an object mapping "
+                "model_value -> display_label."
+            )
+        else:
+            value_set = set(values or [])
+            orphan_keys = [k for k in aliases if k not in value_set]
+            if orphan_keys:
+                issues.append(
+                    f"{prefix} (selectbox): 'aliases' contains key(s) not present in "
+                    f"'values': {orphan_keys}. Every alias key must be a valid model value."
+                )
+            non_string_labels = [
+                k for k, v in aliases.items() if not isinstance(v, str)
+            ]
+            if non_string_labels:
+                issues.append(
+                    f"{prefix} (selectbox): alias labels must be strings. "
+                    f"Non-string labels found for keys: {non_string_labels}."
+                )
+
 
 def _check_number_input(field: dict, prefix: str, issues: list[str]) -> None:
     min_v = field.get("min")
@@ -193,6 +218,8 @@ def validate_schema_vs_columns(schema: dict, columns: list[str]) -> list[str]:
 
         # --- OHE match (selectbox expands to <name>_<value> columns) ---
         if ui == "selectbox":
+            # "values" always holds MODEL values (not alias labels),
+            # so OHE expansion produces the correct column names.
             values    = field.get("values", [])
             ohe_cols  = [f"{name}_{v}" for v in values]
             matched   = [c for c in ohe_cols if c in column_set]
@@ -226,6 +253,68 @@ def validate_schema_vs_columns(schema: dict, columns: list[str]) -> list[str]:
             "These will be set to 0.0 at prediction time. "
             "This is normal for engineered/interaction features not shown in the UI."
         )
+
+    return issues
+
+
+# ---------------------------------------------------------------------------
+# Alias map validation
+# ---------------------------------------------------------------------------
+
+def validate_aliases(aliases: dict, schema: dict) -> list[str]:
+    """
+    Validate an aliases dict against a parsed schema.
+
+    Rules:
+    - aliases must be a dict of {field_name: {model_value: label}}.
+    - Every field_name must exist in the schema.
+    - Every model_value in an alias sub-dict must exist in the field's 'values'.
+    - Labels must be non-empty strings.
+    - Duplicate labels within a single field are flagged (ambiguous reverse lookup).
+
+    Returns list of issue strings. Empty = valid.
+    """
+    issues: list[str] = []
+
+    if not isinstance(aliases, dict):
+        return ["aliases.json must be a JSON object (dict)."]
+
+    field_map = {
+        f["name"]: f
+        for f in schema.get("fields", [])
+        if isinstance(f, dict) and "name" in f
+    }
+
+    for field_name, alias_map in aliases.items():
+        prefix = f"aliases['{field_name}']"
+
+        if field_name not in field_map:
+            issues.append(f"{prefix}: field '{field_name}' does not exist in schema.json.")
+            continue
+
+        if not isinstance(alias_map, dict):
+            issues.append(f"{prefix}: must be a dict of {{model_value: label}}, got {type(alias_map).__name__}.")
+            continue
+
+        field      = field_map[field_name]
+        allowed    = set(field.get("values", []))
+        seen_labels: set[str] = set()
+
+        for model_val, label in alias_map.items():
+            if allowed and model_val not in allowed:
+                issues.append(
+                    f"{prefix}['{model_val}']: model value not in schema 'values' list. "
+                    f"Allowed: {sorted(allowed)[:8]}{'...' if len(allowed) > 8 else ''}."
+                )
+            if not isinstance(label, str) or not label.strip():
+                issues.append(f"{prefix}['{model_val}']: label must be a non-empty string.")
+            else:
+                if label in seen_labels:
+                    issues.append(
+                        f"{prefix}: duplicate display label '{label}' — "
+                        "two model values map to the same label, which breaks reverse lookup."
+                    )
+                seen_labels.add(label)
 
     return issues
 

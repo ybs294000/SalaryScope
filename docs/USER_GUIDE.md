@@ -406,16 +406,16 @@ The Model Hub requires you to be **logged in**. Sign in from the sidebar before 
 2. From the dropdown, select one of the available models. Only admin-approved, active models appear here.
 3. Review the model information shown (number of input fields, number of features).
 4. Click **Load Model** to download the model bundle. This only needs to be done once per session.
-5. Fill in the input form that appears. Fields are generated automatically from the model's schema.
+5. Fill in the input form that appears. Fields are generated automatically from the model's schema. Dropdown fields show human-readable labels (e.g. "Junior (0-4 years)", "Oncology") even when the underlying model uses short codes — this is handled automatically.
 6. Click **Predict**.
 
-The predicted value is displayed with the target variable name as defined by the model's creator.
+The predicted value is displayed with the target variable name as defined by the model's creator. If currency conversion is available, a currency toggle appears below the result so you can view the prediction in your local currency.
 
 ### 10.3 Admin Features
 
 If you are the admin user, additional sections appear below the prediction panel:
 
-**Upload Bundle:** Upload a new model by providing model.pkl, columns.pkl, schema.json, a display name, a description, and the target variable name. The system validates all three files before uploading.
+**Upload Bundle:** Upload a new model by providing model.pkl, columns.pkl, schema.json, a display name, a description, and the target variable name. An optional `aliases.json` file can also be uploaded to provide human-readable display labels for dropdown fields. The system validates all files before uploading.
 
 **Registry Manager:** Activate or deactivate models to control which ones appear in the user dropdown. Roll back to a previous version within a model family.
 

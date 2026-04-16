@@ -32,9 +32,10 @@ from app.model_hub.validator import (
     validate_schema,
     validate_schema_vs_columns,
     validate_bundle_files,
+    validate_aliases,
     parse_schema_json,
 )
-from app.model_hub.uploader import upload_bundle, upload_schema_only
+from app.model_hub.uploader import upload_bundle, upload_schema_only, upload_aliases_only
 
 __all__ = [
     # registry
@@ -58,8 +59,10 @@ __all__ = [
     "validate_schema",
     "validate_schema_vs_columns",
     "validate_bundle_files",
+    "validate_aliases",
     "parse_schema_json",
     # uploader
     "upload_bundle",
     "upload_schema_only",
+    "upload_aliases_only",
 ]
