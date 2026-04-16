@@ -979,7 +979,7 @@ Detailed project documentation is available in the `docs/` directory:
 - Pandas Documentation — https://pandas.pydata.org/docs/
 - NumPy Documentation — https://numpy.org/doc/
 - Plotly Documentation — https://plotly.com/python/
-- ExchangeRate API — https://open.er-api.com/
+- ExchangeRate API — https://www.exchangerate-api.com/docs/overview
 - Kaggle — Salary by Job Title and Country — https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country
 - Kaggle — Data Science Salaries 2023 — https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023
 
