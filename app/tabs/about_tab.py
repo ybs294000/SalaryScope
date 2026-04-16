@@ -126,15 +126,19 @@ def render_about_tab():
         st.markdown("### Model Hub")
         st.markdown("""
     - Available to all logged-in users; upload and management controls are admin-only
-    - Admins upload a three-file bundle: `model.pkl`, `columns.pkl`, and `schema.json`
+    - Two bundle formats supported: ONNX (model.onnx + columns.json, recommended) and Pickle (model.pkl + columns.pkl, legacy)
+    - ONNX bundles are loaded via onnxruntime with no arbitrary code execution on deserialisation
     - Each upload creates a new versioned folder in a private HuggingFace dataset repo — existing bundles are never overwritten
-    - A registry file (`models_registry.json`) tracks all uploaded models and their active status
+    - A registry file (`models_registry.json`) tracks all uploaded models, their active status, and their bundle format
     - Users see a dropdown of active models and a prediction form generated dynamically from the model's schema
     - `schema.json` defines the input fields, their types, and the Streamlit widget to use (slider, selectbox, number_input, text_input, checkbox)
+    - Optional `layout` key in schema.json enables multi-column form rendering (2 or 3 columns) using per-field `row` and `col_span` keys — fully backward compatible
+    - Optional `result_label` key in schema.json overrides the prediction result card label shown to users
+    - Optional `aliases.json` sidecar provides human-readable display labels for selectbox model values
     - The predictor maps schema fields to model columns automatically, including one-hot expansion for selectbox fields
     - Admins can activate, deactivate, or roll back models from the Registry Manager
-    - A visual Schema Editor allows admins to build or validate a schema.json without editing JSON directly
-    - Model files are size-checked before upload (200 MB limit for model.pkl)
+    - A visual Schema Editor allows admins to build or validate a schema.json, set layout options, and download the result
+    - Model files are size-checked before upload (200 MB limit)
     - Requires `HF_TOKEN` and `HF_REPO_ID` to be set in secrets
         """)
 
@@ -261,7 +265,8 @@ def render_about_tab():
     - Firebase Authentication (user login and registration)
     - Firebase Admin SDK / Firestore (user data, prediction storage, and feedback storage)
     - HuggingFace Hub SDK (model bundle storage and retrieval for Model Hub)
-    - joblib (model serialization and deserialization)
+    - joblib (model serialization and deserialization for pickle bundles)
+    - onnxruntime (ONNX model inference for Model Hub ONNX bundles)
     - Requests (cloud file retrieval)
     - bcrypt (password hashing utility)
         """)
@@ -305,7 +310,7 @@ def render_about_tab():
 - Requires login to access.
 - Select a model from the dropdown and click Load Model to download the bundle.
 - Fill in the input form — fields are generated from the model's schema — and click Predict.
-- Admins additionally see an Upload Bundle tab, a Registry Manager for activating and deactivating models, and a Schema Editor for building or validating schema.json files.
+- Admins additionally see an Upload Bundle tab (with ONNX and Pickle format options), a Registry Manager for activating and deactivating models, and a Schema Editor for building or validating schema.json files including multi-column layout and result card label settings.
 
 **Profile**
 - Visible only when logged in.
@@ -386,6 +391,6 @@ def render_about_tab():
     - Tax estimation is based on simplified models and approximate effective rates; it does not account for deductions, filing status, or local regulations.
     - Cost-of-living adjustments use country-level indices and may not accurately represent city-level variations or individual lifestyle differences.
     - Combined salary adjustments (tax, currency, cost of living) are indicative and should be interpreted as general estimates rather than precise financial outcomes.
-    - Model Hub bundles are deserialized using joblib (pickle). Only upload model files from sources you control entirely.
+    - Model Hub ONNX bundles (model.onnx) are loaded via onnxruntime and carry no arbitrary code execution risk. Pickle bundles (model.pkl) are deserialized using joblib — only upload pickle files from sources you control entirely.
     - Model Hub predictions are only as reliable as the model and training data used — the system does not validate model quality or dataset coverage.
         """)

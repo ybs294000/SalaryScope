@@ -945,6 +945,24 @@ def show_admin_panel(user_email):
     except Exception:
         mlxtend_version = "Not available"
 
+    try:
+        import onnxruntime as ort
+        onnxruntime_version = ort.__version__
+    except Exception:
+        onnxruntime_version = "Not installed"
+
+    try:
+        import huggingface_hub as hfh
+        hfhub_version = hfh.__version__
+    except Exception:
+        hfhub_version = "Not available"
+
+    try:
+        import joblib
+        joblib_version = joblib.__version__
+    except Exception:
+        joblib_version = "Not available"
+
     os_info = _get_os_info()
 
     c1, c2, c3, c4 = st.columns(4)
@@ -963,6 +981,14 @@ def show_admin_panel(user_email):
     c9.metric("XGBoost", xgb_version)
     c10.metric("SpaCy", spacy_version)
     c11.metric("Pandas", pd_version)
+
+    c12, c13, c14 = st.columns(3)
+    c12.metric("ONNX Runtime", onnxruntime_version,
+               help="Used to load ONNX bundles in the Model Hub.")
+    c13.metric("HuggingFace Hub", hfhub_version,
+               help="SDK used to upload and download Model Hub bundles.")
+    c14.metric("joblib", joblib_version,
+               help="Used to load pickle bundles in the Model Hub.")
 
     # ==============================
     # LOCAL DIAGNOSTICS
