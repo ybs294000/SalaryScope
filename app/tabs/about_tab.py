@@ -23,7 +23,7 @@ maintainability, and modular structure.
 import streamlit as st
 
 def render_about_tab():
-    st.markdown("## :material/info: About SalaryScope")
+    st.markdown("## About SalaryScope")
 
     st.markdown(
         "SalaryScope is a web application that predicts salary based on factors like "
