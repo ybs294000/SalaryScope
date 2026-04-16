@@ -17,17 +17,19 @@
     <img src="https://img.shields.io/badge/Database-Firebase-000000?style=for-the-badge&logo=firebase&logoColor=white&labelColor=2D3748" alt="Database: Firebase" />
   </a>
   <a>
-    <a>
-      <img src="https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.1.0" />
-    </a>
+    <img src="https://img.shields.io/badge/Model%20Storage-HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=white&labelColor=2D3748" alt="Model Storage: HuggingFace" />
+  </a>
+  <a>
+    <img src="https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.1.0" />
   </a>
 </p>
+
 <p align="center">
   <a>
     <img src="https://img.shields.io/badge/Deployment-Streamlit%20Cloud-1E9E82?style=flat-square&logo=streamlit&logoColor=white&labelColor=2D3748" alt="Deployment: Streamlit Cloud" />
   </a>
   <a>
-    <img src="https://img.shields.io/badge/Platform-Web%20(Browser)-2C3E50?style=flat-square&labelColor=2D3748" alt="Platform: Web" />
+    <img src="https://img.shields.io/badge/Platform-Web%20App-2C3E50?style=flat-square&labelColor=2D3748" alt="Platform: Web" />
   </a>
   <a>
     <img src="https://img.shields.io/badge/License-MIT-6C5CE7?style=flat-square&labelColor=2D3748" alt="License: MIT" />
@@ -972,6 +974,14 @@ Detailed project documentation is available in the `docs/` directory:
 - XGBoost Documentation — https://xgboost.readthedocs.io  
 - SHAP Documentation — https://shap.readthedocs.io
 - HuggingFace Hub Documentation — https://huggingface.co/docs/huggingface_hub
+- Firebase Documentation — https://firebase.google.com/docs
+- spaCy Documentation — https://spacy.io/usage
+- Pandas Documentation — https://pandas.pydata.org/docs/
+- NumPy Documentation — https://numpy.org/doc/
+- Plotly Documentation — https://plotly.com/python/
+- ExchangeRate API — https://open.er-api.com/
+- Kaggle — Salary by Job Title and Country — https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country
+- Kaggle — Data Science Salaries 2023 — https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023
 
 ---
 
