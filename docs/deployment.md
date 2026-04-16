@@ -406,11 +406,12 @@ for filename in files_to_upload:
 
 Model Hub bundles are uploaded through the application's Model Hub admin interface, not manually. Each bundle consists of:
 
-| File | Description |
-|---|---|
-| `model.pkl` | sklearn-compatible estimator saved with `joblib.dump()` |
-| `columns.pkl` | Ordered list of feature column names saved with `joblib.dump()` |
-| `schema.json` | UI field definitions (see Data Dictionary §6.3) |
+| File | Required | Description |
+|---|---|---|
+| `model.pkl` | Yes | sklearn-compatible estimator saved with `joblib.dump()` |
+| `columns.pkl` | Yes | Ordered list of feature column names saved with `joblib.dump()` |
+| `schema.json` | Yes | UI field definitions (see Data Dictionary §6.3) |
+| `aliases.json` | No | Display labels for selectbox fields (see Data Dictionary §6.3). Upload alongside the bundle or push separately via Schema Editor → Upload / Validate → Push aliases.json. |
 
 **Preparing a bundle for upload:**
 
@@ -450,6 +451,21 @@ schema = {
 
 with open("schema.json", "w") as f:
     json.dump(schema, f, indent=2)
+
+# Optional: create aliases.json for fields with cryptic model values
+# (use a sidecar file for large sets; inline "aliases" key in schema.json for small sets)
+aliases = {
+    "experience_level": {
+        "EN": "Entry Level (0-4 years)",
+        "MI": "Mid Level (5-12 years)",
+        "SE": "Senior (13-22 years)",
+        "EX": "Executive / Principal (23+ years)"
+    }
+    # Add more fields as needed. Omit fields whose values are already human-readable.
+}
+
+with open("aliases.json", "w") as f:
+    json.dump(aliases, f, indent=2)
 ```
 
 **Uploading through the admin UI:**
@@ -457,9 +473,17 @@ with open("schema.json", "w") as f:
 1. Log in with the admin account.
 2. Navigate to the **Model Hub** tab.
 3. Scroll to **Upload Bundle**.
-4. Upload `model.pkl`, `columns.pkl`, and `schema.json`.
+4. Upload `model.pkl`, `columns.pkl`, and `schema.json`. Optionally upload `aliases.json` in the same step.
 5. Fill in Display Name, Description, and Target Variable Name.
 6. Click **Upload Bundle**.
+
+**Pushing aliases.json to an existing bundle** (without re-uploading the full bundle):
+
+1. Go to **Model Hub → Schema Editor → Upload / Validate** tab.
+2. Upload the `aliases.json` file.
+3. Enter the bundle path (e.g. `models/model_20260415_abc123/`) and the model ID.
+4. Click **Push aliases.json to bundle**.
+5. Click **Load Model** in the prediction panel to reload with the new aliases applied.
 
 ---
 
@@ -549,6 +573,7 @@ After deploying, verify the following:
 
 - Navigate to the Model Hub tab while logged in.
 - Verify the model registry loads (or shows an empty state if no models are uploaded).
+- If a bundle with `aliases.json` is present, load it and verify that selectbox fields display human-readable labels (e.g. "Senior (13-22 years)" instead of "SE").
 
 ### 10.6 Admin Panel
 
@@ -748,6 +773,7 @@ Several features are designed with explicit rollback markers in source code (com
 | `HF_REPO_ID` wrong format | Must be `"owner/repo-name"`; check for typos |
 | Repo is public, not private | The repo must be accessible with the provided token |
 | Artefact file missing from repo | Verify the file exists in the HuggingFace repo using the web interface |
+| Aliases not showing after push | The bundle cache must be cleared. Click **Clear cache** next to the model in the Registry Manager, then click **Load Model** again. `schema.json` and `aliases.json` are always fetched fresh (`force_download=True`) but the session-state bundle cache is only cleared on explicit reload. |
 
 ### 13.5 Currency Converter Shows No Data
 

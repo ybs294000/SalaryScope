@@ -312,11 +312,12 @@ Each Model Hub bundle is a 3-file package stored in a versioned folder in the Hu
 
 ### 6.1 Bundle Files
 
-| File | Format | Size Limit | Description |
-|---|---|---|---|
-| `model.pkl` | joblib/pickle | 200 MB | sklearn-compatible estimator with a `predict()` method |
-| `columns.pkl` | joblib/pickle | 10 MB | Ordered list of feature column names (strings) |
-| `schema.json` | JSON | 512 KB | UI schema defining input fields |
+| File | Format | Size Limit | Required | Description |
+|---|---|---|---|---|
+| `model.pkl` | joblib/pickle | 200 MB | Yes | sklearn-compatible estimator with a `predict()` method |
+| `columns.pkl` | joblib/pickle | 10 MB | Yes | Ordered list of feature column names (strings) |
+| `schema.json` | JSON | 512 KB | Yes | UI schema defining input fields |
+| `aliases.json` | JSON | 512 KB | No | Display labels for selectbox model values. Merged into the schema at bundle load time. Absent = model values shown as-is in the form. |
 
 ### 6.2 Registry Entry (`models_registry.json`)
 
@@ -335,6 +336,7 @@ Each Model Hub bundle is a 3-file package stored in a versioned folder in the Hu
 | `schema_version` | String | Yes | Schema version, e.g. `"1.0"` |
 | `num_features` | Integer | Yes | Number of columns in `columns.pkl` |
 | `num_inputs` | Integer | Yes | Number of fields in `schema.json["fields"]` |
+| `has_aliases` | Boolean | Yes | True if `aliases.json` was uploaded with the bundle |
 | `family_id` | String | No | Optional group ID for rollback/versioning |
 
 ### 6.3 `schema.json` Field Definition
@@ -356,7 +358,8 @@ Each field object:
 | `max` | Number | slider, number\_input | Maximum value |
 | `default` | Any | No | Default value; must be within [min, max] for sliders |
 | `step` | Number | No | Increment step for slider/number\_input |
-| `values` | Array\<String\> | selectbox | List of allowed string values |
+| `values` | Array\<String\> | selectbox | List of allowed string values (always model values, never display labels) |
+| `aliases` | Object | No (selectbox only) | Maps model values to display labels: `{"model_value": "Display Label"}`. Can be defined inline here for small sets (≤10 entries). For large sets use a separate `aliases.json` sidecar instead to keep `schema.json` readable. Merged at load time; sidecar wins if both are present. |
 
 ---
 
@@ -404,6 +407,8 @@ All session state is per-browser-tab and expires when the tab closes or the sess
 | `mh_bundle_cache` | Dict\<str, ModelBundle\> | Loaded model bundles keyed by model ID |
 | `mh_registry_cache` | Dict | Cached registry with `_fetched_at` timestamp (TTL: 120s) |
 | `mh_schema_fields` | List\<Dict\> | Fields being built in the Schema Editor |
+| `mh_pred_result_{model_id}` | Dict | Persisted prediction result for a loaded model. Keyed per model ID so switching models shows a fresh form. Contains `value`, `model_id`, `target`, `warnings`, `raw_input`. Written on form submit; read on every fragment rerun to keep the result card and currency toggle visible after widget interactions. |
+| `mh_currency_{model_id}` | (managed by `currency_utils`) | Currency converter widget state for a given model's prediction result. Key follows the `render_currency_converter()` convention. |
 
 ### 7.4 Email Verification State Keys
 
