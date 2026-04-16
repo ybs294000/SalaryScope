@@ -65,7 +65,8 @@ from app.core.resume_analysis import (
     APP2_ALLOWED_ISO_CODES_A2
 )
 
-from app.core.auth import login_ui, register_ui, logout, get_logged_in_user, is_admin
+from app.core.auth import login_ui, register_ui, logout, get_logged_in_user, is_admin, forgot_password_ui
+# -- ROLLBACK: forgot_password -- remove forgot_password_ui from the import above
 from app.core.database import init_db, create_prediction_table, save_prediction, delete_expired_sessions
 
 # -------------------------
@@ -1360,7 +1361,7 @@ with st.sidebar:
 
         option = st.radio(
             "Account Options",
-            ["Login", "Register", "Continue without login"]
+            ["Login", "Register", "Forgot Password", "Continue without login"]
         )
 
         if option == "Login":
@@ -1368,6 +1369,11 @@ with st.sidebar:
 
         elif option == "Register":
             register_ui()
+
+        # -- ROLLBACK: forgot_password -- remove this elif block
+        elif option == "Forgot Password":
+            forgot_password_ui()
+        # -- ROLLBACK: forgot_password end --
 
         else:
             st.info("You can use the application without logging in.")
