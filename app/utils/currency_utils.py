@@ -50,6 +50,20 @@ _FALLBACK_FILE_PATH = os.path.join(
 )
 
 # ---------------------------------------------------------------------------
+# Styled Card
+# ---------------------------------------------------------------------------
+def _info_card(title: str, body: str, color: str = "#3B82F6") -> str:
+    return (
+        "<div style='"
+        "background:linear-gradient(135deg,#1A2535 0%,#1B2230 100%);"
+        f"border:1px solid #2D3A50;border-left:5px solid {color};"
+        "border-radius:10px;padding:14px 18px;margin:6px 0;'>"
+        f"<div style='color:#E6EAF0;font-size:13px;font-weight:600;margin-bottom:6px;'>{title}</div>"
+        f"<div style='color:#9CA6B5;font-size:12px;line-height:1.5;'>{body}</div>"
+        "</div>"
+    )
+
+# ---------------------------------------------------------------------------
 # Currency metadata: code → (display name, symbol)
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
@@ -556,7 +570,14 @@ def render_currency_converter(
 
         # Skip if USD selected (no point converting)
         if target_code == "USD":
-            st.info("Target currency is already USD — no conversion needed.")
+            st.markdown(
+                _info_card(
+                    "No Conversion Needed",
+                    "Target currency is already USD — no conversion needed.",
+                    color="#3B82F6",
+                ),
+                unsafe_allow_html=True,
+            )
             return
 
         # Conversion
@@ -614,7 +635,14 @@ def render_currency_converter(
                 ):
                     ok = save_rates_to_file()
                     if ok:
-                        st.success(f"Rates saved to `{_FALLBACK_FILE_PATH}`")
+                        st.markdown(
+                            _info_card(
+                                "Rates Saved",
+                                f"Rates saved to <code>{_FALLBACK_FILE_PATH}</code>",
+                                color="#22C55E",
+                            ),
+                            unsafe_allow_html=True,
+                        )
                     else:
                         st.error("Could not save rates file.")
 
