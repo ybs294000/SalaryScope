@@ -57,6 +57,19 @@ _TAX_FALLBACK_FILE_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "tax_rates_custom.json"
 )
 
+# --------------------------------------------------------------------------
+# Styled Card
+# --------------------------------------------------------------------------
+def _info_card(title: str, body: str, color: str = "#3B82F6") -> str:
+    return (
+        "<div style='"
+        "background:linear-gradient(135deg,#1A2535 0%,#1B2230 100%);"
+        f"border:1px solid #2D3A50;border-left:5px solid {color};"
+        "border-radius:10px;padding:14px 18px;margin:6px 0;'>"
+        f"<div style='color:#E6EAF0;font-size:13px;font-weight:600;margin-bottom:6px;'>{title}</div>"
+        f"<div style='color:#9CA6B5;font-size:12px;line-height:1.5;'>{body}</div>"
+        "</div>"
+    )
 # ---------------------------------------------------------------------------
 # Built-in tax data
 # Structure: country_key -> list of (upper_bound_usd, marginal_rate)
@@ -859,28 +872,47 @@ def render_tax_adjuster(
             if location_hint and location_hint not in ("Other", ""):
                 display_country = get_country_name(country_key) if country_key else (location_hint or "Unknown")
 
-                st.info(
-                    f"**Country detected:** {display_country}\n\n"
-                    f"**Estimated effective rate:** {built_in_pct}%\n\n"
-                    f"_{_SOURCE_NOTES.get(built_in_source, '')}_"
+                st.markdown(
+                    _info_card(
+                        "Country Detected",
+                        f"<b style='color:#E6EAF0;'>{display_country}</b><br>"
+                        f"Estimated effective rate: <b style='color:#E6EAF0;'>{built_in_pct}%</b><br>"
+                        f"<i>{_SOURCE_NOTES.get(built_in_source, '')}</i>",
+                        color="#3B82F6",
+                    ),
+                    unsafe_allow_html=True,
                 )
             else:
-                st.info(
-                    "No country detected. Using generic 25% rate.\n\n"
-                    "Use the custom rate below for accuracy."
+                st.markdown(
+                    _info_card(
+                        "No Country Detected",
+                        "Using generic 25% rate.<br>Use the custom rate below for accuracy.",
+                        color="#6B7585",
+                    ),
+                    unsafe_allow_html=True,
                 )
         if _is_local():
             with col_info2:
                 if saved_rate_for_country is not None:
-                    st.success(
-                        f"A saved custom rate for **{country_key}** was found: "
-                        f"**{saved_rate_for_country * 100:.1f}%**\n\n"
-                        "Enable 'Use custom rate' below to apply it."
+                    st.markdown(
+                        _info_card(
+                            "Saved Custom Rate Found",
+                            f"A saved custom rate for <b style='color:#E6EAF0;'>{country_key}</b> was found: "
+                            f"<b style='color:#E6EAF0;'>{saved_rate_for_country * 100:.1f}%</b><br>"
+                            "Enable 'Use custom rate' below to apply it.",
+                            color="#22C55E",
+                        ),
+                        unsafe_allow_html=True,
                     )
                 else:
                     st.markdown(
-                        "**No saved custom rate for this country.**\n\n"
-                        "You can enter one below and save it for future sessions."
+                        _info_card(
+                            "No Saved Custom Rate",
+                            "No saved custom rate for this country.<br>"
+                            "You can enter one below and save it for future sessions.",
+                            color="#6B7585",
+                        ),
+                        unsafe_allow_html=True,
                     )
 
         # --- Custom rate toggle ---
