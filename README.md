@@ -393,15 +393,27 @@ The Model Hub is a separate tab that allows admins to upload additional independ
 
 ### How it works
 
-Admins train models offline and upload a three-file bundle:
+Admins train models offline and upload a bundle in one of two formats:
+
+**ONNX format (recommended):**
+
+| File | Purpose |
+|---|---|
+| `model.onnx` | ONNX-serialised computation graph — no arbitrary code execution on load |
+| `columns.json` | JSON array of feature column names the model expects |
+| `schema.json` | Defines the user-facing input fields and their UI widget types |
+| `aliases.json` | Optional display labels for selectbox model values |
+
+**Pickle format (legacy, backward-compatible):**
 
 | File | Purpose |
 |---|---|
 | `model.pkl` | Trained sklearn-compatible estimator, serialized with joblib |
 | `columns.pkl` | Ordered list of feature column names the model expects |
 | `schema.json` | Defines the user-facing input fields and their UI widget types |
+| `aliases.json` | Optional display labels for selectbox model values |
 
-Each upload creates a versioned folder in a private HuggingFace dataset repo (`models/model_<timestamp>_<id>/`). Bundles are never overwritten. A registry file (`models_registry.json`) tracks all uploaded models and their active status.
+Each upload creates a versioned folder in a private HuggingFace dataset repo (`models/model_<timestamp>_<id>/`). Bundles are never overwritten. A registry file (`models_registry.json`) tracks all uploaded models, their active status, and their bundle format.
 
 ### What users see
 
@@ -412,11 +424,12 @@ Each upload creates a versioned folder in a private HuggingFace dataset repo (`m
 
 ### What admins can do
 
-- Upload a complete bundle (model.pkl + columns.pkl + schema.json)
+- Upload a complete bundle (ONNX: model.onnx + columns.json + schema.json, or Pickle: model.pkl + columns.pkl + schema.json)
+- Upload an optional aliases.json alongside the bundle, or push one separately after upload
 - Activate or deactivate models from the Registry Manager
 - Roll back to an earlier version within a model family
-- Edit or create schema.json using a visual field builder, then download it
-- Upload a replacement schema.json to an existing bundle without re-uploading the model
+- Edit or create schema.json using a visual field builder with multi-column layout settings and result card label, then download it
+- Upload a replacement schema.json or aliases.json to an existing bundle without re-uploading the model
 
 ### Schema system
 
@@ -424,15 +437,28 @@ Each upload creates a versioned folder in a private HuggingFace dataset repo (`m
 
 ```json
 {
+  "layout": { "columns": 2 },
+  "result_label": "Predicted Annual Salary (USD)",
   "fields": [
-    { "name": "experience_years", "type": "int",      "ui": "slider",    "min": 0, "max": 20 },
-    { "name": "job_title",        "type": "category", "ui": "selectbox", "values": ["Data Scientist", "ML Engineer"] },
-    { "name": "remote_ratio",     "type": "int",      "ui": "slider",    "min": 0, "max": 100 }
+    { "name": "experience_years", "type": "int",      "ui": "slider",    "min": 0, "max": 20,
+      "row": 1, "col_span": 2 },
+    { "name": "job_title",        "type": "category", "ui": "selectbox", "values": ["Data Scientist", "ML Engineer"],
+      "row": 2, "col_span": 1 },
+    { "name": "remote_ratio",     "type": "int",      "ui": "slider",    "min": 0, "max": 100,
+      "row": 2, "col_span": 1 }
   ]
 }
 ```
 
 Supported `ui` values: `slider`, `selectbox`, `number_input`, `text_input`, `checkbox`.
+
+**Optional top-level keys:**
+- `layout.columns` (1, 2, or 3) — arrange fields in a responsive grid. Omitting this key gives a single-column form, identical to the behaviour of all existing schemas.
+- `result_label` — text shown as the label on the prediction result card. Overrides the registry target name. Omitting falls back to the registry target name.
+
+**Optional per-field layout keys:**
+- `row` — integer; fields sharing the same row number are placed side-by-side in one columns row.
+- `col_span` — 1, 2, or 3; how many grid columns the field occupies. Sliders default to the full row width. All layout keys are fully optional — schemas without them render identically to before.
 
 ### Column mapping
 
@@ -459,8 +485,9 @@ HF_REPO_ID = "your-username/your-repo"  # dataset repo
 
 ### Security notes
 
-- `model.pkl` files are deserialized using joblib (which uses pickle internally). Only upload bundles you have trained yourself.
-- File size limits are enforced: 200 MB for model.pkl, 10 MB for columns.pkl, 512 KB for schema.json.
+- ONNX bundles (model.onnx) are loaded via onnxruntime — no arbitrary code execution on deserialisation. This is the recommended format for new uploads.
+- Pickle bundles (model.pkl) are deserialized using joblib (which uses pickle internally). Only upload pickle bundles you have trained yourself.
+- File size limits are enforced: 200 MB for model files, 10 MB for columns files, 512 KB for schema.json and aliases.json.
 - The tab is auth-gated — unauthenticated users cannot access it.
 
 ---
@@ -769,7 +796,7 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 5. Click **Predict** to run the prediction
 
 **Admin only:**
-- Go to the **Upload Bundle** tab to upload a new model (model.pkl + columns.pkl + schema.json)
+- Go to the **Upload Bundle** tab, select ONNX or Pickle format, and upload the corresponding files
 - Use the **Registry Manager** to activate, deactivate, or roll back models
 - Use the **Schema Editor** to build or validate a schema.json visually
 
@@ -820,6 +847,7 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 | Language | Python 3.13+ |
 | NLP | spaCy, Regex, PhraseMatcher |
 | Country Resolution | Babel (Unicode CLDR territory data) |
+| ONNX Runtime | onnxruntime (model inference), skl2onnx (sklearn-to-ONNX conversion) |
 | API Integration | ExchangeRate API (open.er-api.com) |
 
 ---
@@ -833,7 +861,7 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 * Session management with 24-hour expiry enforced via `st.session_state`
 * Firebase-managed authentication — no passwords stored in Firestore or application code
 * Rate limit records in Firestore keyed by SHA-256 hash prefix of user email — PII is never stored in document IDs
-* Model Hub upload restricted to admin users; file size limits enforced pre- and post-download (model.pkl ≤ 200 MB); joblib deserialisation audited on every load
+* Model Hub upload restricted to admin users; file size limits enforced pre- and post-download (model files 200 MB max); ONNX bundles loaded via onnxruntime (no arbitrary code execution); pickle bundles audited via joblib security log on every load
 * Admin role determined by server-side email comparison only (case-insensitive, from `st.secrets`)
 
 > Note: These features are implemented for application-level security and demonstration purposes. For production systems, additional hardening would be appropriate.
@@ -929,7 +957,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Take-home salary estimation uses effective tax rates and simplified deduction models; real payroll calculations may differ.
 - Savings estimates are based on generalized expense ratios and do not account for individual lifestyle or financial obligations.
 - Loan affordability calculations use standard EMI formulas and typical lender norms, but actual loan eligibility depends on credit profile and bank policies.
-- Model Hub bundles are deserialized using joblib (pickle). Only upload model files from sources you control entirely.
+- Model Hub pickle bundles (model.pkl) are deserialized using joblib. Only upload pickle files from sources you control entirely. ONNX bundles (model.onnx) do not carry this risk.
 - Model Hub predictions are only as reliable as the model and data used during training — the system does not validate model quality.
 
 ---
@@ -942,7 +970,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Use collected feedback data to retrain or calibrate models over time.
 - Enhance financial estimation modules (CTC, take-home, savings, loan) with more accurate country-specific rules and real-world datasets.
 - Integrate detailed tax systems with deductions, exemptions, and region-specific regulations for improved take-home accuracy.
-- Extend the Model Hub to support ONNX or other safe serialization formats as an alternative to pickle-based bundles.
+- Extend ONNX support in the Model Hub to additional model architectures beyond sklearn-compatible estimators (e.g. PyTorch, TensorFlow via tf2onnx).
 - Add city-level cost-of-living data to improve the granularity of COL adjustments beyond country averages.
 - Implement real-time salary market data integration for more current predictions.
 - Add Google OAuth as an alternative authentication method (infrastructure is partially scaffolded).

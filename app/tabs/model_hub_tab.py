@@ -52,16 +52,15 @@ from app.model_hub.registry import (
 )
 from app.model_hub.loader import load_bundle, clear_bundle_cache
 from app.model_hub.predictor import predict
-from app.model_hub.schema_parser import render_schema_form
+from app.model_hub.schema_parser import render_schema_form, get_result_label
 from app.model_hub.validator import (
     validate_schema,
     validate_schema_vs_columns,
     parse_schema_json,
     validate_bundle_files,
-    detect_bundle_format,
     validate_aliases,
 )
-from app.model_hub.uploader import upload_bundle, upload_bundle_onnx, upload_schema_only, upload_aliases_only
+from app.model_hub.uploader import upload_bundle, upload_schema_only, upload_aliases_only
 
 # Currency converter — import is lazy-guarded so the tab works even if
 # currency_utils is unavailable (e.g. lite app without the full utils tree).
@@ -321,12 +320,17 @@ def _render_prediction_panel(active_models: list[dict], user: dict) -> None:
     if submitted:
         try:
             _stored = predict(active_bundle, raw_input)
+            # Resolve result label: schema result_label wins over registry target
+            _result_label = get_result_label(
+                active_bundle.schema,
+                selected_meta.get("target", "Predicted Value"),
+            )
             st.session_state[_result_key] = {
-                "value":     _stored.value,
-                "model_id":  _stored.model_id,
-                "target":    selected_meta.get("target", "Predicted Value"),
-                "warnings":  _stored.warnings,
-                "raw_input": _stored.raw_input,
+                "value":        _stored.value,
+                "model_id":     _stored.model_id,
+                "target":       _result_label,
+                "warnings":     _stored.warnings,
+                "raw_input":    _stored.raw_input,
             }
         except (RuntimeError, ValueError) as exc:
             _msg(f"Prediction failed: {exc}", "error")
@@ -457,11 +461,10 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
         "info",
     )
     _msg(
-        "ONNX bundles (model.onnx + columns.json) are the recommended format — "
-        "no arbitrary code execution on load. "
-        "Pickle bundles (model.pkl + columns.pkl) are also supported for compatibility. "
-        "Never upload files from untrusted sources.",
-        "info",
+        "Security notice: model.pkl files are deserialized with joblib (pickle). "
+        "Only upload bundles you have trained yourself. "
+        "Never upload files from untrusted third parties.",
+        "warning",
     )
 
     with st.expander(":material/upload_file: Bundle Upload", expanded=True):
@@ -496,30 +499,8 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
         st.divider()
         st.markdown("**Upload Files**")
 
-        st.markdown("**Format — choose one:**")
-        fmt_choice = st.radio(
-            "Bundle format",
-            options=["ONNX (recommended)", "Pickle (legacy)"],
-            key="mh_up_fmt",
-            horizontal=True,
-            help=(
-                "ONNX: model.onnx + columns.json — no arbitrary code execution on load. "
-                "Pickle: model.pkl + columns.pkl — compatible with all sklearn/XGBoost models."
-            ),
-        )
-        is_onnx_upload = fmt_choice.startswith("ONNX")
-
-        st.divider()
-        st.markdown("**Upload Files**")
-
-        if is_onnx_upload:
-            f_model   = st.file_uploader("model.onnx",    type=["onnx"], key="mh_up_model")
-            f_columns = st.file_uploader("columns.json",  type=["json"], key="mh_up_columns",
-                                         help="JSON array of feature column names, e.g. [\"age\", \"country_US\", ...]")
-        else:
-            f_model   = st.file_uploader("model.pkl",   type=["pkl"],  key="mh_up_model")
-            f_columns = st.file_uploader("columns.pkl", type=["pkl"],  key="mh_up_columns")
-
+        f_model   = st.file_uploader("model.pkl",   type=["pkl"],  key="mh_up_model")
+        f_columns = st.file_uploader("columns.pkl", type=["pkl"],  key="mh_up_columns")
         f_schema  = st.file_uploader("schema.json", type=["json"], key="mh_up_schema")
         f_aliases = st.file_uploader(
             "aliases.json (optional)",
@@ -532,24 +513,14 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
             ),
         )
 
-        # Validate completeness using format-aware checker
         uploaded_names = []
-        if f_model:
-            uploaded_names.append("model.onnx" if is_onnx_upload else "model.pkl")
-        if f_columns:
-            uploaded_names.append("columns.json" if is_onnx_upload else "columns.pkl")
-        if f_schema:
-            uploaded_names.append("schema.json")
+        if f_model:   uploaded_names.append("model.pkl")
+        if f_columns: uploaded_names.append("columns.pkl")
+        if f_schema:  uploaded_names.append("schema.json")
 
         missing = validate_bundle_files(uploaded_names)
         if missing and uploaded_names:
             _msg(f"Bundle incomplete. Still missing: {', '.join(missing)}", "warning")
-
-        if is_onnx_upload and uploaded_names:
-            _msg(
-                ":material/lock: ONNX format — no pickle deserialisation on load.",
-                "success",
-            )
 
         if st.button(
             ":material/cloud_upload: Upload Bundle",
@@ -557,21 +528,12 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
             disabled=bool(missing) or not display_name or not target,
             type="primary",
         ):
-            aliases_bytes = f_aliases.read() if f_aliases else None
-            if is_onnx_upload:
-                _do_upload_onnx(
-                    f_model.read(), f_columns.read(), f_schema.read(),
-                    display_name, description, target, family_id,
-                    user, registry,
-                    aliases_bytes=aliases_bytes,
-                )
-            else:
-                _do_upload(
-                    f_model.read(), f_columns.read(), f_schema.read(),
-                    display_name, description, target, family_id,
-                    user, registry,
-                    aliases_bytes=aliases_bytes,
-                )
+            _do_upload(
+                f_model.read(), f_columns.read(), f_schema.read(),
+                display_name, description, target, family_id,
+                user, registry,
+                aliases_bytes=f_aliases.read() if f_aliases else None,
+            )
 
 
 def _do_upload(
@@ -615,58 +577,6 @@ def _do_upload(
         _invalidate_registry_cache()
         _msg(
             f"Bundle '{result.folder_name}' uploaded and registered successfully. "
-            f"Folder: {result.folder_path}",
-            "success",
-        )
-    except (ValueError, RuntimeError) as exc:
-        _msg(
-            f"Bundle files uploaded but registry update failed: {exc}. "
-            "Manually add the entry to models_registry.json.",
-            "error",
-        )
-        st.code(json.dumps(result.registry_entry, indent=2))
-
-
-def _do_upload_onnx(
-    onnx_bytes: bytes,
-    columns_json_bytes: bytes,
-    schema_bytes: bytes,
-    display_name: str,
-    description: str,
-    target: str,
-    family_id: str,
-    user: dict,
-    registry: dict,
-    aliases_bytes: Optional[bytes] = None,
-) -> None:
-    uploaded_by = user.get("email") or user.get("username") or "admin"
-
-    with st.spinner("Validating and uploading ONNX bundle..."):
-        try:
-            result = upload_bundle_onnx(
-                onnx_bytes         = onnx_bytes,
-                columns_json_bytes = columns_json_bytes,
-                schema_bytes       = schema_bytes,
-                display_name       = display_name,
-                description        = description,
-                target             = target,
-                uploaded_by        = uploaded_by,
-                family_id          = family_id or None,
-                aliases_bytes      = aliases_bytes if aliases_bytes else None,
-            )
-        except (ValueError, RuntimeError) as exc:
-            _msg(f"Upload failed: {exc}", "error")
-            return
-
-    for w in result.warnings:
-        _msg(w, "warning")
-
-    try:
-        new_registry = add_model_to_registry(registry, result.registry_entry)
-        push_registry(new_registry)
-        _invalidate_registry_cache()
-        _msg(
-            f"ONNX bundle '{result.folder_name}' uploaded and registered successfully. "
             f"Folder: {result.folder_path}",
             "success",
         )
@@ -738,9 +648,6 @@ def _render_registry_manager(registry: dict) -> None:
             st.caption(f"Path: {model.get('path', 'N/A')}")
             st.caption(f"Target: {model.get('target', 'N/A')}")
             st.caption(f"Uploaded by: {model.get('uploaded_by', 'N/A')}")
-            _fmt = model.get("bundle_format", "pickle")
-            _fmt_label = ":material/lock: ONNX" if _fmt == "onnx" else ":material/warning: Pickle"
-            st.caption(f"Format: {_fmt_label}")
 
             btn_col1, btn_col2, btn_col3 = st.columns(3)
 
@@ -846,6 +753,31 @@ def _render_visual_schema_editor() -> None:
         new_label   = st.text_input("Display label (optional)", key="mh_se_label")
         new_help    = st.text_input("Help text (optional)",     key="mh_se_help")
 
+        # Layout position controls (optional)
+        lc1, lc2 = st.columns(2)
+        with lc1:
+            new_row = st.number_input(
+                "Row group (optional)",
+                min_value=1, max_value=50, value=1,
+                key="mh_se_row",
+                help=(
+                    "Fields sharing the same row number appear side-by-side. "
+                    "Leave at default if you do not need multi-column layout."
+                ),
+            )
+            use_row = st.checkbox("Assign to a row group", key="mh_se_use_row", value=False)
+        with lc2:
+            new_col_span = st.selectbox(
+                "Column span (optional)",
+                options=[1, 2, 3],
+                index=0,
+                key="mh_se_col_span",
+                help=(
+                    "How many grid columns this field occupies. "
+                    "Sliders automatically span the full row width."
+                ),
+            )
+
         # Conditional constraints
         if new_ui == "slider" or new_ui == "number_input":
             nc1, nc2, nc3 = st.columns(3)
@@ -893,6 +825,9 @@ def _render_visual_schema_editor() -> None:
                     entry["label"] = new_label.strip()
                 if new_help:
                     entry["help"] = new_help.strip()
+                if use_row:
+                    entry["row"]      = int(new_row)
+                    entry["col_span"] = int(new_col_span)
 
                 if new_ui in ("slider", "number_input"):
                     entry["min"]     = float(new_min) if new_type == "float" else int(new_min)
@@ -930,6 +865,36 @@ def _render_visual_schema_editor() -> None:
                 _msg(f"Field '{new_name}' added.", "success")
                 st.rerun()
 
+    # --- Schema-level layout settings ---
+    with st.expander("Schema-level settings (layout + result label)", expanded=False):
+        st.caption(
+            "These settings apply to the whole schema, not individual fields. "
+            "All are optional — existing schemas without them continue to work."
+        )
+        sc1, sc2 = st.columns(2)
+        with sc1:
+            grid_cols_val = st.selectbox(
+                "Form grid columns",
+                options=[1, 2, 3],
+                index=st.session_state.get("mh_se_grid_cols", 1) - 1,
+                key="mh_se_grid_cols_widget",
+                help=(
+                    "1 = single column (default, matches all existing schemas). "
+                    "2 or 3 = side-by-side widgets using the row / col_span field settings."
+                ),
+            )
+            st.session_state["mh_se_grid_cols"] = grid_cols_val
+        with sc2:
+            result_label_val = st.text_input(
+                "Result card label (optional)",
+                key="mh_se_result_label",
+                placeholder="e.g. Predicted Annual Salary (USD)",
+                help=(
+                    "Overrides the target variable name shown on the prediction result card. "
+                    "Leave blank to use the target name from the registry entry."
+                ),
+            )
+
     # --- Current fields list ---
     if fields:
         st.markdown("**Current Fields**")
@@ -952,6 +917,18 @@ def _render_visual_schema_editor() -> None:
                 _msg(iss, "warning")
         else:
             _msg(f"Schema is valid — {len(fields)} field(s) defined.", "success")
+
+        # Assemble schema with optional top-level layout/result_label
+        _grid = st.session_state.get("mh_se_grid_cols", 1)
+        _rlabel = st.session_state.get("mh_se_result_label", "").strip()
+        if _grid > 1:
+            schema_draft["layout"] = {"columns": _grid}
+        elif "layout" in schema_draft:
+            del schema_draft["layout"]
+        if _rlabel:
+            schema_draft["result_label"] = _rlabel
+        elif "result_label" in schema_draft:
+            del schema_draft["result_label"]
 
         # Export
         schema_json_str = json.dumps(schema_draft, indent=2)

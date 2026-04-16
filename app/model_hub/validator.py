@@ -51,6 +51,25 @@ def validate_schema(schema: dict) -> list[str]:
     if not isinstance(schema, dict):
         return ["Schema must be a JSON object (dict)."]
 
+    # Optional top-level layout key
+    layout = schema.get("layout")
+    if layout is not None:
+        if not isinstance(layout, dict):
+            issues.append("'layout' must be an object, e.g. {\"columns\": 2}.")
+        else:
+            cols = layout.get("columns")
+            if cols is not None:
+                if not isinstance(cols, int) or cols not in (1, 2, 3):
+                    issues.append(
+                        "'layout.columns' must be the integer 1, 2, or 3."
+                    )
+
+    # Optional top-level result_label key
+    result_label = schema.get("result_label")
+    if result_label is not None:
+        if not isinstance(result_label, str) or not result_label.strip():
+            issues.append("'result_label' must be a non-empty string when present.")
+
     fields = schema.get("fields")
     if fields is None:
         return ["Schema is missing the required 'fields' key."]
@@ -95,6 +114,29 @@ def validate_schema(schema: dict) -> list[str]:
             _check_selectbox(field, prefix, issues)
         elif ui in ("number_input",):
             _check_number_input(field, prefix, issues)
+
+        # Optional layout positioning keys
+        row_val = field.get("row")
+        if row_val is not None:
+            try:
+                int(row_val)
+            except (TypeError, ValueError):
+                issues.append(
+                    f"{prefix}: 'row' must be an integer when present, got {row_val!r}."
+                )
+
+        span_val = field.get("col_span")
+        if span_val is not None:
+            try:
+                span_int = int(span_val)
+                if span_int < 1 or span_int > 3:
+                    issues.append(
+                        f"{prefix}: 'col_span' must be 1, 2, or 3 when present, got {span_val!r}."
+                    )
+            except (TypeError, ValueError):
+                issues.append(
+                    f"{prefix}: 'col_span' must be an integer when present, got {span_val!r}."
+                )
 
     return issues
 
@@ -327,55 +369,11 @@ def validate_bundle_files(file_names: list[str]) -> list[str]:
     """
     Given a list of file names (not paths) in an upload batch,
     return missing required file names.
-
-    Accepts two valid bundle formats:
-
-    ONNX format   — model.onnx  + columns.json + schema.json
-    Pickle format — model.pkl   + columns.pkl  + schema.json
-
-    A mix (e.g. model.onnx + columns.pkl) is treated as invalid.
-    Returns sorted list of missing required file names, or a format
-    error message if the model/columns pairing is inconsistent.
     """
+    required = {"model.pkl", "columns.pkl", "schema.json"}
     provided = set(file_names)
-
-    has_onnx_model   = "model.onnx"   in provided
-    has_pickle_model = "model.pkl"    in provided
-    has_json_cols    = "columns.json" in provided
-    has_pkl_cols     = "columns.pkl"  in provided
-    has_schema       = "schema.json"  in provided
-
-    missing: list[str] = []
-
-    if not has_schema:
-        missing.append("schema.json")
-
-    if has_onnx_model:
-        # ONNX format: need columns.json
-        if not has_json_cols:
-            missing.append("columns.json")
-    elif has_pickle_model:
-        # Pickle format: need columns.pkl
-        if not has_pkl_cols:
-            missing.append("columns.pkl")
-    else:
-        # No model file at all
-        missing.append("model.onnx  (or  model.pkl)")
-
+    missing  = required - provided
     return sorted(missing)
-
-
-def detect_bundle_format(file_names: list[str]) -> str:
-    """
-    Return "onnx", "pickle", or "unknown" based on uploaded file names.
-    Called by the upload panel UI to show the correct format label.
-    """
-    provided = set(file_names)
-    if "model.onnx" in provided:
-        return "onnx"
-    if "model.pkl" in provided:
-        return "pickle"
-    return "unknown"
 
 
 # ---------------------------------------------------------------------------
