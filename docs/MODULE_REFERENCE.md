@@ -1073,7 +1073,8 @@ Downloads and deserialises a model bundle from HuggingFace. Checks session cache
 **Parameters:** `model_meta` — registry entry dict with `id` and `path` keys. `force_reload` — bypass session cache.  
 **Returns:** `ModelBundle` instance with aliases merged into schema if `aliases.json` is present in the bundle folder.  
 **Raises:** `RuntimeError` on size limit breach, missing files, or deserialisation failure.  
-**Cache note:** `schema.json` and `aliases.json` are always fetched with `force_download=True` to pick up any in-place updates pushed via the Schema Editor or aliases push. `model.pkl` and `columns.pkl` use the SDK disk cache (immutable once written).
+**Format detection:** `load_bundle()` probes for `model.onnx` first. If found, loads `model.onnx` + `columns.json` via onnxruntime (no pickle). If absent, falls back to `model.pkl` + `columns.pkl` (legacy path). Both paths populate an identical `ModelBundle` object.  
+**Cache note:** `schema.json` and `aliases.json` are always fetched with `force_download=True` to pick up any in-place updates. `model.onnx`, `model.pkl`, `columns.json`, and `columns.pkl` use the SDK disk cache (immutable once written).
 
 ---
 
@@ -1095,6 +1096,7 @@ Dataclass with `__slots__`:
 | `schema` | dict | Parsed schema dict (aliases already merged in if `aliases.json` was found) |
 | `model_meta` | dict | Raw registry entry |
 | `has_aliases` | bool | True if `aliases.json` was found and merged at load time |
+| `bundle_format` | str | `"onnx"` or `"pickle"` — set at load time; used by `predictor.py` to route inference to the correct API |
 
 ---
 
@@ -1105,6 +1107,7 @@ Dataclass with `__slots__`:
 Runs a prediction using a loaded `ModelBundle`.
 
 **Parameters:** `bundle` — `ModelBundle` instance. `raw_input` — `{field_name: value}` dict from `render_schema_form()`.  
+**Dispatch:** Routes to `_predict_onnx()` (onnxruntime) or `_predict_pickle()` (sklearn DataFrame) based on `bundle.bundle_format`.  
 **Raises:** `RuntimeError` if the model fails to predict or returns a non-finite value. `ValueError` if the feature vector length mismatches the column count.
 
 ---
@@ -1143,7 +1146,18 @@ Renders Streamlit input widgets for all fields in `schema["fields"]`.
 | `"text_input"` | `_widget_text_input()` |
 | `"checkbox"` | `_widget_checkbox()` |
 
+Respects optional `layout`, `row`, and `col_span` schema keys for multi-column grid rendering. Schemas without these keys render in a single column, identical to old behaviour.
+
 Unknown `ui` values fall back to `_widget_text_input()` with a warning.
+
+---
+
+#### `get_result_label(schema, fallback) -> str`
+
+Returns the label to display on the prediction result card.
+
+**Parameters:** `schema` — parsed schema dict. `fallback` — string to use when `schema["result_label"]` is absent or empty (typically `model_meta["target"]`).  
+**Returns:** Non-empty string. Checks `schema["result_label"]` first; falls back to `fallback`.
 
 **Alias helper functions (internal):**
 
@@ -1157,9 +1171,18 @@ Unknown `ui` values fall back to `_widget_text_input()` with a warning.
 
 ### `uploader.py`
 
+#### `upload_bundle_onnx(onnx_bytes, columns_json_bytes, schema_bytes, display_name, description="", target="prediction", uploaded_by="admin", family_id=None, aliases_bytes=None) → UploadResult`
+
+Validates and uploads an ONNX bundle (model.onnx + columns.json + schema.json) to HuggingFace. Verifies the ONNX model loads cleanly via onnxruntime and that `columns.json` is a valid JSON string array. Registry entry includes `"bundle_format": "onnx"`.
+
+**Returns:** `UploadResult` with `folder_name`, `folder_path`, `registry_entry`, `warnings`.  
+**Raises:** `ValueError` on validation failures (including onnxruntime load errors). `RuntimeError` on upload failures.
+
+---
+
 #### `upload_bundle(model_bytes, columns_bytes, schema_bytes, display_name, description="", target="prediction", uploaded_by="admin", family_id=None, aliases_bytes=None) → UploadResult`
 
-Validates and uploads a complete model bundle to HuggingFace. If `aliases_bytes` is provided, it is validated against the schema and uploaded as `aliases.json` in the same bundle folder.
+Validates and uploads a pickle bundle (model.pkl + columns.pkl + schema.json) to HuggingFace. Registry entry includes `"bundle_format": "pickle"`.
 
 **Returns:** `UploadResult` with `folder_name`, `folder_path`, `registry_entry`, `warnings`. Registry entry includes `has_aliases` boolean.  
 **Raises:** `ValueError` on validation failures. `RuntimeError` on upload failures.
@@ -1205,7 +1228,7 @@ Pure Python — no Streamlit dependency. Safe to use in offline tools or CI pipe
 
 Validates the structure of a parsed schema dict. Returns a list of issue strings; empty list = valid.
 
-**Checks:** Top-level `fields` key present and is a list; each field has `name`, `type`, `ui`; no duplicate names; allowed `type` and `ui` values; per-widget constraints (slider min/max, selectbox values non-empty, number\_input min < max); default within [min, max] for sliders.
+**Checks:** Top-level `fields` key present and is a list; each field has `name`, `type`, `ui`; no duplicate names; allowed `type` and `ui` values; per-widget constraints (slider min/max, selectbox values non-empty, number\_input min < max); default within [min, max] for sliders. Optional top-level keys: `layout.columns` must be 1, 2, or 3 if present; `result_label` must be a non-empty string if present. Optional per-field keys: `row` must be an integer if present; `col_span` must be 1-3 if present.
 
 ---
 
@@ -1229,7 +1252,17 @@ Validates an `aliases.json` dict against a parsed schema.
 
 #### `validate_bundle_files(file_names) → list[str]`
 
-Returns a sorted list of missing required file names from `{"model.pkl", "columns.pkl", "schema.json"}`. (`aliases.json` is optional and not checked here.)
+Format-aware bundle completeness check. Accepts two valid combinations:
+- ONNX: `model.onnx` + `columns.json` + `schema.json`
+- Pickle: `model.pkl` + `columns.pkl` + `schema.json`
+
+Returns a sorted list of missing required file names, or a format error if the model and columns files do not match format. `aliases.json` is optional and not checked here.
+
+---
+
+#### `detect_bundle_format(file_names) → str`
+
+Returns `"onnx"`, `"pickle"`, or `"unknown"` based on which model file is present in `file_names`. Used by the upload panel UI to show the correct format label and route to the correct upload function.
 
 ---
 

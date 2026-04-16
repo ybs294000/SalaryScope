@@ -129,7 +129,7 @@ The application runs in a web browser, making it platform-independent and easily
 
 The lite app was built to stay within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, and the full financial tools chain). Both apps share the same Firebase project, so prediction history is unified across them.
 
-The repository contains the complete implementation in `app_resume.py`. The lite app entry point is `app-lite.py`.
+The repository contains the complete implementation in `app_resume.py`. The lite app entry point is `app.py`.
 
 ---
 
@@ -547,7 +547,7 @@ HF_REPO_ID = "your-username/your-repo"  # dataset repo
 salaryscope/
 │
 ├── app_resume.py                        # Full app entry point (all features)
-├── app-lite.py                               # Lite app entry point (core features only)
+├── app.py                               # Lite app entry point (core features only)
 │
 ├── app/
 │   ├── core/

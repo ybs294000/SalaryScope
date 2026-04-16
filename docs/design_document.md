@@ -313,9 +313,12 @@ User selects model from dropdown (active models only)
     │
     ▼
 load_bundle(model_meta) → check session cache → if miss: download from HuggingFace
-    │  Downloads: schema.json (force=True), columns.pkl, model.pkl,
-    │             aliases.json if present (force=True)
+    │  Format detection: probe for model.onnx first
+    │    ONNX found: download model.onnx + columns.json
+    │    ONNX absent: download model.pkl + columns.pkl (legacy)
+    │  schema.json and aliases.json always fetched with force=True
     │  If aliases.json present → merged into schema fields at load time
+    │  bundle.bundle_format recorded as "onnx" or "pickle" for predictor routing
     │
     ▼
 render_schema_form(schema) → {field_name: model_value} dict
@@ -330,7 +333,9 @@ predict(bundle, raw_input):
         - Fill missing with 0.0
     │
     ▼
-bundle.model.predict(X) → scalar float
+predictor dispatches on bundle.bundle_format:
+    "onnx"   -> onnxruntime sess.run([output], {input: X_f32}) -> scalar float
+    "pickle" -> bundle.model.predict(X_df) -> scalar float
     │
     ▼
 PredictionResult stored in st.session_state[mh_pred_result_{model_id}]
@@ -471,6 +476,8 @@ Aligned with NIST SP 800-63B (2024) and OWASP Authentication Cheat Sheet (2024):
 ### 8.4 Model Hub Security
 
 - Upload restricted to admin users (enforced in `model_hub_tab.py` before any admin section renders).
+- ONNX bundles use onnxruntime (protobuf format) — no arbitrary Python execution on deserialisation. This is the primary security improvement over pickle bundles.
+- `columns.json` in ONNX bundles is plain JSON — no deserialisation risk compared to `columns.pkl`.
 - `aliases.json` is JSON-only (no pickle) and is validated against the schema before upload or push.
 - File size limits enforced pre-download (pre-flight via HuggingFace API `get_paths_info`) and post-download.
 - joblib/pickle deserialisation is acknowledged as a security risk; mitigated by admin-only upload control and a security audit log entry on every load.
@@ -489,9 +496,12 @@ HuggingFace Dataset Repo (private)
 ├── models_registry.json          ← Registry of all models
 └── models/
     └── model_{timestamp}_{id}/
-        ├── model.pkl             ← sklearn-compatible estimator
-        ├── columns.pkl           ← ordered feature column list
-        ├── schema.json           ← UI field definitions
+        ├── model.onnx            ← ONNX computation graph (preferred)
+        ├── columns.json          ← JSON array of column names (ONNX format)
+        │    OR
+        ├── model.pkl             ← sklearn-compatible estimator (pickle format)
+        ├── columns.pkl           ← ordered feature column list (pickle format)
+        ├── schema.json           ← UI field definitions (both formats)
         └── aliases.json          ← display labels for selectbox values (optional)
 ```
 
@@ -507,13 +517,17 @@ HuggingFace Dataset Repo (private)
 
 | `ui` value | Streamlit widget | Required schema keys |
 |---|---|---|
-| `slider` | `st.slider` | `min`, `max`; optional `step`, `default` |
-| `selectbox` | `st.selectbox` | `values` list; optional `aliases` dict |
-| `number_input` | `st.number_input` | optional `min`, `max`, `step` |
-| `text_input` | `st.text_input` | optional `default` |
-| `checkbox` | `st.checkbox` | optional `default` |
+| `slider` | `st.slider` | `min`, `max`; optional `step`, `default`, `row`, `col_span` |
+| `selectbox` | `st.selectbox` | `values` list; optional `aliases` dict, `row`, `col_span` |
+| `number_input` | `st.number_input` | optional `min`, `max`, `step`, `row`, `col_span` |
+| `text_input` | `st.text_input` | optional `default`, `row`, `col_span` |
+| `checkbox` | `st.checkbox` | optional `default`, `row`, `col_span` |
 
-**Alias system:** A `selectbox` field may carry an `aliases` dict that maps model values to display labels — e.g. `{"JNR": "Junior (0-4 years)"}`. The selectbox shows display labels to the user but `render_schema_form()` always returns the underlying model value. Aliases can be defined inline in `schema.json` for small sets, or in a separate `aliases.json` sidecar for large sets (e.g. 100+ country names) where inline definition would make `schema.json` unreadable. The sidecar is merged into the schema at bundle load time by `loader.py`; no other module needs to be aware of it.
+**Column-based layout system:** The top-level `layout` key controls the form grid: `{"columns": 2}` produces a two-column form. Fields use `row` (integer group) and `col_span` (1-3) to control placement. Fields without `row` each get their own row, preserving old single-column behaviour. Sliders default to spanning the full row width. All layout keys are fully optional — schemas without them render identically to before.
+
+**Result card label:** The top-level `result_label` key overrides the target variable name on the prediction result card. `get_result_label(schema, fallback)` in `schema_parser.py` reads this and falls back to the registry target name when absent.
+
+**Alias system:** A `selectbox` field may carry an `aliases` dict mapping model values to display labels. `render_schema_form()` always returns the underlying model value. Aliases can be defined inline for small sets or in a separate `aliases.json` sidecar for large sets; sidecar merged at load time, sidecar wins if both present.
 
 ### 9.4 Feature Vector Construction
 
@@ -776,6 +790,8 @@ Streamlit Cloud runs each user session in an isolated Python process. There is n
 | Rule-based NLP over supervised model | No labeled resume dataset available; deterministic and interpretable; suitable for Streamlit Cloud memory constraints |
 | Two separate deployments (full vs lite) | The lite app is a substantially reduced build (no resume analysis, scenario analysis, Model Hub, Admin Panel, financial tools, or feedback) primarily to stay within Streamlit Cloud free-tier memory limits but also to offer a simpler entry point |
 | joblib over pickle directly | Better compression and cross-version compatibility for sklearn/XGBoost models |
+| ONNX as preferred Model Hub format | Eliminates arbitrary code execution on model load; protobuf graph safe to deserialise; onnxruntime is cross-platform and framework-agnostic |
+| Dual-format support (ONNX + pickle) | Existing pickle bundles continue working with no migration; ONNX opt-in for new uploads; format detected from bundle contents and recorded in registry |
 | Log-transform target for Model 2 | Salary distributions are right-skewed; log transform improves model fit and reduces influence of extreme values |
 
 ---

@@ -964,16 +964,18 @@ If a `tests/` directory does not yet exist, the unit test cases in Sections 17�
 
 ---
 
-### MHUB-005 — Admin Bundle Upload
+### MHUB-005 — Admin Bundle Upload (Pickle Format)
 
-**Precondition:** Logged in as admin. Valid bundle files prepared.
+**Precondition:** Logged in as admin. Valid pickle bundle files prepared.
 
 **Steps:**
-1. In the Upload Bundle section, upload `model.pkl`, `columns.pkl`, `schema.json`.
-2. Enter a display name, description, and target variable name.
-3. Click **Upload Bundle**.
+1. In the Upload Bundle section, select **Pickle (legacy)** from the format radio.
+2. Upload `model.pkl` and `columns.pkl`.
+3. Upload `schema.json`.
+4. Enter a display name, description, and target variable name.
+5. Click **Upload Bundle**.
 
-**Expected Result:** All three files pass validation. Upload succeeds. A success message shows the generated model ID. The new model appears in the Registry Manager.
+**Expected Result:** All files pass validation. Upload succeeds. A success message shows the generated model ID. The new model appears in the Registry Manager with `bundle_format: pickle`.
 
 ---
 
@@ -1082,6 +1084,58 @@ If a `tests/` directory does not yet exist, the unit test cases in Sections 17�
 5. Go back to the prediction panel, select the model, and click **Load Model**.
 
 **Expected Result:** Upload succeeds with a success message. After loading, the selectbox fields show the display labels defined in the pushed aliases file.
+
+---
+
+### MHUB-015 — Admin Bundle Upload (ONNX Format)
+
+**Precondition:** Logged in as admin. A trained sklearn model has been exported to ONNX using skl2onnx. `columns.json` and `schema.json` are prepared.
+
+**Steps:**
+1. In the Upload Bundle section, select **ONNX (recommended)** from the format radio.
+2. Upload `model.onnx` and `columns.json`.
+3. Upload `schema.json`.
+4. Enter a display name, description, and target variable name.
+5. Click **Upload Bundle**.
+
+**Expected Result:** All files pass validation (including onnxruntime load check on `model.onnx`). Upload succeeds. A success message shows the generated model ID. The model appears in the Registry Manager with the ONNX format badge. No pickle deserialisation security warning is shown during Load Model.
+
+---
+
+### MHUB-016 — Registry Manager Shows Bundle Format
+
+**Precondition:** Both an ONNX bundle and a pickle bundle exist in the registry.
+
+**Steps:**
+1. Open the Registry Manager.
+2. Expand the entry for each bundle.
+
+**Expected Result:** The ONNX bundle shows a lock icon format badge. The pickle bundle shows a warning icon format badge. Both load and predict correctly.
+
+---
+
+### MHUB-017 — Multi-Column Layout Renders Correctly
+
+**Precondition:** A bundle with `schema.json` containing `"layout": {"columns": 2}` and `row`/`col_span` per-field keys is loaded.
+
+**Steps:**
+1. Load the model.
+2. Observe the generated input form.
+
+**Expected Result:** Fields assigned to the same `row` appear side-by-side in a two-column layout. Fields spanning `col_span: 2` occupy the full row width. The form is visually balanced. Prediction works identically to a single-column schema.
+
+---
+
+### MHUB-018 — Result Card Uses Schema result_label
+
+**Precondition:** A bundle with `schema.json` containing a top-level `"result_label"` key is loaded.
+
+**Steps:**
+1. Load the model.
+2. Fill in the form and click **Predict**.
+3. Observe the prediction result card.
+
+**Expected Result:** The result card header shows the value from `schema["result_label"]` (e.g. "Predicted Annual Salary (USD)") rather than the raw registry target variable name (e.g. "salary_in_usd").
 
 ---
 
@@ -2157,6 +2211,42 @@ class TestValidateSchema(unittest.TestCase):
         issues = validate_schema("not a dict")
         self.assertTrue(len(issues) > 0)
 
+    def test_layout_columns_valid(self):
+        schema = {"layout": {"columns": 2}, "fields": [
+            {"name": "x", "type": "int", "ui": "slider", "min": 0, "max": 10, "row": 1, "col_span": 2}
+        ]}
+        issues = validate_schema(schema)
+        self.assertEqual(issues, [])
+
+    def test_layout_columns_invalid_value(self):
+        schema = {"layout": {"columns": 5}, "fields": [
+            {"name": "x", "type": "int", "ui": "slider", "min": 0, "max": 10}
+        ]}
+        issues = validate_schema(schema)
+        self.assertTrue(any("columns" in i for i in issues))
+
+    def test_result_label_valid(self):
+        schema = {"result_label": "Predicted Annual Salary (USD)", "fields": [
+            {"name": "x", "type": "int", "ui": "slider", "min": 0, "max": 10}
+        ]}
+        issues = validate_schema(schema)
+        self.assertEqual(issues, [])
+
+    def test_result_label_empty_flagged(self):
+        schema = {"result_label": "   ", "fields": [
+            {"name": "x", "type": "int", "ui": "slider", "min": 0, "max": 10}
+        ]}
+        issues = validate_schema(schema)
+        self.assertTrue(any("result_label" in i for i in issues))
+
+    def test_old_schema_no_layout_still_valid(self):
+        """Schemas without layout keys must remain valid (backward compat)."""
+        schema = {"fields": [
+            {"name": "age", "type": "int", "ui": "slider", "min": 18, "max": 70},
+            {"name": "title", "type": "category", "ui": "selectbox", "values": ["A", "B"]},
+        ]}
+        self.assertEqual(validate_schema(schema), [])
+
 
 class TestValidateSchemaVsColumns(unittest.TestCase):
 
@@ -2191,22 +2281,48 @@ class TestValidateSchemaVsColumns(unittest.TestCase):
 
 class TestValidateBundleFiles(unittest.TestCase):
 
-    def test_all_files_present(self):
+    # Pickle format
+    def test_pickle_all_files_present(self):
         missing = validate_bundle_files(["model.pkl", "columns.pkl", "schema.json"])
         self.assertEqual(missing, [])
 
-    def test_missing_model_pkl(self):
-        missing = validate_bundle_files(["columns.pkl", "schema.json"])
-        self.assertIn("model.pkl", missing)
+    def test_pickle_missing_columns(self):
+        missing = validate_bundle_files(["model.pkl", "schema.json"])
+        self.assertTrue(len(missing) > 0)
 
-    def test_missing_multiple_files(self):
-        missing = validate_bundle_files(["model.pkl"])
-        self.assertIn("columns.pkl", missing)
+    def test_pickle_missing_schema(self):
+        missing = validate_bundle_files(["model.pkl", "columns.pkl"])
         self.assertIn("schema.json", missing)
 
-    def test_extra_files_are_ignored(self):
+    def test_pickle_extra_files_ignored(self):
         missing = validate_bundle_files(["model.pkl", "columns.pkl", "schema.json", "readme.txt"])
         self.assertEqual(missing, [])
+
+    # ONNX format
+    def test_onnx_all_files_present(self):
+        missing = validate_bundle_files(["model.onnx", "columns.json", "schema.json"])
+        self.assertEqual(missing, [])
+
+    def test_onnx_missing_columns_json(self):
+        missing = validate_bundle_files(["model.onnx", "schema.json"])
+        self.assertTrue(len(missing) > 0)
+
+    def test_onnx_with_aliases_valid(self):
+        missing = validate_bundle_files(["model.onnx", "columns.json", "schema.json", "aliases.json"])
+        self.assertEqual(missing, [])
+
+    # detect_bundle_format
+    def test_detect_onnx(self):
+        from app.model_hub.validator import detect_bundle_format
+        self.assertEqual(detect_bundle_format(["model.onnx", "columns.json", "schema.json"]), "onnx")
+
+    def test_detect_pickle(self):
+        from app.model_hub.validator import detect_bundle_format
+        self.assertEqual(detect_bundle_format(["model.pkl", "columns.pkl", "schema.json"]), "pickle")
+
+    def test_detect_unknown(self):
+        from app.model_hub.validator import detect_bundle_format
+        self.assertEqual(detect_bundle_format(["schema.json"]), "unknown")
 
 
 class TestParseSchemaJson(unittest.TestCase):
@@ -2601,6 +2717,10 @@ Copy this table for each test session to record results.
 | MHUB-012 | Alias model value round-trip | | | |
 | MHUB-013 | Currency toggle persists result | | | |
 | MHUB-014 | Push aliases to existing bundle | | | |
+| MHUB-015 | ONNX bundle upload | | | |
+| MHUB-016 | Registry format badge | | | |
+| MHUB-017 | Multi-column layout renders | | | |
+| MHUB-018 | Result card uses result_label | | | |
 | FEED-001 | Feedback form appears | | | |
 | FEED-002 | Submit minimal feedback | | | |
 | FEED-003 | Feedback with actual salary | | | |

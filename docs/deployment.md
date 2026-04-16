@@ -76,7 +76,7 @@ Install from `requirements.txt`:
 pip install -r requirements.txt
 ```
 
-Key packages include: `streamlit`, `scikit-learn`, `xgboost`, `shap`, `mlxtend`, `spacy`, `pdfplumber`, `firebase-admin`, `huggingface_hub>=0.20`, `reportlab`, `plotly`, `pandas`, `numpy`, `joblib`, `babel`, `bcrypt`, `psutil`, `requests`.
+Key packages include: `streamlit`, `scikit-learn`, `xgboost`, `shap`, `mlxtend`, `spacy`, `pdfplumber`, `firebase-admin`, `huggingface_hub>=0.20`, `reportlab`, `plotly`, `pandas`, `numpy`, `joblib`, `babel`, `bcrypt`, `psutil`, `requests`, `onnxruntime>=1.18` (required for loading ONNX bundles at runtime), `skl2onnx>=1.17` (used offline when converting sklearn models to ONNX — not required for running the app).
 
 For resume analysis, also download the spaCy English model:
 
@@ -406,14 +406,45 @@ for filename in files_to_upload:
 
 Model Hub bundles are uploaded through the application's Model Hub admin interface, not manually. Each bundle consists of:
 
+**ONNX format (recommended):**
+
+| File | Required | Description |
+|---|---|---|
+| `model.onnx` | Yes | ONNX computation graph — no pickle deserialisation on load |
+| `columns.json` | Yes | JSON array of feature column names — plain text, no pickle risk |
+| `schema.json` | Yes | UI field definitions (see Data Dictionary §6.3) |
+| `aliases.json` | No | Display labels for selectbox fields. Upload alongside or push separately. |
+
+**Pickle format (legacy):**
+
 | File | Required | Description |
 |---|---|---|
 | `model.pkl` | Yes | sklearn-compatible estimator saved with `joblib.dump()` |
 | `columns.pkl` | Yes | Ordered list of feature column names saved with `joblib.dump()` |
 | `schema.json` | Yes | UI field definitions (see Data Dictionary §6.3) |
-| `aliases.json` | No | Display labels for selectbox fields (see Data Dictionary §6.3). Upload alongside the bundle or push separately via Schema Editor → Upload / Validate → Push aliases.json. |
+| `aliases.json` | No | Display labels for selectbox fields. Upload alongside or push separately. |
 
-**Preparing a bundle for upload:**
+**Preparing an ONNX bundle (recommended):**
+
+```python
+import json
+from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType
+
+# Export trained sklearn model to ONNX
+columns = list(X_train.columns)   # ordered list of feature column names
+initial_type = [("float_input", FloatTensorType([None, len(columns)]))]
+onnx_model = convert_sklearn(trained_model, initial_types=initial_type, target_opset=17)
+
+with open("model.onnx", "wb") as f:
+    f.write(onnx_model.SerializeToString())
+
+# Save columns as JSON (plain text — no pickle)
+with open("columns.json", "w") as f:
+    json.dump(columns, f)
+```
+
+**Preparing a pickle bundle (legacy):**
 
 ```python
 import joblib
@@ -473,9 +504,11 @@ with open("aliases.json", "w") as f:
 1. Log in with the admin account.
 2. Navigate to the **Model Hub** tab.
 3. Scroll to **Upload Bundle**.
-4. Upload `model.pkl`, `columns.pkl`, and `schema.json`. Optionally upload `aliases.json` in the same step.
-5. Fill in Display Name, Description, and Target Variable Name.
-6. Click **Upload Bundle**.
+4. Select **ONNX (recommended)** or **Pickle (legacy)** from the format radio.
+5. Upload the model file (`model.onnx` or `model.pkl`) and columns file (`columns.json` or `columns.pkl`).
+6. Upload `schema.json`. Optionally upload `aliases.json` in the same step.
+7. Fill in Display Name, Description, and Target Variable Name.
+8. Click **Upload Bundle**.
 
 **Pushing aliases.json to an existing bundle** (without re-uploading the full bundle):
 
@@ -774,6 +807,8 @@ Several features are designed with explicit rollback markers in source code (com
 | Repo is public, not private | The repo must be accessible with the provided token |
 | Artefact file missing from repo | Verify the file exists in the HuggingFace repo using the web interface |
 | Aliases not showing after push | The bundle cache must be cleared. Click **Clear cache** next to the model in the Registry Manager, then click **Load Model** again. `schema.json` and `aliases.json` are always fetched fresh (`force_download=True`) but the session-state bundle cache is only cleared on explicit reload. |
+| Form still single-column after adding layout to schema | The bundle cache holds the old schema. Clear the cache and click **Load Model** again. |
+| Result card still shows raw target name after adding result_label | Same cause — clear cache and reload. |
 
 ### 13.5 Currency Converter Shows No Data
 

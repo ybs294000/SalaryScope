@@ -243,16 +243,16 @@ The system shall fetch the model registry from HuggingFace and display only mode
 The registry shall be cached in session state with a 120-second TTL to avoid unnecessary network requests on every Streamlit rerun.
 
 #### FR-H04 — Bundle Loading
-When the user clicks Load Model, the system shall download the required three-file bundle (model.pkl, columns.pkl, schema.json) from HuggingFace. If an optional `aliases.json` file is present in the bundle folder, it shall also be downloaded and its alias mappings merged into the schema before the form is rendered. The loaded bundle (with aliases merged) shall be cached in session state for the duration of the session. `schema.json` and `aliases.json` shall always be fetched fresh from HuggingFace (bypassing local disk cache) to reflect any in-place updates.
+When the user clicks Load Model, the system shall detect the bundle format automatically by probing for `model.onnx` in the bundle folder. If `model.onnx` is present, the system shall download `model.onnx` and `columns.json` and load the model via onnxruntime (no pickle deserialisation). If `model.onnx` is absent, the system shall fall back to downloading `model.pkl` and `columns.pkl` and loading via joblib. In both cases, `schema.json` shall be downloaded and any optional `aliases.json` merged into the schema before the form is rendered. `schema.json` and `aliases.json` shall always be fetched bypassing the local disk cache to reflect any in-place updates. The loaded bundle shall be cached in session state for the duration of the session.
 
 #### FR-H05 — Dynamic Prediction Form
-The system shall generate a Streamlit input form dynamically from the schema.json of the loaded model. Supported widget types are: slider, selectbox, number\_input, text\_input, checkbox. For selectbox fields with defined aliases, the dropdown shall display the alias labels to the user. The form shall return underlying model values (not display labels) to the prediction pipeline regardless of whether aliases are active.
+The system shall generate a Streamlit input form dynamically from the schema.json of the loaded model. Supported widget types are: slider, selectbox, number\_input, text\_input, checkbox. For selectbox fields with defined aliases, the dropdown shall display the alias labels to the user. The form shall return underlying model values (not display labels) to the prediction pipeline regardless of whether aliases are active. If the schema defines a `layout.columns` value of 2 or 3, the system shall render the form in a responsive multi-column grid using the per-field `row` and `col_span` keys. Schemas without these keys shall render in a single column, preserving the existing behaviour.
 
 #### FR-H06 — Hub Prediction
 The system shall build a feature vector from the form values aligned to columns.pkl ordering, handling direct column matches, OHE column expansion (sklearn get\_dummies convention), and zero-fill for unmatched columns. The system shall call `model.predict()` and display the scalar result.
 
 #### FR-H07 — Admin Bundle Upload
-Admin users shall be able to upload a new model bundle consisting of model.pkl, columns.pkl, and schema.json. An optional `aliases.json` file may also be uploaded with the bundle. The system shall validate all files before uploading and shall generate a unique versioned folder name for each upload.
+Admin users shall be able to upload a new model bundle in either of two formats: ONNX (model.onnx + columns.json + schema.json) or Pickle (model.pkl + columns.pkl + schema.json). An optional `aliases.json` file may also be uploaded with either format. The system shall present a format selector in the upload UI. The system shall validate all files before uploading — for ONNX bundles this includes verifying that `model.onnx` loads cleanly via onnxruntime and that `columns.json` is a valid JSON string array. A unique versioned folder name shall be generated for each upload. The bundle format shall be recorded in the registry entry as `bundle_format`.
 
 #### FR-H08 — Admin Registry Management
 Admin users shall be able to activate or deactivate any model in the registry, and roll back to a previous version within a model family.
@@ -268,6 +268,15 @@ The system shall support an optional `aliases.json` file in a bundle folder that
 
 #### FR-H12 — Currency Conversion in Hub
 After a Model Hub prediction result is displayed, a currency conversion widget shall be shown if the currency utility module is available. The widget shall auto-detect a default currency from the prediction inputs when a country field is present.
+
+#### FR-H13 — ONNX Bundle Format Support
+The system shall support ONNX bundles (model.onnx + columns.json) as a secure alternative to pickle bundles (model.pkl + columns.pkl). Loading an ONNX bundle shall not involve pickle deserialisation. The loader shall detect the bundle format automatically from the files present in the bundle folder. Both formats shall be fully supported with no functional difference to the end user.
+
+#### FR-H14 — Column-Based Form Layout
+The schema.json format shall support optional top-level `layout.columns` (integer 1-3) and per-field `row` (integer) and `col_span` (integer 1-3) keys. When `layout.columns` is 2 or 3, the system shall render the prediction form in a multi-column grid. Fields sharing the same `row` value shall be placed side-by-side. All layout keys shall be optional; their absence shall result in single-column rendering identical to existing behaviour.
+
+#### FR-H15 — Result Card Label Override
+The schema.json format shall support an optional top-level `result_label` string key. When present, this string shall be used as the label on the prediction result card in place of the registry `target` field. When absent, the registry `target` field shall be used, preserving existing behaviour.
 
 ### 3.8 Financial Tools
 
@@ -615,6 +624,8 @@ The application communicates with external services over HTTPS. All Firebase RES
 | pandas | Latest stable | Data manipulation |
 | numpy | Latest stable | Numerical operations |
 | joblib | Latest stable | Model serialisation |
+| onnxruntime | 1.18+ | ONNX model inference for Model Hub ONNX bundles |
+| skl2onnx | 1.17+ | sklearn-to-ONNX conversion (used offline when preparing ONNX bundles) |
 | babel | Latest stable | Country name resolution (CLDR) |
 | bcrypt | Latest stable | Password hashing utility |
 | psutil | Latest stable | Memory monitoring in admin panel |
@@ -719,9 +730,9 @@ The application communicates with external services over HTTPS. All Firebase RES
 **Main Flow:**
 1. Admin navigates to the Model Hub tab.
 2. Admin scrolls to the Upload Bundle section.
-3. Admin uploads model.pkl, columns.pkl, schema.json, and fills in display name, description, target variable name.
-4. System validates all three files (size, format, schema structure, schema-column consistency).
-5. System generates a unique folder name and uploads all three files to HuggingFace.
+3. Admin selects ONNX or Pickle format and uploads the corresponding files (model.onnx + columns.json or model.pkl + columns.pkl), schema.json, and fills in display name, description, target variable name.
+4. System validates all files (size, format, schema structure, schema-column consistency; for ONNX, onnxruntime load verification).
+5. System generates a unique folder name and uploads all files to HuggingFace. The bundle format is recorded in the registry entry.
 6. System adds the new model entry to models\_registry.json and pushes it to HuggingFace.
 7. System displays a success message with the generated model ID.
 
@@ -745,7 +756,7 @@ The application communicates with external services over HTTPS. All Firebase RES
 | FR-S01–FR-S05 | Scenario analysis | `scenario_analysis_tab.py` | Up to 5 scenarios, sweep, export functional |
 | FR-A01–FR-A09 | Model analytics | `model_analytics_tab.py` | All sections render; PDF downloadable |
 | FR-D01–FR-D03 | Data insights | `data_insights_tab.py` | Three dashboards per model; filters functional |
-| FR-H01–FR-H10 | Model Hub | `model_hub_tab.py`, `app/model_hub/*` | Auth gate, load, predict, admin upload/registry verified |
+| FR-H01–FR-H15 | Model Hub | `model_hub_tab.py`, `app/model_hub/*` | Auth gate, load (ONNX + pickle), predict, admin upload (ONNX + pickle), aliases, layout, result label, registry verified |
 | FR-F01–FR-F12 | Financial tools | `app/utils/*_utils.py` | Each tool toggleable; output plausible for known inputs |
 | FR-AC01–FR-AC09 | Authentication | `auth.py`, `account_management.py` | Registration, login, verification, rate limiting verified |
 | FR-PR01–FR-PR05 | User profile | `user_profile.py` | History chart, table, export functional |

@@ -312,12 +312,25 @@ Each Model Hub bundle is a 3-file package stored in a versioned folder in the Hu
 
 ### 6.1 Bundle Files
 
+Two bundle formats are supported. The loader detects the format at load time by probing for `model.onnx` first.
+
+**ONNX format (recommended):**
+
 | File | Format | Size Limit | Required | Description |
 |---|---|---|---|---|
-| `model.pkl` | joblib/pickle | 200 MB | Yes | sklearn-compatible estimator with a `predict()` method |
-| `columns.pkl` | joblib/pickle | 10 MB | Yes | Ordered list of feature column names (strings) |
-| `schema.json` | JSON | 512 KB | Yes | UI schema defining input fields |
-| `aliases.json` | JSON | 512 KB | No | Display labels for selectbox model values. Merged into the schema at bundle load time. Absent = model values shown as-is in the form. |
+| `model.onnx` | ONNX protobuf | 200 MB | Yes | ONNX computation graph — loaded via onnxruntime, no arbitrary code execution. |
+| `columns.json` | JSON | 10 MB | Yes | JSON array of feature column name strings. No pickle risk. |
+| `schema.json` | JSON | 512 KB | Yes | UI schema defining input fields. |
+| `aliases.json` | JSON | 512 KB | No | Display labels for selectbox model values. |
+
+**Pickle format (legacy):**
+
+| File | Format | Size Limit | Required | Description |
+|---|---|---|---|---|
+| `model.pkl` | joblib/pickle | 200 MB | Yes | sklearn-compatible estimator with a `predict()` method. |
+| `columns.pkl` | joblib/pickle | 10 MB | Yes | Ordered list of feature column names (strings). |
+| `schema.json` | JSON | 512 KB | Yes | UI schema defining input fields. |
+| `aliases.json` | JSON | 512 KB | No | Display labels for selectbox model values. |
 
 ### 6.2 Registry Entry (`models_registry.json`)
 
@@ -337,6 +350,7 @@ Each Model Hub bundle is a 3-file package stored in a versioned folder in the Hu
 | `num_features` | Integer | Yes | Number of columns in `columns.pkl` |
 | `num_inputs` | Integer | Yes | Number of fields in `schema.json["fields"]` |
 | `has_aliases` | Boolean | Yes | True if `aliases.json` was uploaded with the bundle |
+| `bundle_format` | String | Yes | `"onnx"` or `"pickle"` — recorded at upload time so the loader can detect format without probing HuggingFace |
 | `family_id` | String | No | Optional group ID for rollback/versioning |
 
 ### 6.3 `schema.json` Field Definition
@@ -344,6 +358,13 @@ Each Model Hub bundle is a 3-file package stored in a versioned folder in the Hu
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `fields` | Array | Yes | List of field definition objects |
+
+Top-level schema keys (all optional):
+
+| Key | Type | Description |
+|---|---|---|
+| `layout` | Object | Grid layout: `{"columns": N}` where N is 1, 2, or 3. Omitting = single-column (backward compatible with all existing schemas). |
+| `result_label` | String | Label shown on the prediction result card. Overrides the registry target variable name. Omitting = registry target name used. |
 
 Each field object:
 
@@ -359,7 +380,9 @@ Each field object:
 | `default` | Any | No | Default value; must be within [min, max] for sliders |
 | `step` | Number | No | Increment step for slider/number\_input |
 | `values` | Array\<String\> | selectbox | List of allowed string values (always model values, never display labels) |
-| `aliases` | Object | No (selectbox only) | Maps model values to display labels: `{"model_value": "Display Label"}`. Can be defined inline here for small sets (≤10 entries). For large sets use a separate `aliases.json` sidecar instead to keep `schema.json` readable. Merged at load time; sidecar wins if both are present. |
+| `aliases` | Object | No (selectbox only) | Maps model values to display labels: `{"model_value": "Display Label"}`. Can be defined inline for small sets; use `aliases.json` sidecar for large sets. Sidecar wins if both present. |
+| `row` | Integer | No | Layout group. Fields sharing the same row integer are placed side-by-side. Fields without `row` each get their own row (backward compatible). |
+| `col_span` | Integer | No | Column span: 1, 2, or 3. How many grid columns the field occupies. Sliders default to full row width. Default 1. |
 
 ---
 
@@ -404,7 +427,7 @@ All session state is per-browser-tab and expires when the tab closes or the sess
 
 | Key | Type | Description |
 |---|---|---|
-| `mh_bundle_cache` | Dict\<str, ModelBundle\> | Loaded model bundles keyed by model ID |
+| `mh_bundle_cache` | Dict\<str, ModelBundle\> | Loaded model bundles keyed by model ID. Each ModelBundle carries `bundle_format` ("onnx" or "pickle") used by predictor.py to route inference. |
 | `mh_registry_cache` | Dict | Cached registry with `_fetched_at` timestamp (TTL: 120s) |
 | `mh_schema_fields` | List\<Dict\> | Fields being built in the Schema Editor |
 | `mh_pred_result_{model_id}` | Dict | Persisted prediction result for a loaded model. Keyed per model ID so switching models shows a fresh form. Contains `value`, `model_id`, `target`, `warnings`, `raw_input`. Written on form submit; read on every fragment rerun to keep the result card and currency toggle visible after widget interactions. |
