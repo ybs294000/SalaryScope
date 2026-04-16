@@ -3,43 +3,37 @@ predictor.py
 ============
 Runs predictions using a loaded ModelBundle.
 
-Responsibilities
-----------------
-- Build a feature DataFrame from raw user input using columns.pkl ordering.
-- Validate inputs against expected columns.
-- Call model.predict() and return structured results.
-- No Streamlit. No HuggingFace. Pure prediction logic only.
+Dual-format support
+-------------------
+ONNX bundles  (bundle.bundle_format == "onnx"):
+    The model is an onnxruntime.InferenceSession.
+    Input must be a float32 numpy array shaped [1, n_features].
+    The first output node is read as the prediction scalar.
 
-Schema–column handling strategy
---------------------------------
-The schema defines UI-visible fields.
-columns.pkl defines the EXACT feature vector expected by the model.
+Pickle bundles (bundle.bundle_format == "pickle"):
+    The model is an sklearn-compatible estimator.
+    Input is a pd.DataFrame aligned to bundle.columns.
+    model.predict() is called directly.
 
-These may differ:
-- The model may require one-hot-encoded columns (e.g. job_title_Data Scientist)
-  that are not present as raw schema field names.
-- The predictor handles this via an encoding step.
+Feature vector construction
+----------------------------
+Identical for both formats — _build_feature_vector() returns an ordered
+list of floats aligned to bundle.columns in all cases. The ONNX path
+converts this to a float32 numpy array; the pickle path wraps it in a
+one-row DataFrame.
 
-Current encoding support
-------------------------
-1. Direct mapping: schema field name == column name → value passed through.
-2. One-hot encoding: for selectbox fields, the column name is expected to be
-   in the form  <field_name>_<value>  (sklearn get_dummies convention).
-   The predictor creates the correct binary columns.
-3. Missing columns: filled with 0.0 (safe default for most models).
-
-If the model uses a custom preprocessing pipeline (Pipeline with ColumnTransformer),
-it handles encoding internally — pass raw values directly and the pipeline takes over.
+No other module needs to know about the format distinction.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # Prediction result
@@ -75,10 +69,12 @@ def predict(bundle, raw_input: dict[str, Any]) -> PredictionResult:
     """
     Run a prediction using a ModelBundle.
 
+    Dispatches to the correct inference path based on bundle.bundle_format.
+
     Parameters
     ----------
     bundle    : ModelBundle instance (from loader.py).
-    raw_input : {field_name: value} dict from schema_parser.render_schema_form().
+    raw_input : {field_name: model_value} dict from render_schema_form().
 
     Returns
     -------
@@ -91,7 +87,7 @@ def predict(bundle, raw_input: dict[str, Any]) -> PredictionResult:
     """
     warnings: list[str] = []
 
-    # Step 1: build feature vector
+    # Step 1: build feature vector (format-agnostic)
     feature_vector, build_warnings = _build_feature_vector(
         raw_input=raw_input,
         columns=bundle.columns,
@@ -107,26 +103,12 @@ def predict(bundle, raw_input: dict[str, Any]) -> PredictionResult:
             "This is a schema–columns mismatch. Re-upload a consistent bundle."
         )
 
-    # Step 3: predict
-    import pandas as pd
-    X = pd.DataFrame([feature_vector], columns=bundle.columns)
-
-    try:
-        raw_pred = bundle.model.predict(X)
-    except Exception as exc:
-        raise RuntimeError(
-            f"Model prediction failed: {exc}. "
-            "Ensure the model was trained with a compatible feature set."
-        ) from exc
-
-    # Step 4: extract scalar
-    if hasattr(raw_pred, "__iter__"):
-        raw_pred = list(raw_pred)
-        if len(raw_pred) == 0:
-            raise RuntimeError("Model returned an empty prediction array.")
-        value = float(raw_pred[0])
+    # Step 3: run inference via the correct path
+    fmt = getattr(bundle, "bundle_format", "pickle")
+    if fmt == "onnx":
+        value = _predict_onnx(bundle.model, feature_vector, bundle.model_id)
     else:
-        value = float(raw_pred)
+        value = _predict_pickle(bundle.model, feature_vector, bundle.columns, bundle.model_id)
 
     if not np.isfinite(value):
         raise RuntimeError(
@@ -147,7 +129,69 @@ def predict(bundle, raw_input: dict[str, Any]) -> PredictionResult:
 
 
 # ---------------------------------------------------------------------------
-# Feature vector builder
+# Inference paths
+# ---------------------------------------------------------------------------
+
+def _predict_onnx(sess, feature_vector: list[float], model_id: str) -> float:
+    """
+    Run inference on an onnxruntime.InferenceSession.
+
+    The session expects a float32 array of shape [1, n_features].
+    The first output node is read regardless of its name.
+    """
+    try:
+        import onnxruntime as rt
+    except ImportError:
+        raise RuntimeError(
+            "onnxruntime is not installed. "
+            "Add 'onnxruntime' to requirements.txt."
+        )
+
+    input_name  = sess.get_inputs()[0].name
+    output_name = sess.get_outputs()[0].name
+
+    X = np.array([feature_vector], dtype=np.float32)
+
+    try:
+        result = sess.run([output_name], {input_name: X})
+    except Exception as exc:
+        raise RuntimeError(
+            f"ONNX inference failed for '{model_id}': {exc}. "
+            "Ensure the model was exported with a compatible feature set."
+        ) from exc
+
+    # result is a list of arrays; first element, first row, first value
+    raw = result[0]
+    if hasattr(raw, "flat"):
+        return float(next(iter(raw.flat)))
+    return float(raw)
+
+
+def _predict_pickle(model, feature_vector: list[float], columns: list[str],
+                    model_id: str) -> float:
+    """Run inference on an sklearn-compatible estimator via a one-row DataFrame."""
+    import pandas as pd
+
+    X = pd.DataFrame([feature_vector], columns=columns)
+
+    try:
+        raw_pred = model.predict(X)
+    except Exception as exc:
+        raise RuntimeError(
+            f"Model prediction failed for '{model_id}': {exc}. "
+            "Ensure the model was trained with a compatible feature set."
+        ) from exc
+
+    if hasattr(raw_pred, "__iter__"):
+        raw_pred = list(raw_pred)
+        if not raw_pred:
+            raise RuntimeError("Model returned an empty prediction array.")
+        return float(raw_pred[0])
+    return float(raw_pred)
+
+
+# ---------------------------------------------------------------------------
+# Feature vector builder (format-agnostic)
 # ---------------------------------------------------------------------------
 
 def _build_feature_vector(
@@ -159,23 +203,23 @@ def _build_feature_vector(
     Build an ordered numeric feature vector aligned to columns.
 
     Strategy:
-    1. Try direct match: column name == field name.
-    2. Try one-hot match: column name == "<field_name>_<field_value>".
-    3. Fill with 0.0 if no match found. Warn once.
+    1. Direct match: column name == field name → value passed through.
+    2. OHE match:    column name == "<field_name>_<value>" → binary 0/1.
+    3. Zero fill:    column not matched → 0.0 with a warning.
 
     Returns (feature_vector, warnings).
     """
     warnings: list[str] = []
     filled  : list[float] = []
 
-    # Build a reverse lookup: for selectbox fields, remember (field_name, value)
     ohe_lookup: dict[str, float] = {}
-    schema_fields = {f["name"]: f for f in schema.get("fields", []) if isinstance(f, dict)}
+    schema_fields = {
+        f["name"]: f for f in schema.get("fields", []) if isinstance(f, dict)
+    }
 
     for field_name, value in raw_input.items():
         field = schema_fields.get(field_name, {})
         if field.get("ui") == "selectbox":
-            # Build one-hot columns from this value
             for possible_val in field.get("values", []):
                 col_name = f"{field_name}_{possible_val}"
                 ohe_lookup[col_name] = 1.0 if possible_val == value else 0.0
@@ -183,19 +227,13 @@ def _build_feature_vector(
     missing_cols: list[str] = []
 
     for col in columns:
-        # Direct match
         if col in raw_input:
             filled.append(_to_float(raw_input[col]))
-            continue
-
-        # One-hot match
-        if col in ohe_lookup:
+        elif col in ohe_lookup:
             filled.append(ohe_lookup[col])
-            continue
-
-        # Fallback — fill with 0.0
-        missing_cols.append(col)
-        filled.append(0.0)
+        else:
+            missing_cols.append(col)
+            filled.append(0.0)
 
     if missing_cols:
         warnings.append(

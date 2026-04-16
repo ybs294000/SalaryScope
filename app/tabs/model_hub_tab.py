@@ -58,9 +58,10 @@ from app.model_hub.validator import (
     validate_schema_vs_columns,
     parse_schema_json,
     validate_bundle_files,
+    detect_bundle_format,
     validate_aliases,
 )
-from app.model_hub.uploader import upload_bundle, upload_schema_only, upload_aliases_only
+from app.model_hub.uploader import upload_bundle, upload_bundle_onnx, upload_schema_only, upload_aliases_only
 
 # Currency converter — import is lazy-guarded so the tab works even if
 # currency_utils is unavailable (e.g. lite app without the full utils tree).
@@ -456,10 +457,11 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
         "info",
     )
     _msg(
-        "Security notice: model.pkl files are deserialized with joblib (pickle). "
-        "Only upload bundles you have trained yourself. "
-        "Never upload files from untrusted third parties.",
-        "warning",
+        "ONNX bundles (model.onnx + columns.json) are the recommended format — "
+        "no arbitrary code execution on load. "
+        "Pickle bundles (model.pkl + columns.pkl) are also supported for compatibility. "
+        "Never upload files from untrusted sources.",
+        "info",
     )
 
     with st.expander(":material/upload_file: Bundle Upload", expanded=True):
@@ -494,8 +496,30 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
         st.divider()
         st.markdown("**Upload Files**")
 
-        f_model   = st.file_uploader("model.pkl",   type=["pkl"],  key="mh_up_model")
-        f_columns = st.file_uploader("columns.pkl", type=["pkl"],  key="mh_up_columns")
+        st.markdown("**Format — choose one:**")
+        fmt_choice = st.radio(
+            "Bundle format",
+            options=["ONNX (recommended)", "Pickle (legacy)"],
+            key="mh_up_fmt",
+            horizontal=True,
+            help=(
+                "ONNX: model.onnx + columns.json — no arbitrary code execution on load. "
+                "Pickle: model.pkl + columns.pkl — compatible with all sklearn/XGBoost models."
+            ),
+        )
+        is_onnx_upload = fmt_choice.startswith("ONNX")
+
+        st.divider()
+        st.markdown("**Upload Files**")
+
+        if is_onnx_upload:
+            f_model   = st.file_uploader("model.onnx",    type=["onnx"], key="mh_up_model")
+            f_columns = st.file_uploader("columns.json",  type=["json"], key="mh_up_columns",
+                                         help="JSON array of feature column names, e.g. [\"age\", \"country_US\", ...]")
+        else:
+            f_model   = st.file_uploader("model.pkl",   type=["pkl"],  key="mh_up_model")
+            f_columns = st.file_uploader("columns.pkl", type=["pkl"],  key="mh_up_columns")
+
         f_schema  = st.file_uploader("schema.json", type=["json"], key="mh_up_schema")
         f_aliases = st.file_uploader(
             "aliases.json (optional)",
@@ -508,14 +532,24 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
             ),
         )
 
+        # Validate completeness using format-aware checker
         uploaded_names = []
-        if f_model:   uploaded_names.append("model.pkl")
-        if f_columns: uploaded_names.append("columns.pkl")
-        if f_schema:  uploaded_names.append("schema.json")
+        if f_model:
+            uploaded_names.append("model.onnx" if is_onnx_upload else "model.pkl")
+        if f_columns:
+            uploaded_names.append("columns.json" if is_onnx_upload else "columns.pkl")
+        if f_schema:
+            uploaded_names.append("schema.json")
 
         missing = validate_bundle_files(uploaded_names)
         if missing and uploaded_names:
             _msg(f"Bundle incomplete. Still missing: {', '.join(missing)}", "warning")
+
+        if is_onnx_upload and uploaded_names:
+            _msg(
+                ":material/lock: ONNX format — no pickle deserialisation on load.",
+                "success",
+            )
 
         if st.button(
             ":material/cloud_upload: Upload Bundle",
@@ -523,12 +557,21 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
             disabled=bool(missing) or not display_name or not target,
             type="primary",
         ):
-            _do_upload(
-                f_model.read(), f_columns.read(), f_schema.read(),
-                display_name, description, target, family_id,
-                user, registry,
-                aliases_bytes=f_aliases.read() if f_aliases else None,
-            )
+            aliases_bytes = f_aliases.read() if f_aliases else None
+            if is_onnx_upload:
+                _do_upload_onnx(
+                    f_model.read(), f_columns.read(), f_schema.read(),
+                    display_name, description, target, family_id,
+                    user, registry,
+                    aliases_bytes=aliases_bytes,
+                )
+            else:
+                _do_upload(
+                    f_model.read(), f_columns.read(), f_schema.read(),
+                    display_name, description, target, family_id,
+                    user, registry,
+                    aliases_bytes=aliases_bytes,
+                )
 
 
 def _do_upload(
@@ -572,6 +615,58 @@ def _do_upload(
         _invalidate_registry_cache()
         _msg(
             f"Bundle '{result.folder_name}' uploaded and registered successfully. "
+            f"Folder: {result.folder_path}",
+            "success",
+        )
+    except (ValueError, RuntimeError) as exc:
+        _msg(
+            f"Bundle files uploaded but registry update failed: {exc}. "
+            "Manually add the entry to models_registry.json.",
+            "error",
+        )
+        st.code(json.dumps(result.registry_entry, indent=2))
+
+
+def _do_upload_onnx(
+    onnx_bytes: bytes,
+    columns_json_bytes: bytes,
+    schema_bytes: bytes,
+    display_name: str,
+    description: str,
+    target: str,
+    family_id: str,
+    user: dict,
+    registry: dict,
+    aliases_bytes: Optional[bytes] = None,
+) -> None:
+    uploaded_by = user.get("email") or user.get("username") or "admin"
+
+    with st.spinner("Validating and uploading ONNX bundle..."):
+        try:
+            result = upload_bundle_onnx(
+                onnx_bytes         = onnx_bytes,
+                columns_json_bytes = columns_json_bytes,
+                schema_bytes       = schema_bytes,
+                display_name       = display_name,
+                description        = description,
+                target             = target,
+                uploaded_by        = uploaded_by,
+                family_id          = family_id or None,
+                aliases_bytes      = aliases_bytes if aliases_bytes else None,
+            )
+        except (ValueError, RuntimeError) as exc:
+            _msg(f"Upload failed: {exc}", "error")
+            return
+
+    for w in result.warnings:
+        _msg(w, "warning")
+
+    try:
+        new_registry = add_model_to_registry(registry, result.registry_entry)
+        push_registry(new_registry)
+        _invalidate_registry_cache()
+        _msg(
+            f"ONNX bundle '{result.folder_name}' uploaded and registered successfully. "
             f"Folder: {result.folder_path}",
             "success",
         )
@@ -643,6 +738,9 @@ def _render_registry_manager(registry: dict) -> None:
             st.caption(f"Path: {model.get('path', 'N/A')}")
             st.caption(f"Target: {model.get('target', 'N/A')}")
             st.caption(f"Uploaded by: {model.get('uploaded_by', 'N/A')}")
+            _fmt = model.get("bundle_format", "pickle")
+            _fmt_label = ":material/lock: ONNX" if _fmt == "onnx" else ":material/warning: Pickle"
+            st.caption(f"Format: {_fmt_label}")
 
             btn_col1, btn_col2, btn_col3 = st.columns(3)
 
