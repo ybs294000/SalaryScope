@@ -541,7 +541,7 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
 
         if is_onnx_upload and uploaded_names:
             _msg(
-                ":material/lock: ONNX format — no pickle deserialisation on load.",
+                "ONNX format — no pickle deserialisation on load.",
                 "success",
             )
 
