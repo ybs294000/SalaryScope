@@ -35,7 +35,7 @@ headless = true
 # Only options that cannot live in [theme.dark] / [theme.light] go here.
 # ---------------------------------------------------------------------------
 [theme]
-
+base = "dark"
 # sans-serif lets Inter/Segoe UI declared in CSS act as the effective font.
 font = "sans-serif"
 

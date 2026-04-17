@@ -5,45 +5,40 @@ SalaryScope -- Sidebar Appearance Panel
 
 What works
 ----------
-  - Theme dropdown: switches the full active theme instantly on Apply.
+  - Light/Dark mode toggle: instantly switches between the dark theme family
+    and Light Clean, independently of the full theme picker below it.
+  - Theme dropdown: switches the full active theme (accent, colorway, surfaces)
+    on Apply. Filtered to only show themes matching the current mode so the
+    mode toggle and theme picker never contradict each other.
   - Reset: reverts to Dark Professional.
-  - All cards, charts, and banners respond to theme switches because they
-    call get_token() / get_colorway() on every render.
+  - All cards, charts, and banners respond to theme switches because they call
+    get_token() / get_colorway() on every render.
+  - The :root CSS variable block in app_resume.py is rebuilt on every render
+    from the active theme dict, so Streamlit UI elements (sidebar, inputs,
+    buttons, tabs, metrics) update immediately on theme switch.
 
 What is commented out (fine-tune pickers)
 ------------------------------------------
 Fine-tune individual colour pickers are not functional in the current
-Streamlit version and are therefore disabled.
-
-Why they cannot work as written:
-  Streamlit renders the entire script top-to-bottom in one pass. HTML card
-  strings (salary_card_html, util_card_html, etc.) are built and sent to the
-  browser during that pass. st.color_picker triggers a rerun when the user
-  changes a value, but by the time the rerun starts from the top, the picker
-  has already written the new value to session state. The appearance panel
-  reads that value and calls _apply() which writes the merged theme to
-  THEME_KEY. So far correct. BUT: calling st.rerun() inside the appearance
-  panel after _apply() causes an infinite loop because the picker itself
-  triggered the rerun. NOT calling st.rerun() means the current pass
-  continues rendering with the OLD theme values already cached in local
-  variables at the tops of other tabs. The updated THEME_KEY is only visible
-  on the NEXT rerun, which happens naturally if the user interacts with any
-  other widget. In practice the colour appears to change one interaction late,
-  and for HTML cards rendered in @st.fragment blocks it never updates at all.
-
-Correct fix (future):
-  Wrap the appearance panel in @st.fragment and call st.rerun(scope="app")
-  inside it after _apply(). st.fragment reruns only the fragment on widget
-  interaction, and st.rerun(scope="app") triggers a full app rerun from the
-  correct point without infinite-looping. This requires Streamlit >= 1.37.
-  Once that is confirmed in the deployment environment, uncomment the
-  fine-tune section below and add the @st.fragment decorator.
+Streamlit version and are therefore disabled. See original docstring for
+the full explanation and the correct fix path (requires Streamlit >= 1.37).
 
 Extending the theme list
 ------------------------
   1. Write a new theme dict in app/theme.py following DARK_PROFESSIONAL.
   2. Register it in BUILTIN_THEMES and THEME_ORDER.
-  Done -- the dropdown picks it up automatically.
+  Done. The dropdown picks it up automatically, grouped by mode.
+
+Light/Dark mode toggle -- how it works
+---------------------------------------
+  A session-state key _ST_MODE_KEY stores "dark" or "light".
+  Pressing the toggle button writes the preferred mode, then picks either:
+    - The previously used dark theme (stored in _LAST_DARK_KEY), or
+    - Light Clean if switching to light.
+  This means the user keeps their chosen dark theme (e.g. Dark Violet) when
+  they toggle back from light mode. The full theme picker is filtered to show
+  only themes matching the current mode, so it never shows dark themes when
+  in light mode or vice versa.
 
 Usage
 -----
@@ -65,42 +60,39 @@ from app.theme import (
 )
 
 # ---------------------------------------------------------------------------
-# Session-state key for raw overrides (kept for when fine-tune is re-enabled)
+# Session-state keys
 # ---------------------------------------------------------------------------
-_OVERRIDE_KEY = "_ap_overrides"
+_OVERRIDE_KEY  = "_ap_overrides"
+_ST_MODE_KEY   = "_ap_st_mode"       # "dark" or "light"
+_LAST_DARK_KEY = "_ap_last_dark_id"  # remembers the last-used dark theme id
+
+# The only built-in light theme id -- used when switching to light mode
+_LIGHT_THEME_ID = "light_clean"
+
+# The default dark theme to fall back to when _LAST_DARK_KEY is absent
+_DEFAULT_DARK_ID = DEFAULT_THEME_ID
+
 
 # ---------------------------------------------------------------------------
 # Fine-tune token tables (kept for when fine-tune is re-enabled)
-#
-# _HTML_SURFACE_TOKENS: controls card gradients, banner backgrounds, and
-#   status box backgrounds -- all consumed by HTML helpers in app/theme.py.
-#   Prediction card tokens (card_grad_start, accent_primary, etc.) are
-#   included here so they update salary/level/stage/score/insight cards.
-#
-# _CHART_TOKENS: controls Plotly chart colours consumed by apply_theme().
 # ---------------------------------------------------------------------------
 
 _HTML_SURFACE_TOKENS = [
-    # Prediction output cards
     ("card_grad_start",   "Card top",          "Top colour of prediction card gradient."),
     ("card_grad_end",     "Card bottom",        "Bottom colour of prediction card gradient."),
     ("accent_primary",    "Accent (border)",    "Prediction card border and accent colour."),
     ("accent_bright",     "Accent (value)",     "Large value colour inside prediction cards."),
     ("card_band_border",  "Level border",       "Border of the salary level card."),
     ("card_stage_border", "Stage border",       "Border of the career stage card."),
-    # Model Hub card
     ("hub_card_bg",       "Hub bg",             "Background of the Model Hub result card."),
     ("hub_card_accent",   "Hub accent",         "Left border and value colour of the Model Hub card."),
-    # Utility cards
     ("util_card_start",   "Util top",           "Top of the utility card gradient."),
     ("util_card_end",     "Util bottom",        "Bottom of the utility card gradient."),
     ("util_card_border",  "Util border",        "Border of all utility result cards."),
-    # Banners
     ("banner_info_bg",    "Info banner",        "Background of info banners."),
     ("banner_ok_bg",      "Success banner",     "Background of success banners."),
     ("banner_warn_bg",    "Warn banner",        "Background of warning banners."),
     ("banner_err_bg",     "Error banner",       "Background of error banners."),
-    # Status boxes
     ("status_info_bg",    "Status info",        "Background of in-progress status boxes."),
     ("status_success_bg", "Status success",     "Background of success status boxes."),
     ("status_warn_bg",    "Status warn",        "Background of warning status boxes."),
@@ -117,7 +109,7 @@ _CHART_TOKENS = [
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Internal helpers
 # ---------------------------------------------------------------------------
 
 def _get_active_id() -> str:
@@ -127,6 +119,12 @@ def _get_active_id() -> str:
     if isinstance(stored, dict):
         return stored.get("id", DEFAULT_THEME_ID)
     return DEFAULT_THEME_ID
+
+
+def _get_current_mode() -> str:
+    """Return 'dark' or 'light' based on the active theme."""
+    theme = BUILTIN_THEMES.get(_get_active_id(), DARK_PROFESSIONAL)
+    return theme.get("mode", "dark")
 
 
 def _apply(theme_id: str, overrides: dict = None) -> None:
@@ -149,15 +147,31 @@ def _swatch_row(theme: dict) -> str:
 
     def swatch(color: str, title: str = "", extra: str = "") -> str:
         return (
-            f"<span style='display:inline-block;width:16px;height:16px;"
-            f"border-radius:3px;background:{color};margin-right:2px;{extra}'"
-            f" title='{title}'></span>"
+            "<span style='display:inline-block;width:16px;height:16px;"
+            "border-radius:3px;background:" + color + ";margin-right:2px;" + extra + "'"
+            " title='" + title + "'></span>"
         )
 
     html  = "".join(swatch(c) for c in cw)
     html += swatch(accent, "accent",  "border:2px solid rgba(255,255,255,0.35);")
     html += swatch(card,   "card bg", "border:1px solid rgba(255,255,255,0.15);")
-    return f"<div style='margin:4px 0 8px 0;line-height:20px;'>{html}</div>"
+    return "<div style='margin:4px 0 8px 0;line-height:20px;'>" + html + "</div>"
+
+
+def _dark_themes() -> list:
+    """Return theme ids from THEME_ORDER that have mode == 'dark'."""
+    return [
+        tid for tid in THEME_ORDER
+        if tid in BUILTIN_THEMES and BUILTIN_THEMES[tid].get("mode", "dark") == "dark"
+    ]
+
+
+def _light_themes() -> list:
+    """Return theme ids from THEME_ORDER that have mode == 'light'."""
+    return [
+        tid for tid in THEME_ORDER
+        if tid in BUILTIN_THEMES and BUILTIN_THEMES[tid].get("mode", "dark") == "light"
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -173,6 +187,7 @@ def render_appearance_panel() -> None:
     overrides     = st.session_state.get(_OVERRIDE_KEY, {}) or {}
     has_overrides = bool(overrides)
     is_default    = (live_id == DEFAULT_THEME_ID and not has_overrides)
+    current_mode  = _get_current_mode()
 
     label = (
         ":material/palette: Appearance"
@@ -182,28 +197,78 @@ def render_appearance_panel() -> None:
 
     with st.expander(label, expanded=False):
 
-        st.caption("Switch between built-in themes.")
+        # ----------------------------------------------------------------
+        # Light / Dark mode toggle
+        # This is a dedicated two-button row that switches the Streamlit UI
+        # between dark and light mode independently of the theme picker.
+        # It remembers the last dark theme so toggling back restores it.
+        # ----------------------------------------------------------------
+        st.caption("Light / Dark mode")
+
+        col_dark, col_light = st.columns(2)
+
+        with col_dark:
+            dark_type = "primary" if current_mode == "dark" else "secondary"
+            if st.button(
+                ":material/dark_mode: Dark",
+                key="_ap_mode_dark",
+                use_container_width=True,
+                type=dark_type,
+            ):
+                if current_mode != "dark":
+                    # Remember where we were in dark mode before going light
+                    last_dark = st.session_state.get(_LAST_DARK_KEY, _DEFAULT_DARK_ID)
+                    if last_dark not in BUILTIN_THEMES:
+                        last_dark = _DEFAULT_DARK_ID
+                    st.session_state.pop(_OVERRIDE_KEY, None)
+                    _apply(last_dark)
+                    st.rerun()
+
+        with col_light:
+            light_type = "primary" if current_mode == "light" else "secondary"
+            if st.button(
+                ":material/light_mode: Light",
+                key="_ap_mode_light",
+                use_container_width=True,
+                type=light_type,
+            ):
+                if current_mode != "light":
+                    # Persist the current dark theme id before leaving
+                    if current_mode == "dark":
+                        st.session_state[_LAST_DARK_KEY] = live_id
+                    light_ids = _light_themes()
+                    target = light_ids[0] if light_ids else _LIGHT_THEME_ID
+                    st.session_state.pop(_OVERRIDE_KEY, None)
+                    _apply(target)
+                    st.rerun()
+
+        st.divider()
 
         # ----------------------------------------------------------------
-        # Theme dropdown
+        # Theme dropdown -- filtered to current mode so it never shows
+        # dark themes when in light mode or vice versa
         # ----------------------------------------------------------------
-        theme_names = {
-            tid: BUILTIN_THEMES[tid]["name"]
-            for tid in THEME_ORDER
-            if tid in BUILTIN_THEMES
-        }
+        st.caption("Theme variant")
+
+        if current_mode == "dark":
+            visible_ids = _dark_themes()
+        else:
+            visible_ids = _light_themes()
+
+        # Fallback: if the active id is not in visible list, add it
+        if live_id not in visible_ids and live_id in BUILTIN_THEMES:
+            visible_ids = [live_id] + visible_ids
 
         def _fmt(tid: str) -> str:
             mode = BUILTIN_THEMES[tid].get("mode", "dark")
             tag  = "[Dark]" if mode == "dark" else "[Light]"
-            return f"{tag}  {BUILTIN_THEMES[tid]['name']}"
+            return tag + "  " + BUILTIN_THEMES[tid]["name"]
 
-        options = list(theme_names.keys())
-        idx     = options.index(live_id) if live_id in options else 0
+        idx = visible_ids.index(live_id) if live_id in visible_ids else 0
 
         selected_id = st.selectbox(
             "Theme",
-            options=options,
+            options=visible_ids,
             format_func=_fmt,
             index=idx,
             key="_ap_dropdown",
@@ -222,6 +287,9 @@ def render_appearance_panel() -> None:
                 use_container_width=True,
                 type="primary",
             ):
+                # If applying a dark theme, remember it for the mode toggle
+                if BUILTIN_THEMES.get(selected_id, {}).get("mode", "dark") == "dark":
+                    st.session_state[_LAST_DARK_KEY] = selected_id
                 st.session_state.pop(_OVERRIDE_KEY, None)
                 _apply(selected_id)
                 st.rerun()
@@ -233,6 +301,7 @@ def render_appearance_panel() -> None:
                 use_container_width=True,
             ):
                 st.session_state.pop(_OVERRIDE_KEY, None)
+                st.session_state.pop(_LAST_DARK_KEY, None)
                 reset_theme()
                 st.rerun()
 
@@ -240,18 +309,7 @@ def render_appearance_panel() -> None:
 
         # ----------------------------------------------------------------
         # Fine-tune -- DISABLED (see module docstring for explanation)
-        # To re-enable: uncomment the block below and add @st.fragment
-        # decorator to this function (requires Streamlit >= 1.37).
         # ----------------------------------------------------------------
-
-        # st.markdown("**Fine-tune**")
-        # st.caption(
-        #     "Fine-tune individual colours. "
-        #     "Requires Streamlit >= 1.37 with @st.fragment support. "
-        #     "Not yet enabled."
-        # )
-
-        # --- Fine-tune is currently non-functional. See module docstring. ---
         st.caption(
             ":material/info: Per-colour fine-tune is not yet available. "
             "Use the theme switcher above."
@@ -260,8 +318,14 @@ def render_appearance_panel() -> None:
         # ----------------------------------------------------------------
         # Status line
         # ----------------------------------------------------------------
+        theme_names = {
+            tid: BUILTIN_THEMES[tid]["name"]
+            for tid in THEME_ORDER
+            if tid in BUILTIN_THEMES
+        }
         name = theme_names.get(live_id, live_id)
+        mode_icon = ":material/dark_mode:" if current_mode == "dark" else ":material/light_mode:"
         if has_overrides:
-            st.caption(f":material/brush: {name} + overrides active")
+            st.caption(mode_icon + " " + name + " + overrides active")
         else:
-            st.caption(f":material/palette: {name}")
+            st.caption(mode_icon + " " + name)

@@ -86,6 +86,7 @@ from app.tabs.model_hub_tab import render_model_hub_tab
 
 from app.tabs.appearance_panel import render_appearance_panel
 
+from app.utils.theme_css import inject_theme_css
 # --------------------------------
 # THEME
 # --------------------------------
@@ -119,183 +120,149 @@ st.set_page_config(
 # ============================================================
 # DARK PROFESSIONAL — App 1 Theme (applied globally)
 # ============================================================
+    # ============================================================
+    # THEME CSS -- injected dynamically on every render
+    # :root variables and Streamlit widget overrides are built from
+    # the active theme dict so the full UI updates when the user
+    # switches themes (including light/dark mode).
+    # The structural CSS below (tabs, inputs, buttons, metrics, etc.)
+    # is kept here and is unchanged -- it still reads var(--primary),
+    # var(--bg-main), etc., which are now populated dynamically.
+    # ============================================================
+inject_theme_css()
+ 
 st.markdown(
-    """
-    <style>
-
-    /* ── Root palette — Dark Professional ── */
-    :root {
-        --primary:   #3E7DE0;
-        --primary-hover:#2F6CD0;
-        --bg-main:   #0C1118;
-        --bg-card:   #141A22;
-        --bg-input:  #1B2230;
-        --border:    #283142;
-        --text-main: #E6EAF0;
-        --text-muted:#9CA6B5;
-        --success:   #22C55E;
-        --warning:   #F59E0B;
-        --error:     #EF4444;
-    }
-
-    /* ── App background ── */
-    .stApp, [data-testid="stAppViewContainer"] {
-        background-color: var(--bg-main) !important;
-        color: var(--text-main) !important;
-    }
-
-    /* ── Sidebar ── */
-    [data-testid="stSidebar"] {
-        background-color: var(--bg-card) !important;
-        border-right: 1px solid var(--border) !important;
-    }
-
-    /* ── Titles ── */
-    h1 {
-        color: var(--primary) !important;
-        letter-spacing: -0.5px;
-    }
-
-    h2, h3 { color: var(--text-main) !important; }
-    h4, h5, h6 { color: var(--text-muted) !important; }
-
-    p, li, span, div {
-        color: var(--text-main) !important;
-    }
-
-    /* ── Tabs container ── */
-    [data-baseweb="tab-list"] {
-        background-color: var(--bg-card) !important;
-        border-radius: 8px !important;
-        padding: 4px !important;
-        gap: 12px !important;
-        border: 1px solid var(--border) !important;
-    }
-
-    button[data-baseweb="tab"] {
-        background: transparent !important;
-        border-radius: 6px !important;
-        color: var(--text-muted) !important;
-        transition: color 0.2s ease !important;
-    }
-
-    button[data-baseweb="tab"][aria-selected="true"] {
-        color: #FFFFFF !important;
-        font-weight: 600 !important;
-    }
-
-    button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p {
-        font-size: 17px !important;
-        font-weight: 500 !important;
-    }
-
-    /* ── Inputs ── */
-    /*.stTextInput > div > div,*/
-    .stNumberInput > div > div,
-    .stSelectbox > div > div,
-    .stMultiSelect > div > div {
-        background-color: var(--bg-input) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
-        color: var(--text-main) !important;
-    }
-  
-
-    /*.stTextInput input,*/
-    .stNumberInput input {
-        background-color: var(--bg-input) !important;
-        color: var(--text-main) !important;
-    }
-
-    /*.stTextInput > div > div:focus-within,*/
-    .stNumberInput > div > div:focus-within,
-    .stSelectbox > div > div:focus-within {
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 2px rgba(62,125,224,0.25) !important;
-    }
-
-
-    /* ── Labels ── */
-    label, .stLabel, [data-testid="stWidgetLabel"] {
-        color: var(--text-muted) !important;
-        font-size: 13px !important;
-        font-weight: 600 !important;
-    }
-
-    /* ── Primary buttons ── */
-    .stButton > button[kind="primary"],
-    .stButton > button[data-testid*="primary"] {
-        background-color: var(--primary) !important;
-        border: none !important;
-        border-radius: 6px !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 15px !important;
-        transition: background-color 0.2s ease !important;
-    }
-
-    .stButton > button[kind="primary"]:hover {
-        background-color: var(--primary-hover) !important;
-    }
-
-    /* ── Secondary / download buttons ── */
-    .stButton > button,
-    .stDownloadButton > button {
-        background-color: var(--bg-input) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
-        color: var(--text-main) !important;
-        font-weight: 500 !important;
-    }
-
-    .stButton > button:hover,
-    .stDownloadButton > button:hover {
-        border-color: var(--primary) !important;
-        color: var(--primary) !important;
-    }
-
-    /* ── Metric cards ── */
-    [data-testid="stMetric"] {
-        background-color: var(--bg-card) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 8px !important;
-        padding: 14px 18px !important;
-    }
-
-    [data-testid="stMetricLabel"] { color: var(--text-muted) !important; }
-    [data-testid="stMetricValue"] { color: var(--primary) !important; font-weight: 700 !important; }
-
-
-    /* ── File uploader ── */
-    [data-testid="stFileUploader"] {
-        background-color: var(--bg-card) !important;
-        border: 2px dashed var(--border) !important;
-        border-radius: 8px !important;
-        padding: 16px 18px !important;
-    }
-
-    [data-testid="stFileUploader"] > div {
-        margin-top: 6px !important;
-    }
-
-    [data-testid="stFileUploader"]:hover {
-        border-color: var(--primary) !important;
-    }
-
-    /* ── Divider ── */
-    hr {
-        border-color: var(--border) !important;
-        opacity: 0.7 !important;
-    }
-
-    /* ── Caption ── */
-    .stCaption, small { color: var(--text-muted) !important; }
-
-    </style>
-    """,
-    unsafe_allow_html=True
+        """
+        <style>
+ 
+        /* ── Titles ── */
+        h1 {
+            color: var(--primary) !important;
+            letter-spacing: -0.5px;
+        }
+ 
+        h2, h3 { color: var(--text-main) !important; }
+        h4, h5, h6 { color: var(--text-muted) !important; }
+ 
+        p, li, span, div {
+            color: var(--text-main) !important;
+        }
+ 
+        /* ── Tabs container ── */
+        [data-baseweb="tab-list"] {
+            background-color: var(--bg-card) !important;
+            border-radius: 8px !important;
+            padding: 4px !important;
+            gap: 12px !important;
+            border: 1px solid var(--border) !important;
+        }
+ 
+        button[data-baseweb="tab"] {
+            background: transparent !important;
+            border-radius: 6px !important;
+            color: var(--text-muted) !important;
+            transition: color 0.2s ease !important;
+        }
+ 
+        button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p {
+            font-size: 17px !important;
+            font-weight: 500 !important;
+        }
+ 
+        /* ── Inputs ── */
+        .stNumberInput > div > div,
+        .stSelectbox > div > div,
+        .stMultiSelect > div > div {
+            background-color: var(--bg-input) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 6px !important;
+            color: var(--text-main) !important;
+        }
+ 
+        .stNumberInput input {
+            background-color: var(--bg-input) !important;
+            color: var(--text-main) !important;
+        }
+ 
+        /* ── Labels ── */
+        label, .stLabel, [data-testid="stWidgetLabel"] {
+            color: var(--text-muted) !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+        }
+ 
+        /* ── Primary buttons ── */
+        .stButton > button[kind="primary"],
+        .stButton > button[data-testid*="primary"] {
+            background-color: var(--primary) !important;
+            border: none !important;
+            border-radius: 6px !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            transition: background-color 0.2s ease !important;
+        }
+ 
+        .stButton > button[kind="primary"]:hover {
+            background-color: var(--primary-hover) !important;
+        }
+ 
+        /* ── Secondary / download buttons ── */
+        .stButton > button,
+        .stDownloadButton > button {
+            background-color: var(--bg-input) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 6px !important;
+            color: var(--text-main) !important;
+            font-weight: 500 !important;
+        }
+ 
+        .stButton > button:hover,
+        .stDownloadButton > button:hover {
+            border-color: var(--primary) !important;
+            color: var(--primary) !important;
+        }
+ 
+        /* ── Metric cards ── */
+        [data-testid="stMetric"] {
+            background-color: var(--bg-card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            padding: 14px 18px !important;
+        }
+ 
+        [data-testid="stMetricLabel"] { color: var(--text-muted) !important; }
+        [data-testid="stMetricValue"] { color: var(--primary) !important; font-weight: 700 !important; }
+ 
+        /* ── File uploader ── */
+        [data-testid="stFileUploader"] {
+            background-color: var(--bg-card) !important;
+            border: 2px dashed var(--border) !important;
+            border-radius: 8px !important;
+            padding: 16px 18px !important;
+        }
+ 
+        [data-testid="stFileUploader"] > div {
+            margin-top: 6px !important;
+        }
+ 
+        [data-testid="stFileUploader"]:hover {
+            border-color: var(--primary) !important;
+        }
+ 
+        /* ── Divider ── */
+        hr {
+            border-color: var(--border) !important;
+            opacity: 0.7 !important;
+        }
+ 
+        /* ── Caption ── */
+        .stCaption, small { color: var(--text-muted) !important; }
+ 
+        </style>
+        """,
+        unsafe_allow_html=True
 )
-
 
 # ==================================================
 # CAREER CLUSTER FEATURE ENGINEERING
