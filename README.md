@@ -619,8 +619,7 @@ salaryscope/
 │   ├── module_reference.md              # All public functions documented
 │   ├── deployment.md                    # Deployment and operations guide
 │   ├── testing.md                       # Test plan, unit tests, manual test cases
-│   └── CONTRIBUTING.md                  # Contributor guide
-│
+│   
 ├── samples/                             # Sample input files for batch prediction
 ├── assets/                              # Branding and visual assets
 ├── pdf_outputs/                         # Sample generated PDF reports
@@ -990,7 +989,7 @@ Detailed project documentation is available in the `docs/` directory:
 | [`module_reference.md`](docs/module_reference.md) | Every public function documented with parameters, returns, and side effects |
 | [`deployment.md`](docs/deployment.md) | Firebase setup, HuggingFace setup, Streamlit Cloud deployment, secrets reference |
 | [`testing.md`](docs/testing.md) | Test plan, unit test code, manual test cases, and test results log template |
-| [`CONTRIBUTING.md`](docs/CONTRIBUTING.md) | Contributor guide: architecture rules, adding new features, code style, PR checklist |
+
 
 ---
 
