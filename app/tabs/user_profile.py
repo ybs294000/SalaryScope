@@ -1,3 +1,4 @@
+from app.theme import apply_theme, get_colorway, get_token
 import streamlit as st
 import pandas as pd
 import json
@@ -102,10 +103,10 @@ def show_profile():
         y="Predicted Salary",
         color="Model",
         color_discrete_map={
-            "Random Forest":        "#4F8EF7",
-            "XGBoost":              "#38BDF8",
-            "Random Forest Resume": "#818CF8",
-            "XGBoost Resume":       "#A78BFA",
+            "Random Forest":        get_colorway()[0],
+            "XGBoost":              get_colorway()[1],
+            "Random Forest Resume": get_colorway()[7] if len(get_colorway()) > 7 else get_colorway()[3],
+            "XGBoost Resume":       get_colorway()[3],
         }
     )
 
@@ -116,43 +117,19 @@ def show_profile():
         )
     )
 
-    fig.update_layout(
-        paper_bgcolor="#141A22",
-        plot_bgcolor="#1B2230",
-        font=dict(color="#E6EAF0", family="Inter, Segoe UI, sans-serif", size=13),
-        xaxis=dict(
-            title="Time",
-            gridcolor="#283142",
-            linecolor="#283142",
-            tickfont=dict(color="#9CA6B5"),
-            title_font=dict(color="#9CA6B5")
-        ),
-        yaxis=dict(
-            title="Predicted Salary (USD)",
-            gridcolor="#283142",
-            linecolor="#283142",
-            tickfont=dict(color="#9CA6B5"),
-            title_font=dict(color="#9CA6B5")
-        ),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor="#141A22",
-            bordercolor="#283142",
-            borderwidth=1
-        ),
-        margin=dict(l=60, r=30, t=40, b=60)
-    )
+    apply_theme(fig, extra={
+        "xaxis": {"title": "Time"},
+        "yaxis": {"title": "Predicted Salary (USD)"},
+        "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+        "margin": {"l": 60, "r": 30, "t": 40, "b": 60},
+    })
 
     fig.update_xaxes(
         tickformat="%d %b\n%H:%M",
         nticks=6
     )
 
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', theme=None)
 
     st.divider()
 

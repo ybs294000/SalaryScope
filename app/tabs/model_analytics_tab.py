@@ -1,3 +1,4 @@
+from app.theme import get_colorway, get_continuous_scale, get_colorway_3_stages, get_token, dataframe_highlight_row_style
 """
 model_analytics_tab.py
 ----------------------
@@ -162,7 +163,7 @@ def _render_app1_section1_regression(
 
         def highlight_selected(row):
             if "Random Forest" in row["Model"]:
-                return ["background-color: #1E2A3A"] * len(row)
+                return [f"background-color: {dataframe_highlight_row_style()}"] * len(row)
             return [""] * len(row)
 
         styled_df_a1 = comparison_df_a1.style.apply(highlight_selected, axis=1)
@@ -235,7 +236,7 @@ def _render_app1_section2_diagnostics(analytics_data, apply_theme):
             fig_avp_a1.add_trace(go.Scatter(
                 x=y_test_a1d, y=y_test_pred_a1d, mode="markers",
                 name="Predictions",
-                marker=dict(color="#3E7DE0", opacity=0.6)
+                marker=dict(color=get_token("accent_primary", "#3E7DE0"), opacity=0.6)
             ))
             min_val_a1 = min(y_test_a1d.min(), y_test_pred_a1d.min())
             max_val_a1 = max(y_test_a1d.max(), y_test_pred_a1d.max())
@@ -243,7 +244,7 @@ def _render_app1_section2_diagnostics(analytics_data, apply_theme):
                 x=[min_val_a1, max_val_a1],
                 y=[min_val_a1, max_val_a1],
                 mode="lines", name="Ideal Fit",
-                line=dict(color="#EF4444", width=2)
+                line=dict(color=get_token("status_error", "#EF4444"), width=2)
             ))
             fig_avp_a1.update_layout(
                 title="Predicted vs Actual Salary",
@@ -257,9 +258,9 @@ def _render_app1_section2_diagnostics(analytics_data, apply_theme):
             fig_res_a1 = go.Figure()
             fig_res_a1.add_trace(go.Scatter(
                 x=y_test_pred_a1d, y=residuals_a1d, mode="markers",
-                marker=dict(color="#3E7DE0", opacity=0.6)
+                marker=dict(color=get_token("accent_primary", "#3E7DE0"), opacity=0.6)
             ))
-            fig_res_a1.add_hline(y=0, line_dash="dash", line_color="#EF4444")
+            fig_res_a1.add_hline(y=0, line_dash="dash", line_color=get_token("status_error", "#EF4444"))
             fig_res_a1.update_layout(
                 title="Residuals vs Predicted Values",
                 xaxis_title="Predicted Salary",
@@ -275,10 +276,10 @@ def _render_app1_section2_diagnostics(analytics_data, apply_theme):
                 x=residuals_a1d, nbins=30,
                 labels={"x": "Residual"},
                 title="Distribution of Residuals",
-                color_discrete_sequence=["#A78BFA"]
+                color_discrete_sequence=[get_colorway()[3]]
             )
             fig_rdist_a1.update_traces(
-                marker_line_color="#1B2230", marker_line_width=0.8
+                marker_line_color=get_token("surface_overlay", "#1B2230"), marker_line_width=0.8
             )
             fig_rdist_a1.update_layout(
                 xaxis_title="Residual", yaxis_title="Count"
@@ -294,10 +295,10 @@ def _render_app1_section2_diagnostics(analytics_data, apply_theme):
                     "x": "Prediction Standard Deviation",
                     "y": "Count"
                 },
-                color_discrete_sequence=["#A78BFA"]
+                color_discrete_sequence=[get_colorway()[3]]
             )
             fig_unc_a1.update_traces(
-                marker_line_color="#1B2230", marker_line_width=0.8
+                marker_line_color=get_token("surface_overlay", "#1B2230"), marker_line_width=0.8
             )
             apply_theme(fig_unc_a1)
             st.plotly_chart(fig_unc_a1, width='stretch')
@@ -314,7 +315,7 @@ def _render_app1_section2_diagnostics(analytics_data, apply_theme):
                 orientation="h",
                 title="Feature Importance (Grouped Variables)",
                 color="Importance",
-                color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1.0, "#38BDF8"]]
+                color_continuous_scale=get_continuous_scale()
             )
             fig_fi_a1.update_coloraxes(showscale=False)
             apply_theme(fig_fi_a1)
@@ -333,7 +334,7 @@ def _render_app1_section2_diagnostics(analytics_data, apply_theme):
                 yaxis_title="Cumulative Importance"
             )
             apply_theme(fig_cumul_a1)
-            fig_cumul_a1.add_hline(y=0.80, line_dash="dash", line_color="#F59E0B")
+            fig_cumul_a1.add_hline(y=0.80, line_dash="dash", line_color=get_token("status_warning", "#F59E0B"))
             st.plotly_chart(fig_cumul_a1, width='stretch')
 
 
@@ -379,7 +380,7 @@ def _render_app1_section3_classifier(
 
         def highlight_selected_classifier(row):
             if "HistGradientBoosting" in row["Model"]:
-                return ["background-color: #1E2A3A"] * len(row)
+                return [f"background-color: {dataframe_highlight_row_style()}"] * len(row)
             return [""] * len(row)
 
         styled_cls_df_a1 = classifier_comparison_df_a1.style.apply(
@@ -438,7 +439,7 @@ def _render_app1_section3_classifier(
             orientation="h",
             title="Feature Importances (Salary Level Classifier)",
             color="Importance",
-            color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1.0, "#38BDF8"]]
+            color_continuous_scale=get_continuous_scale()
         )
         fig_cls_imp_a1.update_coloraxes(showscale=False)
         apply_theme(fig_cls_imp_a1)
@@ -521,7 +522,7 @@ def _render_app1_section4_clustering_assoc(
                 x="Career Stage", y="Count",
                 title="Distribution of Career Stages",
                 color="Career Stage",
-                color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"]
+                color_discrete_sequence=get_colorway_3_stages()
             )
             fig_cluster_dist.update_xaxes(
                 categoryorder="array",
@@ -542,7 +543,7 @@ def _render_app1_section4_clustering_assoc(
                 x="Years of Experience", y="Salary",
                 color="Career Stage",
                 title="Experience vs Salary by Career Stage",
-                color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"]
+                color_discrete_sequence=get_colorway_3_stages()
             )
             fig_cluster_scatter.update_traces(marker=dict(size=6, opacity=0.6))
             apply_theme(fig_cluster_scatter)
@@ -570,7 +571,7 @@ def _render_app1_section4_clustering_assoc(
                 plot_df, x="PCA1", y="PCA2",
                 color="Career Stage",
                 title="Cluster Visualization (PCA Projection)",
-                color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"],
+                color_discrete_sequence=get_colorway_3_stages(),
             )
             centroid_labels = [
                 stage_map.get(i, f"Cluster {i}") for i in range(len(centroids_pca))
@@ -581,7 +582,7 @@ def _render_app1_section4_clustering_assoc(
                     mode="markers+text",
                     showlegend=False,
                     marker=dict(
-                        symbol="x", size=14, color="#EF4444",
+                        symbol="x", size=14, color=get_token("status_error", "#EF4444"),
                         line=dict(width=2),
                     ),
                     text=[centroid_labels[i]],
@@ -686,7 +687,7 @@ def _render_app1_section4_clustering_assoc(
             orientation="h",
             title="Top Rules by Lift",
             color="lift",
-            color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1.0, "#38BDF8"]]
+            color_continuous_scale=get_continuous_scale()
         )
         fig_lift.update_coloraxes(showscale=False)
         apply_theme(fig_lift)
@@ -700,7 +701,7 @@ def _render_app1_section4_clustering_assoc(
             hover_data=["rule"],
             title="Support vs Confidence (Bubble size represents Lift)",
             color="lift",
-            color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1.0, "#38BDF8"]]
+            color_continuous_scale=get_continuous_scale()
         )
         fig_scatter.update_coloraxes(showscale=False)
         apply_theme(fig_scatter)
@@ -803,7 +804,7 @@ def _render_app2_section2_diagnostics(analytics_data, apply_theme):
             fig_avp_a2.add_trace(go.Scatter(
                 x=y_raw_a2, y=preds_full_a2, mode="markers",
                 name="Predictions",
-                marker=dict(color="#3E7DE0", opacity=0.6)
+                marker=dict(color=get_token("accent_primary", "#3E7DE0"), opacity=0.6)
             ))
             min_val_a2 = min(y_raw_a2.min(), preds_full_a2.min())
             max_val_a2 = max(y_raw_a2.max(), preds_full_a2.max())
@@ -811,7 +812,7 @@ def _render_app2_section2_diagnostics(analytics_data, apply_theme):
                 x=[min_val_a2, max_val_a2],
                 y=[min_val_a2, max_val_a2],
                 mode="lines", name="Ideal Fit",
-                line=dict(color="#EF4444", width=2)
+                line=dict(color=get_token("status_error", "#EF4444"), width=2)
             ))
             fig_avp_a2.update_layout(
                 title="Predicted vs Actual Salary",
@@ -825,9 +826,9 @@ def _render_app2_section2_diagnostics(analytics_data, apply_theme):
             fig_res_a2 = go.Figure()
             fig_res_a2.add_trace(go.Scatter(
                 x=preds_full_a2, y=residuals_a2d, mode="markers",
-                marker=dict(color="#3E7DE0", opacity=0.6)
+                marker=dict(color=get_token("accent_primary", "#3E7DE0"), opacity=0.6)
             ))
-            fig_res_a2.add_hline(y=0, line_dash="dash", line_color="#EF4444")
+            fig_res_a2.add_hline(y=0, line_dash="dash", line_color=get_token("status_error", "#EF4444"))
             fig_res_a2.update_layout(
                 title="Residuals vs Predicted Values",
                 xaxis_title="Predicted Salary",
@@ -843,10 +844,10 @@ def _render_app2_section2_diagnostics(analytics_data, apply_theme):
                 x=residuals_a2d, nbins=30,
                 title="Distribution of Residuals",
                 labels={"x": "Residual"},
-                color_discrete_sequence=["#A78BFA"]
+                color_discrete_sequence=[get_colorway()[3]]
             )
             fig_rdist_a2.update_traces(
-                marker_line_color="#1B2230", marker_line_width=0.8
+                marker_line_color=get_token("surface_overlay", "#1B2230"), marker_line_width=0.8
             )
             fig_rdist_a2.update_layout(
                 title="Distribution of Residuals",
@@ -864,10 +865,10 @@ def _render_app2_section2_diagnostics(analytics_data, apply_theme):
                     "x": "Prediction Standard Deviation",
                     "y": "Count"
                 },
-                color_discrete_sequence=["#A78BFA"]
+                color_discrete_sequence=[get_colorway()[3]]
             )
             fig_unc_a2.update_traces(
-                marker_line_color="#1B2230", marker_line_width=0.8
+                marker_line_color=get_token("surface_overlay", "#1B2230"), marker_line_width=0.8
             )
             apply_theme(fig_unc_a2)
             st.plotly_chart(fig_unc_a2, width='stretch')
@@ -896,7 +897,7 @@ def _render_app2_section3_features(analytics_data, apply_theme):
                 orientation="h",
                 title="Grouped Feature Importance",
                 color="importance",
-                color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1, "#38BDF8"]]
+                color_continuous_scale=get_continuous_scale()
             )
             fig_grouped_a2.update_coloraxes(showscale=False)
             fig_grouped_a2.update_layout(
@@ -913,10 +914,10 @@ def _render_app2_section3_features(analytics_data, apply_theme):
                 x=preds_distribution_a2, nbins=30,
                 title="Distribution of Predicted Salaries",
                 labels={"x": "Predicted Salary"},
-                color_discrete_sequence=["#A78BFA"]
+                color_discrete_sequence=[get_colorway()[3]]
             )
             fig_pred_dist_a2.update_traces(
-                marker_line_color="#1B2230", marker_line_width=0.8
+                marker_line_color=get_token("surface_overlay", "#1B2230"), marker_line_width=0.8
             )
             apply_theme(fig_pred_dist_a2)
             st.plotly_chart(fig_pred_dist_a2, width='stretch')
@@ -932,7 +933,7 @@ def _render_app2_section3_features(analytics_data, apply_theme):
             x="SHAP Importance", y="Feature",
             orientation="h",
             color="SHAP Importance",
-            color_continuous_scale=[[0, "#1E4799"], [0.5, "#4F8EF7"], [1, "#38BDF8"]],
+            color_continuous_scale=get_continuous_scale(),
             title="Top Features Influencing Salary Predictions"
         )
         fig_shap_a2.update_layout(

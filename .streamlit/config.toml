@@ -1,37 +1,232 @@
+# .streamlit/config.toml
+# ======================
+# SalaryScope — Complete Configuration
+#
+# Sections
+# --------
+#   [browser]            — unchanged from original
+#   [server]             — unchanged from original
+#   [theme]              — global options shared by BOTH themes
+#   [theme.dark]         — Dark Professional (your existing CSS, now native)
+#   [theme.dark.sidebar] — sidebar overrides for dark mode
+#   [theme.light]        — Light Clean (pairs with LIGHT_CLEAN in app/theme.py)
+#   [theme.light.sidebar]— sidebar overrides for light mode
+#
+# Migration note
+# --------------
+# The original flat [theme] block (base, primaryColor, backgroundColor,
+# secondaryBackgroundColor, textColor, font) has been absorbed into
+# [theme.dark] where it belongs. The global [theme] section now holds only
+# things that are truly shared and cannot be split per mode: font, border
+# radius, widget border visibility, sidebar border, and chart colorway.
+
+# ---------------------------------------------------------------------------
+[browser]
+gatherUsageStats = true
+
+# ---------------------------------------------------------------------------
+[server]
+headless = true
+# enableCORS           = true
+# enableXsrfProtection = true
+
+# ---------------------------------------------------------------------------
+# [theme] — global, applies to BOTH modes
+# Only options that cannot live in [theme.dark] / [theme.light] go here.
+# ---------------------------------------------------------------------------
 [theme]
-# ─────────────────────────────────────────────────────────────────
-# SalaryScope — Dual-Theme Config
-#
-# The app manages ALL visual styling through st.markdown() CSS for
-# both dark and light modes. This file only sets Streamlit's native
-# widget baseline so it does not clash with either custom theme.
-#
-# Rule: dark base keeps native widgets from flashing light on load.
-# The custom CSS then takes over completely for both themes.
-# ─────────────────────────────────────────────────────────────────
 
-base                     = "dark"
+# sans-serif lets Inter/Segoe UI declared in CSS act as the effective font.
+font = "sans-serif"
 
-# Matches the dark theme's --primary (#3E7DE0) — used by Streamlit
-# for focus rings, sliders, and checkbox ticks before CSS loads.
-primaryColor             = "#3E7DE0"
+# "md" ≈ 6px — matches border-radius:6px throughout the existing CSS.
+baseRadius   = "md"
+buttonRadius = "md"
 
-# Matches --bg-main of the dark theme exactly.
-backgroundColor          = "#0C1118"
+# Always show widget borders at rest — matches the existing CSS which draws
+# border:1px solid var(--border) on unfocused inputs.
+showWidgetBorder  = true
 
-# Matches --bg-card / --bg-input of the dark theme.
+# Visible dividing line between sidebar and main body in both themes.
+showSidebarBorder = true
+
+# Plotly/Altair colorway fallback (used when theme=None is NOT passed to
+# st.plotly_chart). Once all charts go through apply_theme() this only
+# affects Altair/Vega-Lite. Values = Dark Professional COLORWAY.
+chartCategoricalColors = [
+    "#4F8EF7",
+    "#38BDF8",
+    "#34D399",
+    "#A78BFA",
+    "#F59E0B",
+    "#FB923C",
+    "#F472B6",
+    "#22D3EE",
+]
+
+# ---------------------------------------------------------------------------
+# [theme.dark] — Dark Professional
+# Direct translation of the :root CSS variables that the existing
+# st.markdown block sets. Streamlit now owns these values natively.
+# ---------------------------------------------------------------------------
+[theme.dark]
+
+base = "dark"
+
+# --primary: #3E7DE0
+# Drives: focused widget border ring, slider thumb, checkbox tick,
+#         st.button type="primary" fill, selected multiselect pills,
+#         stMetricValue color, active toggle, progress bar fill.
+# NOTE: --primary-hover (#2F6CD0) has no config.toml key — kept as a
+#       :root custom property in app_resume.py for the button hover rule.
+primaryColor = "#3E7DE0"
+
+# --bg-main: #0C1118
+backgroundColor = "#0C1118"
+
+# --bg-card: #141A22
+# Streamlit uses secondaryBackgroundColor for input/selection backgrounds,
+# code blocks, and — because it SWAPS bg/secondaryBg in the sidebar —
+# the sidebar panel background. #141A22 is exactly what the existing CSS
+# sets for the sidebar, so this is correct.
 secondaryBackgroundColor = "#141A22"
 
-# Matches --text-main of the dark theme.
-textColor                = "#E6EAF0"
+# --text-main: #E6EAF0
+textColor = "#E6EAF0"
 
-# Sans-serif keeps Inter/Segoe UI (set in CSS) as the effective font.
-font                     = "sans serif"
+# Link color — slightly brighter primary variant
+linkColor = "#4F8EF7"
 
-[browser]
-gatherUsageStats         = true
+# --border: #283142
+# Drives: expander borders, form borders, dataframe borders,
+#         sidebar right edge, widget focus ring color baseline,
+#         widget borders when showWidgetBorder=true.
+borderColor = "#283142"
 
-[server]
-headless                 = true
-#enableCORS               = true
-#enableXsrfProtection     = true
+# Dataframe / table header background
+dataframeHeaderBackgroundColor = "#141A22"
+
+# Basic semantic color palette
+# Drives: st.success/warning/error/info, colored Markdown, st.metric
+# delta indicators, sparklines, badges, chat avatars, st.badge text.
+greenColor  = "#22C55E"   # --success
+orangeColor = "#F59E0B"   # --warning (Streamlit uses orange for warnings)
+redColor    = "#EF4444"   # --error
+blueColor   = "#4F8EF7"   # info / primary bright
+violetColor = "#A78BFA"   # COLORWAY[3]
+yellowColor = "#F59E0B"   # amber — same as orange in this palette
+grayColor   = "#9CA6B5"   # --text-muted
+
+# ---------------------------------------------------------------------------
+# [theme.dark.sidebar]
+#
+# Streamlit's automatic bg/secondaryBg swap makes the sidebar background
+# = secondaryBackgroundColor (#141A22) which is correct.
+# But it would make widget INPUT AREAS inside the sidebar fall back to
+# backgroundColor (#0C1118) — too dark. Override here to get bg-input.
+# ---------------------------------------------------------------------------
+[theme.dark.sidebar]
+
+backgroundColor          = "#141A22"   # bg-card — sidebar panel
+secondaryBackgroundColor = "#1B2230"   # bg-input — widget interiors in sidebar
+borderColor              = "#283142"
+primaryColor             = "#4F8EF7"   # slightly brighter for the sidebar
+
+# ---------------------------------------------------------------------------
+# [theme.light] — Light Clean
+# Paired with LIGHT_CLEAN in app/theme.py. When the user picks light mode
+# from the Streamlit settings menu, both Streamlit widgets and Plotly charts
+# (via apply_theme) will share the same visual language.
+# ---------------------------------------------------------------------------
+[theme.light]
+
+base = "light"
+
+# Blue-600 — WCAG AA contrast ratio 5.9:1 on white
+primaryColor = "#2563EB"
+
+# Near-white app background
+backgroundColor = "#FAFAFA"
+
+# White sidebar (Streamlit swaps this to become the sidebar background).
+# Widget input areas in the main body inherit from backgroundColor (#FAFAFA).
+secondaryBackgroundColor = "#FFFFFF"
+
+# Dark slate text — contrast ratio ~14:1 on white
+textColor = "#1A202C"
+
+linkColor   = "#1D4ED8"
+borderColor = "#CBD5E1"
+
+dataframeHeaderBackgroundColor = "#F4F6F9"
+
+# Palette — darker/richer variants so badges, deltas, and alerts
+# remain clearly readable on white/near-white backgrounds.
+greenColor  = "#16A34A"   # teal-600
+orangeColor = "#D97706"   # amber-700
+redColor    = "#DC2626"   # red-600
+blueColor   = "#2563EB"
+violetColor = "#7C3AED"   # violet-600
+yellowColor = "#D97706"
+grayColor   = "#4A5568"
+
+# ---------------------------------------------------------------------------
+# [theme.light.sidebar]
+# ---------------------------------------------------------------------------
+[theme.light.sidebar]
+
+# Slightly off-white — distinguishes sidebar from the #FAFAFA main body
+backgroundColor          = "#F4F6F9"
+# Widget inputs inside sidebar — white for contrast against #F4F6F9
+secondaryBackgroundColor = "#FFFFFF"
+borderColor              = "#E2E8F0"
+primaryColor             = "#2563EB"
+
+
+# ==========================================================================
+# CSS REDUCTION GUIDE — CURRENT STATE (post-migration)
+# app_resume.py st.markdown block now contains ONLY what config.toml
+# cannot express. Everything else is owned here.
+#
+# REMOVED from CSS (config.toml owns these now):
+#   :root { --primary, --bg-main, --bg-card, --bg-input,
+#           --border, --text-main, --text-muted, --success, --warning, --error }
+#   .stApp / [data-testid="stAppViewContainer"]  { background-color; color }
+#   [data-testid="stSidebar"]  { background-color; border-right }
+#   h1  { color: var(--primary) }
+#   h2, h3  { color: var(--text-main) }
+#   h4, h5, h6  { color: var(--text-muted) }   ← grayColor = #9CA6B5
+#   p, li, span, div  { color: var(--text-main) }
+#   label / .stLabel  { color: var(--text-muted) }
+#   .stNumberInput, .stSelectbox, .stMultiSelect  { background; border; color }
+#   .stNumberInput input  { background; color }
+#   .stButton > button[kind="primary"]  { background; border; color; weight }
+#   .stButton > button, .stDownloadButton  { background; border; color }
+#   .stButton:hover, .stDownloadButton:hover  { border-color; color }
+#   [data-testid="stMetric"]  { background; border }
+#   [data-testid="stMetricValue"]  { color: var(--primary) }
+#   hr  { border-color: var(--border) }
+#   .stCaption, small  { color: var(--text-muted) }
+#
+# KEPT in CSS (config.toml cannot express these):
+#   :root { --primary-hover: #2F6CD0 }        ← no hover-state key in config
+#   [data-baseweb="tab-list"]                 ← full block (layout/spacing)
+#   button[data-baseweb="tab"]                ← border-radius, transition
+#   button[data-baseweb="tab"][aria-selected="true"]  ← color, font-weight
+#   button > div[...stMarkdownContainer] > p  ← font-size, font-weight
+#   .stNumberInput/stSelectbox:focus-within   ← box-shadow ONLY
+#   .stButton > button[kind="primary"]:hover  ← uses --primary-hover
+#   [data-testid="stFileUploader"]            ← dashed border + hover
+#   [data-testid="stMetricLabel"]  { color }  ← mapped to --text-color-secondary
+#   [data-testid="stMetricValue"]  { font-weight: 700 }
+#   label / .stLabel  { font-size; font-weight }
+#   hr  { opacity: 0.7 }
+#
+# CSS custom property mapping (Streamlit injects these from config.toml):
+#   var(--primary-color)              ← primaryColor
+#   var(--background-color)           ← backgroundColor
+#   var(--background-color-secondary) ← secondaryBackgroundColor
+#   var(--text-color)                 ← textColor
+#   var(--text-color-secondary)       ← grayColor
+#   var(--border-color)               ← borderColor
+# ==========================================================================

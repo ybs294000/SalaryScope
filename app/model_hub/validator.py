@@ -60,9 +60,7 @@ def validate_schema(schema: dict) -> list[str]:
             cols = layout.get("columns")
             if cols is not None:
                 if not isinstance(cols, int) or cols not in (1, 2, 3):
-                    issues.append(
-                        "'layout.columns' must be the integer 1, 2, or 3."
-                    )
+                    issues.append("'layout.columns' must be the integer 1, 2, or 3.")
 
     # Optional top-level result_label key
     result_label = schema.get("result_label")
@@ -137,7 +135,6 @@ def validate_schema(schema: dict) -> list[str]:
                 issues.append(
                     f"{prefix}: 'col_span' must be an integer when present, got {span_val!r}."
                 )
-
     return issues
 
 
@@ -369,11 +366,55 @@ def validate_bundle_files(file_names: list[str]) -> list[str]:
     """
     Given a list of file names (not paths) in an upload batch,
     return missing required file names.
+
+    Accepts two valid bundle formats:
+
+    ONNX format   — model.onnx  + columns.json + schema.json
+    Pickle format — model.pkl   + columns.pkl  + schema.json
+
+    A mix (e.g. model.onnx + columns.pkl) is treated as invalid.
+    Returns sorted list of missing required file names, or a format
+    error message if the model/columns pairing is inconsistent.
     """
-    required = {"model.pkl", "columns.pkl", "schema.json"}
     provided = set(file_names)
-    missing  = required - provided
+
+    has_onnx_model   = "model.onnx"   in provided
+    has_pickle_model = "model.pkl"    in provided
+    has_json_cols    = "columns.json" in provided
+    has_pkl_cols     = "columns.pkl"  in provided
+    has_schema       = "schema.json"  in provided
+
+    missing: list[str] = []
+
+    if not has_schema:
+        missing.append("schema.json")
+
+    if has_onnx_model:
+        # ONNX format: need columns.json
+        if not has_json_cols:
+            missing.append("columns.json")
+    elif has_pickle_model:
+        # Pickle format: need columns.pkl
+        if not has_pkl_cols:
+            missing.append("columns.pkl")
+    else:
+        # No model file at all
+        missing.append("model.onnx  (or  model.pkl)")
+
     return sorted(missing)
+
+
+def detect_bundle_format(file_names: list[str]) -> str:
+    """
+    Return "onnx", "pickle", or "unknown" based on uploaded file names.
+    Called by the upload panel UI to show the correct format label.
+    """
+    provided = set(file_names)
+    if "model.onnx" in provided:
+        return "onnx"
+    if "model.pkl" in provided:
+        return "pickle"
+    return "unknown"
 
 
 # ---------------------------------------------------------------------------

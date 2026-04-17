@@ -5,6 +5,7 @@ Admin diagnostics and monitoring panel for SalaryScope.
 """
 
 import streamlit as st
+from app.theme import get_token, get_gauge_colors, get_base_layout_dict, apply_theme, get_colorway
 import sys
 import platform
 import datetime
@@ -527,29 +528,26 @@ def _build_system_plots(
     import plotly.graph_objects as go
     import plotly.express as px
 
-    _BG       = "#141A22"
-    _BG_INNER = "#1B2230"
-    _BG_INPUT   = "#1B2230"
-    _BORDER   = "#283142"
-    _TEXT     = "#E6EAF0"
-    _MUTED    = "#9CA6B5"
-    _BLUE     = "#4F8EF7"
-    _GREEN    = "#34D399"
-    _AMBER    = "#F59E0B"
-    _RED      = "#EF4444"
-    _PURPLE   = "#A78BFA"
+    # ── Theme tokens (all resolved from active theme at call time) ──────────
+    _G    = get_gauge_colors()
+    _BASE = get_base_layout_dict()
 
-    _SAFE   = "#22C55E"   # success
-    _WARN   = "#F59E0B"   # warning
-    _DANGER = "#EF4444"   # error
-    _PRIMARY = "#3E7DE0"  # app primary
-
-    _BASE = dict(
-        paper_bgcolor=_BG,
-        plot_bgcolor=_BG_INNER,
-        font=dict(color=_TEXT, size=12),
-        margin=dict(l=50, r=20, t=40, b=50),
-    )
+    # Convenience aliases that match the old names — zero call-site changes needed
+    _BG       = _G["bg"]
+    _BG_INNER = _G["bg_inner"]
+    _BG_INPUT = _G["bg_inner"]
+    _BORDER   = _G["border"]
+    _TEXT     = _G["text"]
+    _MUTED    = _G["muted"]
+    _BLUE     = _G["blue"]
+    _GREEN    = _G["green"]
+    _AMBER    = _G["amber"]
+    _RED      = _G["red"]
+    _PURPLE   = _G["purple"]
+    _SAFE     = _G["safe"]
+    _WARN     = _G["warn"]
+    _DANGER   = _G["danger"]
+    _PRIMARY  = _G["primary"]
 
     st.caption(
         "Charts are built from already-cached snapshot data. "
@@ -599,9 +597,9 @@ def _build_system_plots(
                 bgcolor=_BG_INPUT,
                 bordercolor=_BORDER,
                 steps=[
-                    dict(range=[0, ram_total * 0.5], color="#1E2A3A"),
-                    dict(range=[ram_total * 0.5, ram_total * 0.8], color="#2A2215"),
-                    dict(range=[ram_total * 0.8, max(ram_total, rss_mb * 2)], color="#2A1515"),
+                    dict(range=[0, ram_total * 0.5],                       color=_G["step_safe"]),
+                    dict(range=[ram_total * 0.5, ram_total * 0.8],         color=_G["step_warn"]),
+                    dict(range=[ram_total * 0.8, max(ram_total, rss_mb * 2)], color=_G["step_danger"]),
                 ],
                 threshold=dict(
                     line=dict(color=_DANGER, width=2),
@@ -611,7 +609,7 @@ def _build_system_plots(
             ),
         ))
         fig_rss.update_layout(height=220, **_BASE)
-        st.plotly_chart(fig_rss, width='stretch')
+        st.plotly_chart(fig_rss, width='stretch', theme=None)
 
         process_pct = (rss_mb / ram_total) * 100
         st.caption(f"Process uses {process_pct:.2f}% of system RAM")
@@ -635,9 +633,9 @@ def _build_system_plots(
                 bgcolor=_BG_INNER,
                 bordercolor=_BORDER,
                 steps=[
-                    dict(range=[0, 60],  color="#1B2A3A"),
-                    dict(range=[60, 80], color="#2A2215"),
-                    dict(range=[80, 100], color="#2A1515"),
+                    dict(range=[0, 60],   color=_G["step_safe"]),
+                    dict(range=[60, 80],  color=_G["step_warn"]),
+                    dict(range=[80, 100], color=_G["step_danger"]),
                 ],
                 threshold=dict(
                     line=dict(color=_RED, width=2),
@@ -647,7 +645,7 @@ def _build_system_plots(
             ),
         ))
         fig_ram.update_layout(height=220, **_BASE)
-        st.plotly_chart(fig_ram, width='stretch')
+        st.plotly_chart(fig_ram, width='stretch', theme=None)
 
     with col_g3:
         disk_pct = sys_snap.get("disk_pct", 0)
@@ -671,14 +669,14 @@ def _build_system_plots(
                 bgcolor=_BG_INNER,
                 bordercolor=_BORDER,
                 steps=[
-                    dict(range=[0, 60],  color="#1B2A3A"),
-                    dict(range=[60, 80], color="#2A2215"),
-                    dict(range=[80, 100], color="#2A1515"),
+                    dict(range=[0, 60],   color=_G["step_safe"]),
+                    dict(range=[60, 80],  color=_G["step_warn"]),
+                    dict(range=[80, 100], color=_G["step_danger"]),
                 ],
             ),
         ))
         fig_disk.update_layout(height=220, **_BASE)
-        st.plotly_chart(fig_disk, width='stretch')
+        st.plotly_chart(fig_disk, width='stretch', theme=None)
 
     # ------------------------------------------------------------------
     # ROW 2 — Horizontal bar: disk breakdown  |  Context switches
@@ -713,7 +711,7 @@ def _build_system_plots(
                 **_BASE,
             )
             fig_disk_bar.update_layout(margin=dict(l=10, r=10, t=10, b=40))
-            st.plotly_chart(fig_disk_bar, width='stretch')
+            st.plotly_chart(fig_disk_bar, width='stretch', theme=None)
         else:
             st.caption("Disk data not available.")
 
@@ -738,7 +736,7 @@ def _build_system_plots(
                 **_BASE,
             )
             fig_ctx.update_layout(margin=dict(l=40, r=10, t=10, b=40))
-            st.plotly_chart(fig_ctx, width='stretch')
+            st.plotly_chart(fig_ctx, width='stretch', theme=None)
         else:
             st.caption("Context switch data not available (Windows or psutil version).")
 
@@ -781,7 +779,7 @@ def _build_system_plots(
             **_BASE,
         )
         fig_load.update_layout(margin=dict(l=50, r=20, t=20, b=40))
-        st.plotly_chart(fig_load, width='stretch')
+        st.plotly_chart(fig_load, width='stretch', theme=None)
         st.caption(
             f"Load averages above the CPU count ({logical} logical cores) "
             "indicate sustained saturation."
@@ -884,7 +882,7 @@ def _build_system_plots(
             **_BASE,
         )
         fig_ts.update_layout(margin=dict(l=60, r=60, t=50, b=50))
-        st.plotly_chart(fig_ts, width='stretch')
+        st.plotly_chart(fig_ts, width='stretch', theme=None)
 
         if st.button(
             ":material/delete: Clear capture history",
@@ -1399,20 +1397,17 @@ def show_admin_panel(user_email):
                             labels=["Yes", "Somewhat", "No"],
                             values=[stats["yes"], stats["somewhat"], stats["no"]],
                             hole=0.4,
-                            marker=dict(colors=["#4F8EF7", "#38BDF8", "#F59E0B"]),
+                            marker=dict(colors=[get_colorway()[0], get_colorway()[1], get_colorway()[4]]),
                             textinfo="label+percent",
                             textposition="inside",
                             textfont=dict(color="white"),
                         )])
-                        fig_acc.update_layout(
-                            height=350,
-                            paper_bgcolor="#141A22",
-                            plot_bgcolor="#1B2230",
-                            font=dict(color="#E6EAF0"),
-                            showlegend=False,
-                            margin=dict(l=10, r=10, t=30, b=10),
-                        )
-                        st.plotly_chart(fig_acc, width='stretch')
+                        apply_theme(fig_acc, extra={
+                            "height": 350,
+                            "showlegend": False,
+                            "margin": dict(l=10, r=10, t=30, b=10),
+                        })
+                        st.plotly_chart(fig_acc, width='stretch', theme=None)
 
                 with right:
                     st.markdown("#### Prediction Direction")
@@ -1423,20 +1418,17 @@ def show_admin_panel(user_email):
                             labels=["Too High", "About Right", "Too Low"],
                             values=[stats["too_high"], stats["about_right"], stats["too_low"]],
                             hole=0.42,
-                            marker=dict(colors=["#EF4444", "#34D399", "#4F8EF7"]),
+                            marker=dict(colors=[get_token("status_error", "#EF4444"), get_colorway()[2], get_colorway()[0]]),
                             textinfo="label+percent",
                             textposition="inside",
                             textfont=dict(color="white", size=11),
                         ))
-                        fig_dir.update_layout(
-                            height=350,
-                            paper_bgcolor="#141A22",
-                            plot_bgcolor="#1B2230",
-                            font=dict(color="#E6EAF0"),
-                            showlegend=False,
-                            margin=dict(l=10, r=10, t=30, b=10),
-                        )
-                        st.plotly_chart(fig_dir, width='stretch')
+                        apply_theme(fig_dir, extra={
+                            "height": 350,
+                            "showlegend": False,
+                            "margin": dict(l=10, r=10, t=30, b=10),
+                        })
+                        st.plotly_chart(fig_dir, width='stretch', theme=None)
                     else:
                         st.caption("No feedback data available")
 
@@ -1448,22 +1440,20 @@ def show_admin_panel(user_email):
                         x=list(mc.keys()),
                         y=list(mc.values()),
                         labels={"x": "Model", "y": "Feedback Count"},
-                        color_discrete_sequence=["#4F8EF7"],
+                        color_discrete_sequence=[get_colorway()[0]],
                         text=list(mc.values()),
                     )
                     fig_mc.update_traces(
                         textposition="outside",
                         textfont=dict(color="white"),
                     )
-                    fig_mc.update_layout(
-                        title="Feedback Count per Model",
-                        xaxis_title="Model",
-                        yaxis_title="Count",
-                        paper_bgcolor="#141A22",
-                        plot_bgcolor="#1B2230",
-                        showlegend=False,
-                    )
-                    st.plotly_chart(fig_mc, width='stretch')
+                    apply_theme(fig_mc, extra={
+                        "title": "Feedback Count per Model",
+                        "xaxis_title": "Model",
+                        "yaxis_title": "Count",
+                        "showlegend": False,
+                    })
+                    st.plotly_chart(fig_mc, width='stretch', theme=None)
 
                 st.caption("Loaded on demand to minimize database reads")
 

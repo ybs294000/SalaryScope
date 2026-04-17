@@ -1,3 +1,4 @@
+from app.theme import get_colorway, get_continuous_scale, get_colorway_3_stages, get_token
 """
 scenario_analysis_tab.py
 ------------------------
@@ -327,7 +328,7 @@ def render_scenario_tab(
                     x=res_df_a1["Scenario"],
                     y=res_df_a1["Predicted Salary (USD)"],
                     mode="markers",
-                    marker=dict(color="#fef6e4", size=10),
+                    marker=dict(color=get_token("ci_marker", "#fef6e4"), size=10),
                     name="Point Estimate"
                 ))
                 apply_theme(fig_ci_a1, {
@@ -340,6 +341,7 @@ def render_scenario_tab(
                 st.divider()
                 st.subheader("Salary Level Distribution Across Scenarios")
 
+                _cw3s = get_colorway_3_stages()
                 fig_band_sc_a1 = px.bar(
                     res_df_a1,
                     x="Scenario",
@@ -347,9 +349,9 @@ def render_scenario_tab(
                     color="Salary Level",
                     title="Scenarios Colored by Salary Level",
                     color_discrete_map={
-                        "Early Career Range": "#38BDF8",
-                        "Professional Range": "#4F8EF7",
-                        "Executive Range": "#A78BFA"
+                        "Early Career Range": _cw3s[0],
+                        "Professional Range": _cw3s[1],
+                        "Executive Range": _cw3s[2]
                     }
                 )
                 apply_theme(fig_band_sc_a1)
@@ -365,9 +367,7 @@ def render_scenario_tab(
                     color="Career Stage",
                     title="Scenarios Colored by Career Stage",
                     color_discrete_map={
-                        "Entry Stage": "#38BDF8",
-                        "Growth Stage": "#4F8EF7",
-                        "Leadership Stage": "#A78BFA"
+                        "Entry Stage": get_colorway()[1], "Growth Stage": get_colorway()[0], "Leadership Stage": get_colorway()[3]
                     }
                 )
                 apply_theme(fig_stage_sc_a1)
@@ -431,7 +431,7 @@ def render_scenario_tab(
                     x="Years of Experience",
                     y="Predicted Salary (USD)",
                     title=f"Salary Sensitivity: Experience Sweep -- {sweep_scenario_a1}",
-                    color_discrete_sequence=["#4F8EF7"]
+                    color_discrete_sequence=[get_colorway()[0]]
                 )
                 fig_sweep_a1.update_traces(line=dict(width=2.5))
                 apply_theme(fig_sweep_a1)
@@ -471,7 +471,7 @@ def render_scenario_tab(
                     y="Predicted Salary (USD)",
                     title=f"Salary by Education Level -- {sweep_scenario_a1}",
                     color="Education",
-                    color_discrete_sequence=["#4F8EF7", "#38BDF8", "#34D399", "#A78BFA"],
+                    color_discrete_sequence=get_colorway()[:4],
                     text="Predicted Salary (USD)"
                 )
                 fig_edu_sweep_a1.update_traces(
@@ -802,10 +802,7 @@ def render_scenario_tab(
                     color="Experience Level",
                     title="Scenarios Colored by Experience Level",
                     color_discrete_map={
-                        "Entry Level": "#38BDF8",
-                        "Mid Level": "#4F8EF7",
-                        "Senior Level": "#A78BFA",
-                        "Executive Level": "#F59E0B"
+                        "Entry Level": get_colorway()[1], "Mid Level": get_colorway()[0], "Senior Level": get_colorway()[3], "Executive Level": get_colorway()[4]
                     }
                 )
                 apply_theme(fig_exp_sc_a2)
@@ -822,9 +819,7 @@ def render_scenario_tab(
                     color="Company Size",
                     title="Scenarios Colored by Company Size",
                     color_discrete_map={
-                        "Small Company": "#38BDF8",
-                        "Medium Company": "#4F8EF7",
-                        "Large Company": "#A78BFA"
+                        "Small Company": get_colorway()[1], "Medium Company": get_colorway()[0], "Large Company": get_colorway()[3]
                     }
                 )
                 apply_theme(fig_size_sc_a2)
@@ -841,9 +836,7 @@ def render_scenario_tab(
                     color="Work Mode",
                     title="Scenarios Colored by Work Mode",
                     color_discrete_map={
-                        "On-site": "#38BDF8",
-                        "Hybrid": "#4F8EF7",
-                        "Fully Remote": "#34D399"
+                        "On-site": get_colorway()[1], "Hybrid": get_colorway()[0], "Fully Remote": get_colorway()[2]
                     }
                 )
                 apply_theme(fig_remote_sc_a2)
@@ -901,7 +894,7 @@ def render_scenario_tab(
                     y="Predicted Salary (USD)",
                     title=f"Salary Sensitivity: Experience Level Sweep -- {sweep_scenario_a2}",
                     markers=True,
-                    color_discrete_sequence=["#4F8EF7"],
+                    color_discrete_sequence=[get_colorway()[0]],
                     text="Predicted Salary (USD)"
                 )
                 fig_sweep_exp_a2.update_traces(
@@ -956,7 +949,7 @@ def render_scenario_tab(
                     y="Predicted Salary (USD)",
                     title=f"Salary by Company Size -- {sweep_scenario_a2}",
                     color="Company Size",
-                    color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"],
+                    color_discrete_sequence=get_colorway_3_stages(),
                     text="Predicted Salary (USD)"
                 )
                 fig_sweep_size_a2.update_traces(

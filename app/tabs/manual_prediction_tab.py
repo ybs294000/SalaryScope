@@ -26,6 +26,15 @@ from app.utils.emergency_fund_utils import render_emergency_fund_planner
 from app.utils.lifestyle_utils import render_lifestyle_split
 
 from app.utils.feedback import feedback_ui
+from app.theme import (
+    salary_card_html,
+    salary_level_card_html,
+    career_stage_card_html,
+    association_insight_card_html,
+    apply_theme,
+    get_colorway,
+    get_token,
+)
 from app.core.database import save_prediction
 
 
@@ -249,42 +258,10 @@ def render_manual_prediction_tab(
             hourly = prediction / (52 * 40)
 
             st.markdown("<h3 style='text-align: center;'>Estimated Annual Salary</h3>", unsafe_allow_html=True)
-            st.markdown(
-                f"""
-                <div style='
-                    background: linear-gradient(135deg, #1B2A45 0%, #1B2230 100%);
-                    border: 1px solid #3E7DE0;
-                    border-left: 5px solid #3E7DE0;
-                    border-radius: 10px;
-                    padding: 24px 32px;
-                    text-align: center;
-                    margin: 8px auto;
-                '>
-                    <div style='color: #9CA6B5; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;'>ANNUAL SALARY (USD)</div>
-                    <div style='color: #4F8EF7; font-size: 42px; font-weight: 700; letter-spacing: -1px;'>${prediction:,.2f}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(salary_card_html(f"${prediction:,.2f}"), unsafe_allow_html=True)
             st.divider()
             st.markdown("<h3 style='text-align: center;'>Estimated Salary Level</h3>", unsafe_allow_html=True)
-            st.markdown(
-                f"""
-                <div style='
-                    background: linear-gradient(135deg, #1B2A45 0%, #1B2230 100%);
-                    border: 1px solid #818CF8;
-                    border-left: 5px solid #818CF8;
-                    border-radius: 10px;
-                    padding: 24px 32px;
-                    text-align: center;
-                    margin: 8px auto;
-                '>
-                    <div style='color: #9CA6B5; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;'>CAREER SALARY LEVEL</div>
-                    <div style='color: #4F8EF7; font-size: 42px; font-weight: 700; letter-spacing: -1px;'>{salary_band_label}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(salary_level_card_html(salary_band_label), unsafe_allow_html=True)
             # -------------------------------------------------------
             # CAREER STAGE (CLUSTER MODEL)
             # -------------------------------------------------------
@@ -293,27 +270,7 @@ def render_manual_prediction_tab(
             st.markdown("<h3 style='text-align: center;'>Career Stage</h3>", unsafe_allow_html=True)
 
             # Display UI (same style as salary band)
-            st.markdown(
-                f"""
-                <div style='
-                    background: linear-gradient(135deg, #1B2A45 0%, #1B2230 100%);
-                    border: 1px solid #A78BFA;
-                    border-left: 5px solid #A78BFA;
-                    border-radius: 10px;
-                    padding: 24px 32px;
-                    text-align: center;
-                    margin: 8px auto;
-                '>
-                    <div style='color: #9CA6B5; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;'>
-                        CAREER STAGE (PROGRESSION SEGMENT)
-                    </div>
-                    <div style='color: #A78BFA; font-size: 42px; font-weight: 700; letter-spacing: -1px;'>
-                        {career_stage_label}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(career_stage_card_html(career_stage_label), unsafe_allow_html=True)
 
             st.caption(
                 "Career stage is determined using an unsupervised clustering model based on "
@@ -328,21 +285,7 @@ def render_manual_prediction_tab(
 
             st.markdown("<h3 style='text-align: center;'>Pattern Insight (Data Association)</h3>", unsafe_allow_html=True)
 
-            st.markdown(
-                f"""
-                <div style='
-                    background: linear-gradient(135deg, #1B2A45 0%, #1B2230 100%);
-                    border: 1px solid #F59E0B;
-                    border-left: 5px solid #F59E0B;
-                    border-radius: 10px;
-                    padding: 24px 32px;
-                    margin: 8px auto;
-                '>
-                    <div style='color: #E5E7EB; font-size: 18px; font-weight: 500; line-height: 1.4;'>{assoc_text_a1_improved}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(association_insight_card_html(assoc_text_a1_improved), unsafe_allow_html=True)
 
             st.caption(
                 "This insight is generated using association rule mining (Apriori algorithm), "
@@ -612,23 +555,7 @@ def render_manual_prediction_tab(
             hourly_a2 = prediction_a2 / (52 * 40)
 
             st.markdown("<h3 style='text-align: center;'>Estimated Annual Salary</h3>", unsafe_allow_html=True)
-            st.markdown(
-                f"""
-                <div style='
-                    background: linear-gradient(135deg, #1B2A45 0%, #1B2230 100%);
-                    border: 1px solid #3E7DE0;
-                    border-left: 5px solid #3E7DE0;
-                    border-radius: 10px;
-                    padding: 24px 32px;
-                    text-align: center;
-                    margin: 8px auto;
-                '>
-                    <div style='color: #9CA6B5; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;'>ANNUAL SALARY (USD)</div>
-                    <div style='color: #4F8EF7; font-size: 42px; font-weight: 700; letter-spacing: -1px;'>${prediction_a2:,.2f}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(salary_card_html(f"${prediction_a2:,.2f}"), unsafe_allow_html=True)
 
             st.divider()
             st.markdown("<h3 style='text-align: center;'>Breakdown (Approximate)</h3>", unsafe_allow_html=True)

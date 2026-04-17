@@ -84,6 +84,25 @@ from app.tabs.user_profile import show_profile
 
 from app.tabs.model_hub_tab import render_model_hub_tab
 
+from app.tabs.appearance_panel import render_appearance_panel
+
+# --------------------------------
+# THEME
+# --------------------------------
+from app.theme import (
+    apply_theme        as _apply_theme,
+    get_active_colorway,
+    get_colorway       as _get_colorway,
+    get_model_colors,
+    get_continuous_scale,
+    COLORWAY           as _COLORWAY,
+    MODEL_COLORS       as _MODEL_COLORS,
+    COLOR_BG_CARD      as _BG_CARD,
+    COLOR_BG_INPUT     as _BG_INPUT,
+    COLOR_BORDER       as _BORDER,
+    COLOR_TEXT_MAIN    as _TEXT_MAIN,
+    COLOR_TEXT_MUTED   as _TEXT_MUTED,
+)
 
 if "db_initialized" not in st.session_state:
     init_db()
@@ -277,66 +296,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
-# --------------------------------------------------
-# Custom Plotly Theme (from App 1)
-# --------------------------------------------------
-_BG_CARD    = "#141A22"
-_BG_INPUT   = "#1B2230"
-_BORDER     = "#283142"
-_TEXT_MAIN  = "#E6EAF0"
-_TEXT_MUTED = "#9CA6B5"
-
-_COLORWAY = [
-    "#4F8EF7",
-    "#38BDF8",
-    "#34D399",
-    "#A78BFA",
-    "#F59E0B",
-    "#FB923C",
-    "#F472B6",
-    "#22D3EE",
-]
-
-_MODEL_COLORS = ["#6EB3FF", "#4F8EF7", "#3366CC", "#1E4799", "#0F2A5C"]
-
-_BASE_LAYOUT = dict(
-    paper_bgcolor=_BG_CARD,
-    plot_bgcolor=_BG_INPUT,
-    font=dict(color=_TEXT_MAIN, family="Inter, Segoe UI, sans-serif", size=13),
-    title=dict(font=dict(color=_TEXT_MAIN, size=16)),
-    colorway=_COLORWAY,
-    xaxis=dict(
-        gridcolor=_BORDER, linecolor=_BORDER,
-        tickfont=dict(color=_TEXT_MUTED, size=12),
-        title_font=dict(color=_TEXT_MUTED, size=13),
-        zerolinecolor=_BORDER, showgrid=True,
-    ),
-    yaxis=dict(
-        gridcolor=_BORDER, linecolor=_BORDER,
-        tickfont=dict(color=_TEXT_MUTED, size=12),
-        title_font=dict(color=_TEXT_MUTED, size=13),
-        zerolinecolor=_BORDER, showgrid=True,
-    ),
-    legend=dict(
-        bgcolor=_BG_CARD, bordercolor=_BORDER, borderwidth=1,
-        font=dict(color=_TEXT_MAIN, size=12),
-    ),
-    hoverlabel=dict(
-        bgcolor="#1E2A3A", bordercolor=_BORDER,
-        font=dict(color=_TEXT_MAIN, size=12),
-    ),
-    margin=dict(l=60, r=30, t=50, b=60),
-)
-
-
-def _apply_theme(fig, extra=None):
-    """Inline the dark theme into a plotly figure."""
-    layout = dict(_BASE_LAYOUT)
-    if extra:
-        layout.update(extra)
-    fig.update_layout(**layout)
-    return fig
 
 # ==================================================
 # CAREER CLUSTER FEATURE ENGINEERING
@@ -1377,8 +1336,8 @@ with st.sidebar:
 
         else:
             st.info("You can use the application without logging in.")
-
-
+    st.divider()
+    render_appearance_panel() 
 # ==================================================
 # HEADER USER INDICATOR
 # ==================================================
@@ -1646,7 +1605,7 @@ with tab_objects[3]:
             REMOTE_REVERSE=REMOTE_REVERSE,
             COUNTRY_NAME_MAP=COUNTRY_NAME_MAP,
             apply_theme=_apply_theme,
-            colorway=_COLORWAY,
+            colorway=get_active_colorway(),
             title_features=title_features,
             app1_generate_scenario_pdf=app1_generate_scenario_pdf,
             app2_generate_scenario_pdf=app2_generate_scenario_pdf,
@@ -1675,7 +1634,7 @@ with tab_objects[4]:
         APP2_MODEL_COMPARISON=APP2_MODEL_COMPARISON,
         # Shared helpers
         apply_theme=_apply_theme,
-        model_colors=_MODEL_COLORS,
+        model_colors=get_model_colors(),
         # PDF helpers
         cached_app1_model_analytics_pdf=cached_app1_model_analytics_pdf,
         cached_app2_model_analytics_pdf=cached_app2_model_analytics_pdf,

@@ -23,19 +23,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # ---------------------------------------------------------------------------
-# Colour constants matching the host app dark-professional theme
+# Colour constants — delegated to app/theme.py
 # ---------------------------------------------------------------------------
-_BG_CARD    = "#141A22"
-_BG_INPUT   = "#1B2230"
-_BORDER     = "#283142"
-_TEXT_MAIN  = "#E6EAF0"
-_TEXT_MUTED = "#9CA6B5"
+from app.theme import (
+    get_token, get_colorway_extended, get_continuous_scale,
+    apply_theme, rule_divider_html,
+)
 
-_C = [
-    "#4F8EF7", "#38BDF8", "#34D399", "#A78BFA",
-    "#F59E0B", "#FB923C", "#F472B6", "#22D3EE",
-    "#818CF8", "#6EE7B7", "#FCD34D", "#F87171",
-]
+def _C():
+    """Return the 12-color extended colorway from the active theme."""
+    return get_colorway_extended()
 
 _EXP_ORDER  = ["Entry Level", "Mid Level", "Senior Level", "Executive Level"]
 _SIZE_ORDER = ["Small Company", "Medium Company", "Large Company"]
@@ -46,47 +43,13 @@ _MODE_ORDER = ["On-site", "Hybrid", "Fully Remote"]
 # ---------------------------------------------------------------------------
 
 def _themed(fig, extra=None):
-    """Apply the app dark theme to any plotly figure."""
-    layout = dict(
-        paper_bgcolor=_BG_CARD,
-        plot_bgcolor=_BG_INPUT,
-        font=dict(color=_TEXT_MAIN, family="Inter, Segoe UI, sans-serif", size=13),
-        title=dict(font=dict(color=_TEXT_MAIN, size=15)),
-        colorway=_C,
-        xaxis=dict(
-            gridcolor=_BORDER, linecolor=_BORDER,
-            tickfont=dict(color=_TEXT_MUTED, size=12),
-            title_font=dict(color=_TEXT_MUTED, size=13),
-            zerolinecolor=_BORDER, showgrid=True,
-        ),
-        yaxis=dict(
-            gridcolor=_BORDER, linecolor=_BORDER,
-            tickfont=dict(color=_TEXT_MUTED, size=12),
-            title_font=dict(color=_TEXT_MUTED, size=13),
-            zerolinecolor=_BORDER, showgrid=True,
-        ),
-        legend=dict(
-            bgcolor=_BG_CARD, bordercolor=_BORDER, borderwidth=1,
-            font=dict(color=_TEXT_MAIN, size=12),
-        ),
-        hoverlabel=dict(
-            bgcolor="#1E2A3A", bordercolor=_BORDER,
-            font=dict(color=_TEXT_MAIN, size=12),
-        ),
-        margin=dict(l=60, r=30, t=50, b=60),
-    )
-    if extra:
-        layout.update(extra)
-    fig.update_layout(**layout)
-    return fig
+    """Apply the active theme to a Plotly figure (delegates to app/theme.apply_theme)."""
+    return apply_theme(fig, extra=extra)
 
 
 def _rule():
-    """Thin divider line matching the app border colour."""
-    st.markdown(
-        "<hr style='border:none;border-top:1px solid #283142;margin:4px 0 10px 0;'>",
-        unsafe_allow_html=True,
-    )
+    """Thin divider line — theme-aware."""
+    st.markdown(rule_divider_html(), unsafe_allow_html=True)
 
 
 def _kpi_row(items):
@@ -114,9 +77,9 @@ def _stats_table(series, label="Salary (USD)"):
         desc.to_frame().style
             .format("{:,.2f}")
             .set_properties(**{
-                "background-color": _BG_CARD,
-                "color": _TEXT_MAIN,
-                "border-color": _BORDER,
+                "background-color": get_token("surface_raised",  "#141A22"),
+                "color":             get_token("text_primary",    "#E6EAF0"),
+                "border-color":      get_token("border_default",  "#283142"),
             }),
         width='stretch',
     )
@@ -201,10 +164,10 @@ def _app1_dash1(df):
             fig = px.histogram(
                 dff, x="Salary", nbins=30,
                 title="Salary Frequency Distribution",
-                color_discrete_sequence=["#4F8EF7"],
+                color_discrete_sequence=[_C()[0]],
                 labels={"Salary": "Annual Salary (USD)"},
             )
-            fig.update_traces(marker_line_color="#0C1118", marker_line_width=0.6)
+            fig.update_traces(marker_line_color=get_token("surface_base", "#0C1118"), marker_line_width=0.6)
             fig.update_layout(xaxis_title="Annual Salary (USD)", yaxis_title="Count")
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
@@ -215,7 +178,7 @@ def _app1_dash1(df):
                 dff, x="Seniority", y="Salary",
                 title="Salary Spread by Seniority",
                 color="Seniority",
-                color_discrete_sequence=["#38BDF8", "#4F8EF7"],
+                color_discrete_sequence=_C()[:2],
                 category_orders={"Seniority": ["Non-Senior", "Senior"]},
                 points="outliers",
                 labels={"Salary": "Annual Salary (USD)"},
@@ -237,7 +200,7 @@ def _app1_dash1(df):
                 dff_v, x="Education Label", y="Salary",
                 title="Salary Spread by Education Level",
                 color="Education Label",
-                color_discrete_sequence=_C[:4],
+                color_discrete_sequence=_C()[:4],
                 labels={"Education Label": "", "Salary": "Annual Salary (USD)"},
                 category_orders={"Education Label": edu_order},
                 points="outliers",
@@ -252,11 +215,11 @@ def _app1_dash1(df):
             fig = px.scatter(
                 samp, x="Years of Experience", y="Age",
                 title="Age vs Years of Experience",
-                color_discrete_sequence=["#4F8EF7"],
+                color_discrete_sequence=[_C()[0]],
                 opacity=0.55,
                 labels={"Years of Experience": "Experience (yrs)", "Age": "Age (yrs)"},
                 trendline="ols",
-                trendline_color_override="#F59E0B",
+                trendline_color_override=get_token("status_warning", "#F59E0B"),
             )
             fig.update_traces(marker=dict(size=4), selector=dict(mode="markers"))
             fig.update_layout(xaxis_title="Experience (yrs)", yaxis_title="Age (yrs)")
@@ -278,15 +241,15 @@ def _app1_dash1(df):
             fig = go.Figure()
             fig.add_trace(go.Bar(
                 x=agg["Education Label"], y=agg["Mean"],
-                name="Mean", marker_color="#4F8EF7",
+                name="Mean", marker_color=_C()[0],
                 text=[f"${v:,.0f}" for v in agg["Mean"]],
-                textposition="outside", textfont=dict(color=_TEXT_MUTED, size=11),
+                textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=11),
             ))
             fig.add_trace(go.Bar(
                 x=agg["Education Label"], y=agg["Median"],
-                name="Median", marker_color="#34D399",
+                name="Median", marker_color=_C()[2],
                 text=[f"${v:,.0f}" for v in agg["Median"]],
-                textposition="outside", textfont=dict(color=_TEXT_MUTED, size=11),
+                textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=11),
             ))
             fig.update_layout(
                 title="Mean vs Median Salary by Education Level",
@@ -371,7 +334,7 @@ def _app1_dash2(df):
                 samp, x="Years of Experience", y="Salary",
                 color="Education Label",
                 title="Experience vs Salary (by Education)",
-                color_discrete_sequence=_C[:4],
+                color_discrete_sequence=_C()[:4],
                 opacity=0.65,
                 category_orders={"Education Label": edu_order},
                 labels={"Years of Experience": "Experience (yrs)", "Salary": "Annual Salary (USD)"},
@@ -394,7 +357,7 @@ def _app1_dash2(df):
                 color="Gender",
                 barmode="group",
                 title="Average Salary by Education Level and Gender",
-                color_discrete_sequence=["#F472B6", "#38BDF8", "#34D399"],
+                color_discrete_sequence=[_C()[6], _C()[1], _C()[2]],
                 labels={"Education Label": "", "Salary": "Avg Annual Salary (USD)"},
                 category_orders={"Education Label": edu_order},
             )
@@ -421,7 +384,7 @@ def _app1_dash2(df):
                 color="Seniority",
                 title="Salary Progression by Experience Band",
                 markers=True,
-                color_discrete_sequence=["#38BDF8", "#A78BFA"],
+                color_discrete_sequence=[_C()[1], _C()[3]],
                 labels={"Exp Band": "Experience Band", "Salary": "Avg Annual Salary (USD)"},
             )
             fig.update_layout(xaxis_title="", yaxis_title="Avg Annual Salary (USD)")
@@ -444,12 +407,12 @@ def _app1_dash2(df):
                 y="Count",
                 title="Number of Records by Education Level",
                 color="Education Level",
-                color_discrete_sequence=_C[:4],
+                color_discrete_sequence=_C()[:4],
                 text=edu_count["Count"],
                 labels={"Education Level": "", "Count": "Number of Records"},
                 category_orders={"Education Level": edu_order},
             )
-            fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=11))
+            fig.update_traces(textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=11))
             fig.update_layout(showlegend=False, yaxis_title="Number of Records")
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
@@ -463,11 +426,11 @@ def _app1_dash2(df):
             job_top, x="Salary", y="Job Title",
             orientation="h",
             title="Top 10 Job Titles by Average Salary",
-            color_discrete_sequence=["#4F8EF7"],
+            color_discrete_sequence=[_C()[0]],
             text=[f"${v:,.0f}" for v in job_top["Salary"]],                
             labels={"Salary": "Avg Annual Salary (USD)", "Job Title": ""},
         )
-        fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=10))
+        fig.update_traces(textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=10))
         fig.update_layout(height=350, xaxis_title="Avg Annual Salary (USD)")
         _themed(fig)
         st.plotly_chart(fig, width='stretch')
@@ -538,11 +501,11 @@ def _app1_dash3(df):
             job_agg, x="Salary", y="Job Title",
             orientation="h",
             title=f"Top {top_n} Job Titles by Average Salary",
-            color_discrete_sequence=["#4F8EF7"],
+            color_discrete_sequence=[_C()[0]],
             text=[f"${v:,.0f}" for v in job_agg["Salary"]],
             labels={"Salary": "Average Annual Salary (USD)", "Job Title": ""},
         )
-        fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=10))
+        fig.update_traces(textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=10))
         fig.update_layout(height=max(300, top_n * 28), xaxis_title="Avg Annual Salary (USD)")
         _themed(fig)
         st.plotly_chart(fig, width='stretch')
@@ -562,7 +525,7 @@ def _app1_dash3(df):
                 c_agg, x="Country", y="Avg Salary",
                 title="Average Salary by Country",
                 color="Country",
-                color_discrete_sequence=_C,
+                color_discrete_sequence=_C(),
                 labels={"Avg Salary": "Avg Annual Salary (USD)"},
             )
             fig.update_layout(
@@ -581,12 +544,12 @@ def _app1_dash3(df):
                 text="Country",
                 title="Country: Sample Size vs Avg Salary",
                 labels={"Count": "Number of Records", "Avg Salary": "Avg Annual Salary (USD)"},
-                color_discrete_sequence=_C,
+                color_discrete_sequence=_C(),
                 size_max=50,
             )
             fig.update_traces(
                 textposition="top center",
-                textfont=dict(size=10, color=_TEXT_MUTED),
+                textfont=dict(size=10, color=get_token("text_secondary", "#9CA6B5")),
                 marker=dict(opacity=0.8),
             )
             fig.update_layout(
@@ -604,7 +567,7 @@ def _app1_dash3(df):
                 df10, x="Job Title", y="Salary",
                 color="Job Title",
                 title="Salary Range for 10 Most Common Job Titles",
-                color_discrete_sequence=_C[:10],
+                color_discrete_sequence=_C()[:10],
                 labels={"Job Title": "", "Salary": "Annual Salary (USD)"},
                 points="outliers",
             )
@@ -698,10 +661,10 @@ def _app2_dash1(df):
             fig = px.histogram(
                 dff, x="salary_in_usd", nbins=30,
                 title="Salary Frequency Distribution",
-                color_discrete_sequence=["#4F8EF7"],
+                color_discrete_sequence=[_C()[0]],
                 labels={"salary_in_usd": "Annual Salary (USD)"},
             )
-            fig.update_traces(marker_line_color="#0C1118", marker_line_width=0.6)
+            fig.update_traces(marker_line_color=get_token("surface_base", "#0C1118"), marker_line_width=0.6)
             fig.update_layout(xaxis_title="Annual Salary (USD)", yaxis_title="Count")
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
@@ -712,7 +675,7 @@ def _app2_dash1(df):
                 dff, x="Experience Level", y="salary_in_usd",
                 title="Salary Range by Experience Level",
                 color="Experience Level",
-                color_discrete_sequence=_C[:4],
+                color_discrete_sequence=_C()[:4],
                 category_orders={"Experience Level": _EXP_ORDER},
                 points="outliers",
                 labels={"salary_in_usd": "Annual Salary (USD)"},
@@ -738,12 +701,12 @@ def _app2_dash1(df):
                 size_agg, x="Company Size", y="Avg Salary",
                 title="Average Salary by Company Size",
                 color="Company Size",
-                color_discrete_sequence=_C[:3],
+                color_discrete_sequence=_C()[:3],
                 text=[f"${v:,.0f}" for v in size_agg["Avg Salary"]],
                 labels={"Company Size": "", "Avg Salary": "Avg Annual Salary (USD)"},
                 category_orders={"Company Size": _SIZE_ORDER},
             )
-            fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=11))
+            fig.update_traces(textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=11))
             fig.update_layout(showlegend=False, yaxis_title="Avg Annual Salary (USD)")
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
@@ -759,11 +722,11 @@ def _app2_dash1(df):
                 emp_agg, x="Employment Type", y="Avg Salary",
                 title="Average Salary by Employment Type",
                 color="Employment Type",
-                color_discrete_sequence=_C[:4],
+                color_discrete_sequence=_C()[:4],
                 text=[f"${v:,.0f}" for v in emp_agg["Avg Salary"]],
                 labels={"Employment Type": "", "Avg Salary": "Avg Annual Salary (USD)"},
             )
-            fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=11))
+            fig.update_traces(textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=11))
             fig.update_layout(showlegend=False, yaxis_title="Avg Annual Salary (USD)")
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
@@ -777,7 +740,7 @@ def _app2_dash1(df):
                 y="salary_in_usd",
                 title="Salary Distribution by Employment Type",
                 color="Employment Type",
-                color_discrete_sequence=_C[:4],
+                color_discrete_sequence=_C()[:4],
                 labels={
                     "Employment Type": "",
                     "salary_in_usd": "Annual Salary (USD)"
@@ -813,9 +776,9 @@ def _app2_dash1(df):
                 emp_stats.style
                     .format({"Count": "{:,.0f}", "Mean": "${:,.0f}", "Median": "${:,.0f}", "Std Dev": "${:,.0f}"})
                     .set_properties(**{
-                        "background-color": _BG_CARD,
-                        "color": _TEXT_MAIN,
-                        "border-color": _BORDER,
+                        "background-color": get_token("surface_raised",  "#141A22"),
+                        "color":             get_token("text_primary",    "#E6EAF0"),
+                        "border-color":      get_token("border_default",  "#283142"),
                     }),
                 width='stretch',
                 hide_index=True,
@@ -897,7 +860,7 @@ def _app2_dash2(df):
                 color="Company Size",
                 barmode="group",
                 title="Avg Salary -- Experience Level vs Company Size",
-                color_discrete_sequence=_C[:3],
+                color_discrete_sequence=_C()[:3],
                 labels={"Avg Salary": "Avg Annual Salary (USD)"},
                 category_orders={"Experience Level": _EXP_ORDER, "Company Size": _SIZE_ORDER},
             )
@@ -917,7 +880,7 @@ def _app2_dash2(df):
                 color="Experience Level",
                 title="Salary by Work Mode Across Experience Tiers",
                 markers=True,
-                color_discrete_sequence=_C[:4],
+                color_discrete_sequence=_C()[:4],
                 labels={"Avg Salary": "Avg Annual Salary (USD)"},
                 category_orders={"Work Mode": _MODE_ORDER, "Experience Level": _EXP_ORDER},
             )
@@ -939,12 +902,12 @@ def _app2_dash2(df):
                 mode_agg, x="Work Mode", y="Avg Salary",
                 title="Average Salary by Work Arrangement",
                 color="Work Mode",
-                color_discrete_sequence=_C[:3],
+                color_discrete_sequence=_C()[:3],
                 text=[f"${v:,.0f}" for v in mode_agg["Avg Salary"]],
                 labels={"Work Mode": "", "Avg Salary": "Avg Annual Salary (USD)"},
                 category_orders={"Work Mode": _MODE_ORDER},
             )
-            fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=11))
+            fig.update_traces(textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=11))
             fig.update_layout(showlegend=False, yaxis_title="Avg Annual Salary (USD)")
             _themed(fig)
             st.plotly_chart(fig, width='stretch')
@@ -959,7 +922,7 @@ def _app2_dash2(df):
                 cnt, x="Company Size", y="Count",
                 color="Experience Level",
                 title="Workforce Distribution -- Experience Tiers by Company Size",
-                color_discrete_sequence=_C[:4],
+                color_discrete_sequence=_C()[:4],
                 labels={"Count": "Number of Records"},
                 category_orders={"Company Size": _SIZE_ORDER, "Experience Level": _EXP_ORDER},
                 barmode="stack",
@@ -986,7 +949,7 @@ def _app2_dash2(df):
                 values="count",
                 title="Work Mode Distribution",
                 color="Work Mode",
-                color_discrete_sequence=_C[:3],
+                color_discrete_sequence=_C()[:3],
                 category_orders={"Work Mode": _MODE_ORDER},
                 hole=0.45
             )
@@ -1079,11 +1042,11 @@ def _app2_dash3(df, country_map):
             top_roles, x="Avg Salary", y="job_title",
             orientation="h",
             title=f"Top {top_n} Data Science Roles by Average Salary",
-            color_discrete_sequence=["#4F8EF7"],
+            color_discrete_sequence=[_C()[0]],
             text=[f"${v:,.0f}" for v in top_roles["Avg Salary"]],
             labels={"Avg Salary": "Avg Annual Salary (USD)", "job_title": ""},
         )
-        fig.update_traces(textposition="outside", textfont=dict(color=_TEXT_MUTED, size=10))
+        fig.update_traces(textposition="outside", textfont=dict(color=get_token("text_secondary", "#9CA6B5"), size=10))
         fig.update_layout(height=max(300, top_n * 28), xaxis_title="Avg Annual Salary (USD)")
         _themed(fig)
         st.plotly_chart(fig, width='stretch')
@@ -1102,7 +1065,7 @@ def _app2_dash3(df, country_map):
             top_c, x="Company Location Full", y="Avg Salary",
             title="Top 10 Countries by Average Data Science Salary",
             color="Company Location Full",
-            color_discrete_sequence=_C,
+            color_discrete_sequence=_C(),
             labels={"Company Location Full": "Country", "Avg Salary": "Avg Annual Salary (USD)"},
         )
         fig.update_layout(
@@ -1120,7 +1083,7 @@ def _app2_dash3(df, country_map):
                 df10, x="job_title", y="salary_in_usd",
                 color="job_title",
                 title="Salary Range for 10 Most Common Data Science Roles",
-                color_discrete_sequence=_C[:10],
+                color_discrete_sequence=_C()[:10],
                 labels={"job_title": "", "salary_in_usd": "Annual Salary (USD)"},
                 points="outliers",
             )

@@ -1,3 +1,4 @@
+from app.theme import get_colorway, get_colorway_3_stages, get_token
 """
 batch_prediction_tab.py
 -----------------------
@@ -474,7 +475,7 @@ Your file must contain exactly these columns with these exact names:
                     y="Job Title",
                     orientation="h",
                     title="Top Roles by Salary",
-                    color_discrete_sequence=["#60A5FA"]
+                    color_discrete_sequence=[get_colorway()[0]]
                 )
                 fig_lb_a1.update_yaxes(categoryorder="total ascending")
                 apply_theme(fig_lb_a1)
@@ -489,9 +490,9 @@ Your file must contain exactly these columns with these exact names:
                     analytics_df_a1, x="Predicted Annual Salary",
                     nbins=min(25, len(analytics_df_a1)),
                     title="Distribution of Predicted Annual Salaries",
-                    color_discrete_sequence=["#4F8EF7"]
+                    color_discrete_sequence=[get_colorway()[0]]
                 )
-                fig_hist_a1.update_traces(marker_line_color="#1B2230", marker_line_width=0.8)
+                fig_hist_a1.update_traces(marker_line_color=get_token("surface_overlay", "#1B2230"), marker_line_width=0.8)
                 fig_hist_a1.update_layout(xaxis_title="Predicted Salary (USD)", yaxis_title="Count")
                 apply_theme(fig_hist_a1)
                 st.plotly_chart(fig_hist_a1, width='stretch')
@@ -504,7 +505,7 @@ Your file must contain exactly these columns with these exact names:
                                       y="Predicted Annual Salary",
                                       title="Average Predicted Salary by Salary Level",
                                       color="Estimated Salary Level",
-                                      color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"])
+                                      color_discrete_sequence=get_colorway_3_stages())
                 fig_band_a1.update_xaxes(
                     categoryorder="array",
                     categoryarray=[
@@ -527,7 +528,7 @@ Your file must contain exactly these columns with these exact names:
                     color="Estimated Salary Level",
                     title="Salary Levels Across Education Levels",
                     barmode="group",
-                    color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"]
+                    color_discrete_sequence=get_colorway_3_stages()
                 )
                 fig_edu_band_a1.update_xaxes(
                     categoryorder="array",
@@ -552,7 +553,7 @@ Your file must contain exactly these columns with these exact names:
                     y="Count",
                     title="Distribution of Career Stages",
                     color="Career Stage",
-                    color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"]
+                    color_discrete_sequence=get_colorway_3_stages()
                 )
                 fig_stage_dist_a1.update_xaxes(
                     categoryorder="array",
@@ -579,7 +580,7 @@ Your file must contain exactly these columns with these exact names:
                     y="Predicted Annual Salary",
                     title="Average Predicted Salary by Career Stage",
                     color="Career Stage",
-                    color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"]
+                    color_discrete_sequence=get_colorway_3_stages()
                 )
                 fig_stage_salary_a1.update_xaxes(
                     categoryorder="array",
@@ -611,7 +612,7 @@ Your file must contain exactly these columns with these exact names:
                     color="Career Stage",
                     title="Career Stage Distribution Across Education Levels",
                     barmode="group",
-                    color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"]
+                    color_discrete_sequence=get_colorway_3_stages()
                 )
                 fig_edu_stage_a1.update_xaxes(
                     categoryorder="array",
@@ -624,9 +625,9 @@ Your file must contain exactly these columns with these exact names:
                 st.subheader("Salary vs Experience Trend")
                 fig_trend_a1 = px.scatter(
                     plot_df_a1, x="Years of Experience", y="Predicted Annual Salary",
-                    trendline="ols", trendline_color_override="#F59E0B",
+                    trendline="ols", trendline_color_override=get_token("status_warning", "#F59E0B"),
                     title="Predicted Salary vs Experience",
-                    color_discrete_sequence=["#4F8EF7"]
+                    color_discrete_sequence=[get_colorway()[0]]
                 )
                 fig_trend_a1.update_traces(marker=dict(size=7, opacity=0.65))
                 apply_theme(fig_trend_a1)
@@ -645,7 +646,7 @@ Your file must contain exactly these columns with these exact names:
                         "Years of Experience": "Years of Experience",
                         "Predicted Annual Salary": "Predicted Salary (USD)"
                     },
-                    color_discrete_sequence=["#38BDF8", "#4F8EF7", "#A78BFA"]
+                    color_discrete_sequence=get_colorway_3_stages()
                 )
                 fig_career_landscape.update_traces(
                     marker=dict(size=9, opacity=0.65)
@@ -663,7 +664,7 @@ Your file must contain exactly these columns with these exact names:
                     edu_group_a1, x="Education Level", y="Predicted Annual Salary",
                     title="Average Predicted Salary by Education",
                     color="Education Level",
-                    color_discrete_sequence=["#4F8EF7", "#38BDF8", "#34D399", "#A78BFA"]
+                    color_discrete_sequence=get_colorway()[:4]
                 )
                 fig_edu_bulk_a1.update_xaxes(
                     categoryorder="array",
@@ -681,7 +682,7 @@ Your file must contain exactly these columns with these exact names:
                     country_group_a1, x="Country", y="Predicted Annual Salary",
                     title="Average Predicted Salary by Country",
                     color="Country",
-                    color_discrete_sequence=["#4F8EF7","#38BDF8","#34D399","#A78BFA","#F59E0B","#FB923C","#F472B6","#22D3EE","#818CF8","#6EE7B7"])
+                    color_discrete_sequence=get_colorway()[:8])
                 fig_country_bulk_a1.update_xaxes(categoryorder="total descending")
                 apply_theme(fig_country_bulk_a1)
                 st.plotly_chart(fig_country_bulk_a1, width='stretch')
@@ -695,7 +696,7 @@ Your file must contain exactly these columns with these exact names:
                     senior_group_a1, x="Senior", y="Predicted Annual Salary",
                     title="Average Predicted Salary by Seniority",
                     color="Senior",
-                    color_discrete_sequence=["#38BDF8", "#4F8EF7"]
+                    color_discrete_sequence=get_colorway()[:2]
                 )
                 fig_senior_bulk_a1.update_xaxes(
                     categoryorder="array",
@@ -713,8 +714,7 @@ Your file must contain exactly these columns with these exact names:
                     job_salary_a1, x="Job Title", y="Predicted Annual Salary",
                     title="Salary Distribution by Job Title (Top 10)",
                     color="Job Title",
-                    color_discrete_sequence=["#4F8EF7","#38BDF8","#34D399","#A78BFA",
-                                              "#F59E0B","#FB923C","#F472B6","#22D3EE","#6366F1","#14B8A6"]
+                    color_discrete_sequence=get_colorway()[:8]
                 )
                 fig_job_box_a1.update_layout(xaxis_title="Job Title",
                                               yaxis_title="Predicted Salary (USD)", showlegend=False)
@@ -1031,7 +1031,7 @@ Your file must contain exactly these columns with these exact names:
                     y="Job Title",
                     orientation="h",
                     title="Top Roles by Salary",
-                    color_discrete_sequence=["#60A5FA"]
+                    color_discrete_sequence=[get_colorway()[0]]
                 )
                 fig_lb_a2.update_yaxes(categoryorder="total ascending")
                 apply_theme(fig_lb_a2)
@@ -1044,9 +1044,9 @@ Your file must contain exactly these columns with these exact names:
                     nbins=min(25, len(analytics_df_a2)),
                     title="Distribution of Predicted Annual Salaries",
                     labels={"Predicted Annual Salary (USD)": "Predicted Annual Salary (USD)"},
-                    color_discrete_sequence=["#4F8EF7"]
+                    color_discrete_sequence=[get_colorway()[0]]
                 )
-                fig_hist_a2.update_traces(marker_line_color="#1B2230", marker_line_width=0.8)
+                fig_hist_a2.update_traces(marker_line_color=get_token("surface_overlay", "#1B2230"), marker_line_width=0.8)
                 fig_hist_a2.update_layout(xaxis_title="Predicted Annual Salary (USD)",
                                            yaxis_title="Number of Records")
                 apply_theme(fig_hist_a2)
@@ -1063,7 +1063,7 @@ Your file must contain exactly these columns with these exact names:
                     color="Experience Level",
                     labels={"Experience Level": "Experience Level",
                             "Predicted Annual Salary (USD)": "Average Predicted Salary (USD)"},
-                        color_discrete_sequence=["#4F8EF7","#38BDF8","#34D399","#A78BFA"]
+                        color_discrete_sequence=get_colorway()[:4]
                 )
                 fig_exp_a2.update_layout(xaxis_title="Experience Level",
                                           yaxis_title="Average Predicted Salary (USD)", showlegend=True)
@@ -1090,7 +1090,7 @@ Your file must contain exactly these columns with these exact names:
                     color="Company Size",
                     labels={"Company Size": "Company Size",
                             "Predicted Annual Salary (USD)": "Average Predicted Salary (USD)"},
-                    color_discrete_sequence=["#38BDF8","#4F8EF7","#A78BFA"]
+                    color_discrete_sequence=get_colorway_3_stages()
                 )
                 fig_size_a2.update_layout(xaxis_title="Company Size",
                                            yaxis_title="Average Predicted Salary (USD)", showlegend=True)
@@ -1116,7 +1116,7 @@ Your file must contain exactly these columns with these exact names:
                     color="Work Mode",
                     labels={"Work Mode": "Work Mode",
                             "Predicted Annual Salary (USD)": "Average Predicted Salary (USD)"},
-                    color_discrete_sequence=["#38BDF8","#4F8EF7","#34D399"]
+                    color_discrete_sequence=get_colorway()[:3]
                 )
                 fig_remote_a2.update_layout(xaxis_title="Work Mode",
                                              yaxis_title="Average Predicted Salary (USD)", showlegend=True)
@@ -1137,7 +1137,7 @@ Your file must contain exactly these columns with these exact names:
                     color="Country",
                     labels={"Country": "Country",
                             "Predicted Annual Salary (USD)": "Average Predicted Salary (USD)"},
-                    color_discrete_sequence=["#4F8EF7","#38BDF8","#34D399","#A78BFA","#F59E0B","#FB923C","#F472B6","#22D3EE","#818CF8","#6EE7B7"]
+                    color_discrete_sequence=get_colorway()[:8]
                 )
                 fig_country_a2.update_layout(xaxis_title="Country",
                                               yaxis_title="Average Predicted Salary (USD)", showlegend=True)
