@@ -1397,29 +1397,29 @@ if IS_APP1:
 else:
     st.caption("**Active Model:** XGBoost Regressor (log-transformed) — trained on a Data Science salary dataset.")
 
-st.divider()
+#st.divider()
 
 # ==================================================
 # TABS
 # ==================================================
 tabs = [
-    "Manual Prediction",
-    "Resume Analysis",
-    "Batch Prediction",
-    "Scenario Analysis", 
-    "Model Analytics",
-    "Data Insights",
-    "Model Hub",  
+    ":material/edit_note: Manual Prediction",
+    ":material/description: Resume Analysis",
+    ":material/batch_prediction: Batch Prediction",
+    ":material/analytics: Scenario Analysis", 
+    ":material/model_training: Model Analytics",
+    ":material/insights: Data Insights",
+    ":material/hub: Model Hub",  
 ]
 
 if st.session_state.logged_in:
-    tabs.append("Profile")
+    tabs.append(":material/account_box: Profile")
 
     # ONLY ADMIN SEES THIS
     if is_admin():
-        tabs.append("Admin")
+        tabs.append(":material/admin_panel_settings: Admin")
 
-tabs.append("About")
+tabs.append(":material/info: About")
 
 tab_objects = st.tabs(tabs)
 
@@ -1616,7 +1616,7 @@ with tab_objects[5]:
 # ==================================================
 # TAB 7: MODEL HUB
 # ==================================================
-with tab_objects[tabs.index("Model Hub")]:
+with tab_objects[tabs.index(":material/hub: Model Hub")]:
     render_model_hub_tab(
         user={"username": st.session_state.username} if st.session_state.logged_in else None,
         is_admin_user=is_admin() if st.session_state.logged_in else False,
@@ -1626,7 +1626,7 @@ with tab_objects[tabs.index("Model Hub")]:
 # =================================================
 if st.session_state.logged_in:
 
-    profile_index = tabs.index("Profile")
+    profile_index = tabs.index(":material/account_box: Profile")
 
     with tab_objects[profile_index]:
         show_profile()
@@ -1634,8 +1634,8 @@ if st.session_state.logged_in:
 # ==================================================
 # TAB 9: ADMIN TAB
 # ==================================================
-if "Admin" in tabs:
-    admin_index = tabs.index("Admin")
+if ":material/admin_panel_settings: Admin" in tabs:
+    admin_index = tabs.index(":material/admin_panel_settings: Admin")
 
     with tab_objects[admin_index]:
 
@@ -1649,6 +1649,6 @@ if "Admin" in tabs:
 # ==================================================
 # TAB 10: ABOUT (Merged from both apps)
 # ==================================================
-about_index = tabs.index("About")
+about_index = tabs.index(":material/info: About")
 with tab_objects[about_index]:
     render_about_tab()

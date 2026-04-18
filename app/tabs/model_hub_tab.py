@@ -237,7 +237,7 @@ def render_model_hub_tab(
 @st.fragment
 def _render_prediction_panel(active_models: list[dict], user: dict) -> None:
     """Prediction model selector and form — isolated fragment."""
-    st.subheader(":material/model_training: Run a Prediction")
+    st.subheader(":material/model_training: Prediction Studio")
 
     if not active_models:
         _msg(
@@ -305,7 +305,7 @@ def _render_prediction_panel(active_models: list[dict], user: dict) -> None:
         _render_model_card(selected_meta, expanded=False)
     # ==========================================================================
 
-    st.divider()
+    #st.divider()
 
     # --- Load bundle ---
     load_key = f"mh_load_{selected_meta['id']}"
@@ -381,7 +381,7 @@ def _render_extended_modes_panel(active_bundle: Any, selected_meta: dict) -> Non
         return
 
     st.divider()
-    st.subheader(":material/apps: Additional Prediction Modes")
+    st.subheader(":material/apps: Prediction Modes")
     st.caption(
         "Use the same loaded model in different modes below. "
         "All modes read from the same schema and bundle."

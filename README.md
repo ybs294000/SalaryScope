@@ -20,7 +20,7 @@
     <img src="https://img.shields.io/badge/Model%20Storage-HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=white&labelColor=2D3748" alt="Model Storage: HuggingFace" />
   </a>
   <a>
-    <img src="https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.1.0" />
+    <img src="https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.2.0" />
   </a>
 </p>
 
@@ -36,7 +36,7 @@
   </a>
 </p>
 
-> Machine learning-powered salary prediction system with dual models, hybrid resume analysis (spaCy + rule-based extraction), interactive analytics, and an extensible Model Hub for deploying additional trained models.
+> Machine learning-powered salary prediction system with dual models, hybrid resume analysis (spaCy + rule-based extraction), interactive analytics, an extensible Model Hub with four schema-driven prediction modes per model, and data-driven extraction lexicons covering 20+ STEM and professional domains.
 
 SalaryScope is a machine learning-based web application developed as a Final Year B.Tech Project. It provides salary prediction capabilities through two distinct models, each trained on a different dataset and targeting different use cases. The application is built with Streamlit and deployed on Streamlit Cloud.
 
@@ -88,16 +88,17 @@ The application runs in a web browser, making it platform-independent and easily
 ## Key Features (Quick Overview)
 
 - Dual machine learning models (Random Forest + XGBoost)
-- Resume-based salary prediction using NLP (spaCy)
+- Resume-based salary prediction using NLP (spaCy + data-driven JSON lexicons)
 - Scenario analysis and sensitivity simulation
-- Batch prediction (up to 50,000 records)
+- Batch prediction (up to 50,000 records for built-in models; up to 10,000 for Model Hub)
 - Real-time currency conversion with fallback system
 - Model analytics and performance visualization
 - Firebase-based authentication and feedback system
 - Basic post-tax salary estimation with country-specific effective rates
 - Basic cost-of-living (COL) adjustment for contextual salary comparison
 - Financial planning tools: CTC breakdown, take-home salary, savings potential, loan affordability, budget allocation, investment growth projection, emergency fund planning, lifestyle budget split
-- Model Hub: upload and serve additional trained models with dynamic schema-driven prediction UI
+- Model Hub: upload and serve additional trained models with four schema-driven prediction modes (Manual, Batch, Resume, Scenario) and a Model Card per model
+- Per-bundle lexicons: Model Hub models can supply custom skill and job title lexicons that override global defaults for resume extraction
 
 ---
 
@@ -171,17 +172,16 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 
 ### Resume-Based Prediction (NLP)
 - Upload a resume (PDF format)
-- Automatic extraction of:
-  - Job Title
-  - Years of Experience
-  - Skills
-  - Education Level
-  - Country
-- Basic resume scoring based on experience, education, and skills
-- Uses a hybrid approach combining spaCy (lightweight NLP for entity recognition and phrase matching) with rule-based extraction (regex and keyword matching)
-- Handles unstructured resume text and converts it into structured model-ready input
-- Extracted features are passed to the selected model for prediction
-- Supports both Model 1 and Model 2 pipelines
+- Automatic extraction of: Job Title, Years of Experience, Skills, Education Level, Country
+- Resume scoring out of 100 across three dimensions: experience (up to 40), education (up to 30), and skills (up to 30); profile strength label: Basic, Moderate, or Strong
+- Extraction quality panel showing which fields were auto-matched and which need manual review, with per-field provenance (extractor used, value found, source)
+- Uses a hybrid approach: spaCy PhraseMatcher for skills and job titles, NER for countries, regex for experience years and education level
+- Extraction is data-driven: all skill phrases, job title aliases, education patterns, and country aliases are loaded from JSON lexicons under `app/model_hub/extended_modes/lexicons/` — extendable without code changes
+- Skill coverage spans 20+ professional domains: programming languages, data science, ML/AI, cloud, data engineering, MLOps, mechanical and civil engineering, electrical and electronics, aerospace, chemical and process engineering, energy and environment, pharmaceutical and drug development, biotechnology and life sciences, neuroscience, mathematics and statistics, and cybersecurity
+- Model Hub models can supply per-bundle `skills.json` and `job_titles.json` lexicons that override global defaults for that specific model; falls back to global lexicons when absent
+- Uploading a new PDF clears previous extraction results automatically; a Clear button is also available
+- Extracted features are fully editable before prediction
+- Supports both Model 1 and Model 2 pipelines, and all Model Hub models
 - Optional currency conversion for predicted salary output
 
 ### Batch Prediction
@@ -196,7 +196,8 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 ### Scenario Analysis
 - Build and compare up to 5 fully customisable named scenarios in a single session
 - Each scenario accepts the same inputs as manual prediction for the active model
-- Run all scenarios simultaneously with a single button click
+- Input fields are plain widgets — no save step is required before running; values are always current when Run All Scenarios is clicked
+- Run all scenarios simultaneously with a single button click; Clear Results button resets between runs
 - Side-by-side comparison table with predicted salary, salary level, and career stage per scenario
 - Bar chart comparing predicted annual salary across all scenarios with dollar labels
 - Charts colored by salary level and career stage (Model 1), or by experience level, company size, and work mode (Model 2)
@@ -205,6 +206,7 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Sensitivity sweep: select a baseline scenario and simulate salary change across a continuous 0–40 year experience range (Model 1) or across all four experience levels (Model 2), with all other inputs held fixed
 - Education level sweep across High School, Bachelor's, Master's, and PhD for a selected baseline scenario — Model 1
 - Company size sweep across Small, Medium, and Large companies for a selected baseline scenario — Model 2
+- For Model Hub models: sweep field and mode (continuous range or discrete values) declared in schema.json via the `scenario_sweep` key
 - Export scenario results in CSV, XLSX, or JSON format
 
 ### Prediction Feedback
@@ -403,6 +405,8 @@ Admins train models offline and upload a bundle in one of two formats:
 | `columns.json` | JSON array of feature column names the model expects |
 | `schema.json` | Defines the user-facing input fields and their UI widget types |
 | `aliases.json` | Optional display labels for selectbox model values |
+| `skills.json` | Optional per-bundle skill lexicon for resume extraction (overrides global) |
+| `job_titles.json` | Optional per-bundle job title alias map for resume extraction (overrides global) |
 
 **Pickle format (legacy, backward-compatible):**
 
@@ -412,20 +416,26 @@ Admins train models offline and upload a bundle in one of two formats:
 | `columns.pkl` | Ordered list of feature column names the model expects |
 | `schema.json` | Defines the user-facing input fields and their UI widget types |
 | `aliases.json` | Optional display labels for selectbox model values |
+| `skills.json` | Optional per-bundle skill lexicon for resume extraction (overrides global) |
+| `job_titles.json` | Optional per-bundle job title alias map for resume extraction (overrides global) |
 
 Each upload creates a versioned folder in a private HuggingFace dataset repo (`models/model_<timestamp>_<id>/`). Bundles are never overwritten. A registry file (`models_registry.json`) tracks all uploaded models, their active status, and their bundle format.
 
 ### What users see
 
 - A dropdown listing only active, registered models
-- An input form generated dynamically from the model's `schema.json`
-- A prediction result for the model's target variable
+- A Model Card expander showing structured metadata (intended use, metrics, training data, authors, links) when populated by the admin
+- Four prediction modes after loading a bundle: Manual (single prediction with styled result card), Batch (CSV/XLSX upload with distribution chart and downloads), Resume (PDF extraction with editable review form and quality score), and Scenario (up to 5 named scenarios with comparison chart and optional sensitivity sweep)
+- In Batch and Resume modes, uploading a new file clears previous results automatically; a Clear button is also available
+- In Scenario mode, input fields are plain widgets — no save step is required before running
 - No access to upload, registry management, or schema editing
 
 ### What admins can do
 
 - Upload a complete bundle (ONNX: model.onnx + columns.json + schema.json, or Pickle: model.pkl + columns.pkl + schema.json)
+- Attach Model Card metadata (intended use, out-of-scope, limitations, ethical notes, metrics, training data, authors, license, tags, links) at upload time via structured form fields and a raw JSON override
 - Upload an optional aliases.json alongside the bundle, or push one separately after upload
+- Upload optional per-bundle lexicons (skills.json, job_titles.json) to override global resume extraction defaults for this specific model
 - Activate or deactivate models from the Registry Manager
 - Roll back to an earlier version within a model family
 - Edit or create schema.json using a visual field builder with multi-column layout settings and result card label, then download it
@@ -453,12 +463,17 @@ Each upload creates a versioned folder in a private HuggingFace dataset repo (`m
 Supported `ui` values: `slider`, `selectbox`, `number_input`, `text_input`, `checkbox`.
 
 **Optional top-level keys:**
-- `layout.columns` (1, 2, or 3) — arrange fields in a responsive grid. Omitting this key gives a single-column form, identical to the behaviour of all existing schemas.
-- `result_label` — text shown as the label on the prediction result card. Overrides the registry target name. Omitting falls back to the registry target name.
+- `layout.columns` (1, 2, or 3) — arrange fields in a responsive grid. Omitting gives a single-column form identical to existing schemas.
+- `result_label` — label on the prediction result card. Overrides the registry target name.
+- `plots` — list of chart descriptors rendered automatically in the appropriate mode. Supported types: `gauge`, `bar`, `horizontal_bar`, `scatter`, `histogram`, `line`. Charts with `x_field`/`y_field` use batch or scenario result data; `gauge` and single-value bar charts use the scalar prediction result.
+- `scenario_sweep` — configures a sensitivity sweep in Scenario mode. Fields: `field` (schema field to vary), `mode` (`range` or `values`), `min`/`max`/`steps` for range mode, `values` and `value_labels` for discrete mode.
 
 **Optional per-field layout keys:**
-- `row` — integer; fields sharing the same row number are placed side-by-side in one columns row.
-- `col_span` — 1, 2, or 3; how many grid columns the field occupies. Sliders default to the full row width. All layout keys are fully optional — schemas without them render identically to before.
+- `row` — integer; fields sharing the same row number are placed side-by-side.
+- `col_span` — 1, 2, or 3; how many grid columns the field occupies. All layout keys are fully optional.
+
+**Optional per-field extractor hint (Resume mode):**
+- `extractor` — explicitly selects which resume extractor to use for this field, overriding the default name-based selection. Supported values: `experience`, `education`, `country_name`, `country_iso`, `senior_flag`, `job_title`, `employment_type`, `remote_ratio`, `skills_list`, `skills_str`, `age`.
 
 ### Column mapping
 
@@ -568,7 +583,21 @@ salaryscope/
 │   │   ├── predictor.py                 # Feature vector construction and model.predict()
 │   │   ├── schema_parser.py             # schema.json → Streamlit widgets
 │   │   ├── uploader.py                  # Bundle validation and upload to HuggingFace
-│   │   └── validator.py                 # Schema and schema–columns consistency checks
+│   │   ├── validator.py                 # Schema and schema–columns consistency checks
+│   │   └── extended_modes/              # Schema-driven prediction modes for Model Hub
+│   │       ├── __init__.py
+│   │       ├── hub_manual_tab.py        # Manual prediction mode
+│   │       ├── hub_batch_tab.py         # Batch prediction mode (CSV/XLSX, file-change auto-clear)
+│   │       ├── hub_resume_tab.py        # Resume analysis mode (PDF extraction, auto-clear)
+│   │       ├── hub_resume_engine.py     # Data-driven extraction engine (spaCy + JSON lexicons)
+│   │       ├── hub_scenario_tab.py      # Scenario analysis mode (plain widgets, no save step)
+│   │       ├── model_card.py            # Model Card UI component
+│   │       ├── schema_plots.py          # Chart renderer for schema plots key
+│   │       └── lexicons/                # Shared global extraction lexicons (JSON, extensible)
+│   │           ├── skills.json          # 450+ skills across 20+ categories
+│   │           ├── job_titles.json      # 50+ canonical titles with alias lists
+│   │           ├── education.json       # Education level regex patterns
+│   │           └── countries.json       # Country aliases → display names and ISO-2 codes
 │   │
 │   ├── tabs/
 │   │   ├── manual_prediction_tab.py     # Manual Prediction
@@ -619,6 +648,7 @@ salaryscope/
 │   ├── module_reference.md              # All public functions documented
 │   ├── deployment.md                    # Deployment and operations guide
 │   ├── testing.md                       # Test plan, unit tests, manual test cases
+│   └── model_hub_extended_schema.md     # Extended schema reference (plots, scenario_sweep, lexicons, extractors)
 │   
 ├── samples/                             # Sample input files for batch prediction
 ├── assets/                              # Branding and visual assets
@@ -790,14 +820,18 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 ### Model Hub
 1. Log in to access the **Model Hub** tab
 2. Select a model from the dropdown — only active, registered models are listed
-3. Click **Load Model** to download the bundle from HuggingFace
-4. Fill in the input form generated from the model's schema
-5. Click **Predict** to run the prediction
+3. Review the **Model Card** expander for information about the model (if populated by the admin)
+4. Click **Load Model** to download the bundle from HuggingFace
+5. Choose a prediction mode from the sub-tabs: **Manual**, **Batch**, **Resume**, or **Scenario**
+6. In Manual mode: fill in the schema-generated form and click Predict
+7. In Batch mode: upload a CSV or XLSX file and click Run — uploading a new file clears previous results automatically
+8. In Resume mode: upload a PDF, click Extract, review and edit extracted fields, then click Predict from Resume — uploading a new PDF clears previous results automatically
+9. In Scenario mode: fill in each scenario panel directly (no save step needed) and click Run All Scenarios
 
 **Admin only:**
-- Go to the **Upload Bundle** tab, select ONNX or Pickle format, and upload the corresponding files
+- Go to the **Upload Bundle** tab, fill in model card metadata, select ONNX or Pickle format, optionally attach aliases.json and custom lexicons (skills.json, job_titles.json), and upload
 - Use the **Registry Manager** to activate, deactivate, or roll back models
-- Use the **Schema Editor** to build or validate a schema.json visually
+- Use the **Schema Editor** to build or validate a schema.json visually, including plots and scenario_sweep configuration
 
 ### Model Analytics
 - Navigate to the **Model Analytics** tab to view full model diagnostics, comparison charts, and download the analytics PDF report
@@ -846,7 +880,7 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 | Language | Python 3.13+ |
 | NLP | spaCy, Regex, PhraseMatcher |
 | Country Resolution | Babel (Unicode CLDR territory data) |
-| ONNX Runtime | onnxruntime (model inference), skl2onnx (sklearn-to-ONNX conversion) |
+| ONNX Runtime | onnxruntime (model inference for Model Hub), skl2onnx (sklearn-to-ONNX conversion) |
 | API Integration | ExchangeRate API (open.er-api.com) |
 
 ---
@@ -860,7 +894,7 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 * Session management with 24-hour expiry enforced via `st.session_state`
 * Firebase-managed authentication — no passwords stored in Firestore or application code
 * Rate limit records in Firestore keyed by SHA-256 hash prefix of user email — PII is never stored in document IDs
-* Model Hub upload restricted to admin users; file size limits enforced pre- and post-download (model files 200 MB max); ONNX bundles loaded via onnxruntime (no arbitrary code execution); pickle bundles audited via joblib security log on every load
+* Model Hub upload restricted to admin users; file size limits enforced pre- and post-download (model files 200 MB max, schema/aliases/lexicons 512 KB max); ONNX bundles loaded via onnxruntime (no arbitrary code execution); pickle bundles audited via joblib security log on every load; per-bundle lexicon JSON files are plain data with no execution risk
 * Admin role determined by server-side email comparison only (case-insensitive, from `st.secrets`)
 
 > Note: These features are implemented for application-level security and demonstration purposes. For production systems, additional hardening would be appropriate.
@@ -970,6 +1004,8 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Enhance financial estimation modules (CTC, take-home, savings, loan) with more accurate country-specific rules and real-world datasets.
 - Integrate detailed tax systems with deductions, exemptions, and region-specific regulations for improved take-home accuracy.
 - Extend ONNX support in the Model Hub to additional model architectures beyond sklearn-compatible estimators (e.g. PyTorch, TensorFlow via tf2onnx).
+- Add education, country, and experience pattern lexicons as optional per-bundle sidecars (currently only skills and job titles are per-bundle overridable).
+- Expose the spaCy model version as a configurable parameter in the extraction engine to support multilingual resume parsing.
 - Add city-level cost-of-living data to improve the granularity of COL adjustments beyond country averages.
 - Implement real-time salary market data integration for more current predictions.
 - Add Google OAuth as an alternative authentication method (infrastructure is partially scaffolded).
