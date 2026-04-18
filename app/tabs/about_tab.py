@@ -651,10 +651,8 @@ def render_about_tab():
 
 **Resume Analysis**
 - Upload a PDF resume and click Extract to run NLP-based extraction.
-- The quality panel shows how many fields were auto-extracted and which ones need review.
 - Edit any pre-filled field if needed, then click Predict Salary from Resume.
 - Upload a new PDF at any time -- previous extraction results are cleared automatically.
-- Click Clear to reset the tab manually between resumes.
 
 **Batch Prediction**
 - Upload a file (CSV, XLSX, JSON, or SQL) or paste a public Google Drive link to run predictions on multiple records at once.
@@ -668,7 +666,6 @@ def render_about_tab():
 - Click Run All Scenarios to generate predictions for every scenario simultaneously.
 - Review the comparison table, salary charts, and confidence interval ranges.
 - Use the sensitivity sweep section to simulate how salary changes as experience or education varies.
-- Click Clear Results to reset between runs.
 
 **Model Analytics**
 - Explore the performance and internals of the active model.
@@ -733,7 +730,6 @@ def render_about_tab():
 - Click **Add Scenario** to add more (up to 5) or **Remove** to delete one.
 - Click **Run All Scenarios** to predict salaries for all scenarios at once.
 - Scroll down to view the comparison table, salary charts, and sensitivity sweeps.
-- Click **Clear Results** to reset between runs.
 - Use the export button to save scenario results as CSV.
 
 **Model Hub**
