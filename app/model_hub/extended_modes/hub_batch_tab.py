@@ -377,23 +377,29 @@ def _render_batch_results(
             schema_fields = fields,
         )
 
-    # Auto-generated prediction distribution (always shown when predictions exist)
+    # Auto-generated prediction distribution (always shown when predictions exist).
+    # Uses the same theme pipeline as schema_plots.py and the main batch tab:
+    #   get_colorway()[0]  -- active first chart color
+    #   get_token(...)     -- semantic token for bar outline
+    #   apply_theme(fig)   -- full layout pass (backgrounds, grid, fonts)
+    #   theme=None         -- prevents Streamlit overriding the theme
     if not valid_preds.empty:
         import plotly.express as px
+        from app.theme import apply_theme, get_colorway, get_token
         st.divider()
         st.subheader(":material/analytics: Prediction Distribution")
         fig = px.histogram(
             df, x=target_col, nbins=40,
             title=f"{target_label} Distribution",
             labels={target_col: target_label},
-            color_discrete_sequence=["#4F8EF7"],
+            color_discrete_sequence=[get_colorway()[0]],
         )
-        fig.update_layout(
-            paper_bgcolor = "rgba(0,0,0,0)",
-            plot_bgcolor  = "rgba(0,0,0,0)",
-            font_color    = "#CBD5E1",
+        fig.update_traces(
+            marker_line_width = 0.8,
+            marker_line_color = get_token("surface_overlay", "#1B2230"),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        apply_theme(fig)
+        st.plotly_chart(fig, use_container_width=True, theme=None)
 
 
 # ---------------------------------------------------------------------------
