@@ -1652,3 +1652,23 @@ if ":material/admin_panel_settings: Admin" in tabs:
 about_index = tabs.index(":material/info: About")
 with tab_objects[about_index]:
     render_about_tab()
+
+# ==================================================
+# FOOTER
+# ==================================================
+st.divider()
+st.markdown(
+    """
+    <div class="salaryscope-footer" style="text-align:center;">
+        <div>
+            <strong>SalaryScope</strong> · Salary Prediction System (ML) · v1.2.0
+        </div>
+        <div style="font-size:0.9em; opacity:0.8;">
+            Developed by Yash Shah ·
+            <a href="https://github.com/ybs294000" target="_blank">GitHub</a> ·
+            <a href="mailto:yashbshah2004@gmail.com">Contact</a>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)

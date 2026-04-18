@@ -237,7 +237,7 @@ def render_model_hub_tab(
 @st.fragment
 def _render_prediction_panel(active_models: list[dict], user: dict) -> None:
     """Prediction model selector and form — isolated fragment."""
-    st.subheader(":material/model_training: Prediction Studio")
+    st.subheader(":material/model_training: Model Selection")
 
     if not active_models:
         _msg(

@@ -55,7 +55,7 @@ def render_hub_scenario_mode(
     selected_meta  : Registry metadata dict.
     msg_fn         : Callable(text, kind).
     """
-    st.subheader(":material/schema: Scenario Analysis")
+    st.subheader(":material/analytics: Scenario Analysis")
     st.caption(
         "Define up to 5 named scenarios. "
         "Edit any field directly, then click Run All Scenarios."

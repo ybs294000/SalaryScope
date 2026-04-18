@@ -982,7 +982,7 @@ def render_model_analytics_tab(
     are never re-invoked here, preventing resource waste.
     """
 
-    st.header(":material/analytics: Model Analytics and Performance Evaluation")
+    st.header(":material/model_training: Model Analytics and Performance Evaluation")
 
     # ------------------------------------------------------------------
     # APP 1

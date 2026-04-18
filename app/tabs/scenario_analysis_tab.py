@@ -96,7 +96,7 @@ def render_scenario_tab(
     app1_generate_scenario_pdf,
     app2_generate_scenario_pdf,
 ):
-    st.header(":material/schema: Scenario Analysis & What-If Simulation")
+    st.header(":material/analytics: Scenario Analysis & What-If Simulation")
     st.caption(
         "Build and compare multiple salary prediction scenarios side by side. "
         "Adjust parameters, run all scenarios at once, and explore how changes "
