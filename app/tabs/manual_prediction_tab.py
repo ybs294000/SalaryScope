@@ -259,22 +259,15 @@ def render_manual_prediction_tab(
 
             st.markdown("<h3 style='text-align: center;'>Estimated Annual Salary</h3>", unsafe_allow_html=True)
             st.markdown(salary_card_html(f"${prediction:,.2f}"), unsafe_allow_html=True)
-            st.divider()
-            # ------------------------------------------------------------------
-            # SALARY LEVEL AND CAREER STAGE
-            # ------------------------------------------------------------------
+
             st.markdown("<h3 style='text-align: center;'>Salary Context</h3>", unsafe_allow_html=True)
-
             col_a, col_b = st.columns(2)
-
             with col_a:
                 st.markdown("<h5 style='text-align: center;'>Salary Level</h5>", unsafe_allow_html=True)
                 st.markdown(salary_level_card_html(salary_band_label), unsafe_allow_html=True)
-
             with col_b:
                 st.markdown("<h5 style='text-align: center;'>Career Stage</h5>", unsafe_allow_html=True)
                 st.markdown(career_stage_card_html(career_stage_label), unsafe_allow_html=True)
-
             st.caption(
                 "Salary level represents your earning bracket, while career stage reflects your position "
                 "based on experience and education."
@@ -293,10 +286,29 @@ def render_manual_prediction_tab(
             col_high.metric("Upper Estimate", f"${upper_bound:,.2f}")
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
 
+        
+            #st.divider()
+            #st.markdown("<h3 style='text-align: center;'>Estimated Salary Level</h3>", unsafe_allow_html=True)
+            #st.markdown(salary_level_card_html(salary_band_label), unsafe_allow_html=True)
+            # -------------------------------------------------------
+            # CAREER STAGE (CLUSTER MODEL)
+            # -------------------------------------------------------
+
+            #st.divider()
+            #st.markdown("<h3 style='text-align: center;'>Career Stage</h3>", unsafe_allow_html=True)
+
+            # Display UI (same style as salary band)
+            #st.markdown(career_stage_card_html(career_stage_label), unsafe_allow_html=True)
+
+          #  st.caption(
+          #      "Career stage is determined using an unsupervised clustering model based on "
+          #      "experience and education. It represents your relative position in career progression."
+          #  )
+
+
             # -------------------------------------------------------
             # ASSOCIATION INSIGHT (APP 1)
             # -------------------------------------------------------
-
             st.divider()
 
             st.markdown("<h3 style='text-align: center;'>Pattern Insight (Data Association)</h3>", unsafe_allow_html=True)
