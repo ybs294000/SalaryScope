@@ -396,7 +396,7 @@ def _render_extended_modes_panel(active_bundle: Any, selected_meta: dict) -> Non
     if _HUB_RESUME_AVAILABLE:
         tab_labels.append(":material/description: Resume")
     if _HUB_SCENARIO_AVAILABLE:
-        tab_labels.append(":material/schema: Scenario")
+        tab_labels.append(":material/analytics: Scenario")
 
     tab_objects = st.tabs(tab_labels)
     tab_idx = 0
