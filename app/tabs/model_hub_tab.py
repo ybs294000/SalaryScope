@@ -63,6 +63,46 @@ from app.model_hub.validator import (
 )
 from app.model_hub.uploader import upload_bundle, upload_bundle_onnx, upload_schema_only, upload_aliases_only
 
+# ==========================================================================
+# EXTENDED MODES - BEGIN
+# These imports enable Manual, Batch, Resume, and Scenario prediction modes
+# for Model Hub bundles.  Each import is independently removable:
+#   - Remove the import + the corresponding _render_hub_*_mode() call below.
+#   - No other file needs changing.
+# ==========================================================================
+try:
+    from app.model_hub.extended_modes.hub_manual_tab import render_hub_manual_mode as _hub_manual
+    _HUB_MANUAL_AVAILABLE = True
+except Exception:
+    _HUB_MANUAL_AVAILABLE = False
+
+try:
+    from app.model_hub.extended_modes.hub_batch_tab import render_hub_batch_mode as _hub_batch
+    _HUB_BATCH_AVAILABLE = True
+except Exception:
+    _HUB_BATCH_AVAILABLE = False
+
+try:
+    from app.model_hub.extended_modes.hub_resume_tab import render_hub_resume_mode as _hub_resume
+    _HUB_RESUME_AVAILABLE = True
+except Exception:
+    _HUB_RESUME_AVAILABLE = False
+
+try:
+    from app.model_hub.extended_modes.hub_scenario_tab import render_hub_scenario_mode as _hub_scenario
+    _HUB_SCENARIO_AVAILABLE = True
+except Exception:
+    _HUB_SCENARIO_AVAILABLE = False
+
+try:
+    from app.model_hub.extended_modes.model_card import render_model_card as _render_model_card
+    _MODEL_CARD_AVAILABLE = True
+except Exception:
+    _MODEL_CARD_AVAILABLE = False
+# ==========================================================================
+# EXTENDED MODES - END
+# ==========================================================================
+
 # Currency converter — import is lazy-guarded so the tab works even if
 # currency_utils is unavailable (e.g. lite app without the full utils tree).
 try:
@@ -257,6 +297,14 @@ def _render_prediction_panel(active_models: list[dict], user: dict) -> None:
     if info_parts:
         st.caption("  |  ".join(info_parts))
 
+    # ==========================================================================
+    # MODEL CARD: renders structured metadata for the selected model.
+    # To remove: delete model_card.py and this block.
+    # ==========================================================================
+    if _MODEL_CARD_AVAILABLE:
+        _render_model_card(selected_meta, expanded=False)
+    # ==========================================================================
+
     st.divider()
 
     # --- Load bundle ---
@@ -293,52 +341,84 @@ def _render_prediction_panel(active_models: list[dict], user: dict) -> None:
         )
         return
 
-    # --- Render prediction form ---
-    st.markdown("**Input Parameters**")
+    # The prediction form, batch upload, resume analysis, and scenario analysis
+    # are all available in the tabs below.  There is no separate inline form here
+    # to avoid showing the same inputs twice.
+
+    # ==========================================================================
+    # EXTENDED MODES - BEGIN
+    # Renders Manual / Batch / Resume / Scenario sub-tabs for the loaded bundle.
+    # This block is completely self-contained.  To remove it, delete everything
+    # between "EXTENDED MODES - BEGIN" and "EXTENDED MODES - END".
+    # ==========================================================================
+    _render_extended_modes_panel(active_bundle, selected_meta)
+    # ==========================================================================
+    # EXTENDED MODES - END
+    # ==========================================================================
+
+
+def _render_extended_modes_panel(active_bundle: Any, selected_meta: dict) -> None:
+    """
+    Render the extended prediction modes sub-tab panel for a loaded bundle.
+
+    Shows Manual / Batch / Resume / Scenario sub-tabs below the existing
+    single-prediction panel.  Each mode is gated on its availability flag so
+    removing any extended_modes submodule simply drops that tab from the UI
+    without errors.
+
+    This function is called from _render_prediction_panel (inside a fragment)
+    so it participates in the same fragment rerun boundary.  Each inner mode
+    manages its own session state keys using the model_id as a namespace.
+    """
+    # Only show if at least one extended mode is available.
+    any_available = (
+        _HUB_MANUAL_AVAILABLE
+        or _HUB_BATCH_AVAILABLE
+        or _HUB_RESUME_AVAILABLE
+        or _HUB_SCENARIO_AVAILABLE
+    )
+    if not any_available:
+        return
+
+    st.divider()
+    st.subheader(":material/apps: Additional Prediction Modes")
     st.caption(
-        "Fill in the fields below. The form is generated from this model's schema."
+        "Use the same loaded model in different modes below. "
+        "All modes read from the same schema and bundle."
     )
 
-    with st.form(key=f"mh_pred_form_{active_bundle.model_id}"):
-        raw_input = render_schema_form(
-            schema=active_bundle.schema,
-            key_prefix=f"mh_{active_bundle.model_id}",
-        )
-        submitted = st.form_submit_button(
-            ":material/play_arrow: Predict",
-            type="primary",
-        )
+    # Build tab list dynamically from what is available.
+    tab_labels = []
+    if _HUB_MANUAL_AVAILABLE:
+        tab_labels.append(":material/edit_note: Manual")
+    if _HUB_BATCH_AVAILABLE:
+        tab_labels.append(":material/batch_prediction: Batch")
+    if _HUB_RESUME_AVAILABLE:
+        tab_labels.append(":material/description: Resume")
+    if _HUB_SCENARIO_AVAILABLE:
+        tab_labels.append(":material/schema: Scenario")
 
-    # On form submit: run prediction and store result in session_state so it
-    # survives reruns triggered by the currency toggle (or any other widget
-    # inside this fragment) without losing the displayed result.
-    _result_key = f"mh_pred_result_{active_bundle.model_id}"
+    tab_objects = st.tabs(tab_labels)
+    tab_idx = 0
 
-    if submitted:
-        try:
-            _stored = predict(active_bundle, raw_input)
+    if _HUB_MANUAL_AVAILABLE:
+        with tab_objects[tab_idx]:
+            _hub_manual(active_bundle, selected_meta, _msg)
+        tab_idx += 1
 
-            _result_label = get_result_label(
-                active_bundle.schema,
-                selected_meta.get("target", "Predicted Value"),
-            )
+    if _HUB_BATCH_AVAILABLE:
+        with tab_objects[tab_idx]:
+            _hub_batch(active_bundle, selected_meta, _msg)
+        tab_idx += 1
 
-            st.session_state[_result_key] = {
-                "value":     _stored.value,
-                "model_id":  _stored.model_id,
-                "target":    _result_label,
-                "warnings":  _stored.warnings,
-                "raw_input": _stored.raw_input,
-            }
-        except (RuntimeError, ValueError) as exc:
-            _msg(f"Prediction failed: {exc}", "error")
-            st.session_state.pop(_result_key, None)
+    if _HUB_RESUME_AVAILABLE:
+        with tab_objects[tab_idx]:
+            _hub_resume(active_bundle, selected_meta, _msg)
+        tab_idx += 1
 
-    # Render result on every fragment rerun as long as it is in session_state.
-    # This keeps the result card and currency toggle visible after the toggle
-    # is clicked, since clicking it reruns the fragment without re-submitting.
-    if _result_key in st.session_state:
-        _render_prediction_result(st.session_state[_result_key])
+    if _HUB_SCENARIO_AVAILABLE:
+        with tab_objects[tab_idx]:
+            _hub_scenario(active_bundle, selected_meta, _msg)
 
 
 def _render_prediction_result(stored: dict) -> None:
@@ -487,6 +567,126 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
                 help="Group related model versions under one family for rollback.",
             )
 
+        # ==========================================================================
+        # MODEL CARD - BEGIN
+        # Optional structured metadata stored in the registry entry.
+        # Displayed in the Model Card expander when users select the model.
+        # To remove model card support: delete from MODEL CARD - BEGIN to END,
+        # and remove model_card_json from all _do_upload* calls below.
+        # ==========================================================================
+        with st.expander(":material/badge: Model Card Metadata (optional)", expanded=False):
+            st.caption(
+                "Fill in any fields you want to appear on the model card. "
+                "All fields are optional. You can also paste raw JSON directly."
+            )
+            mc_col1, mc_col2 = st.columns(2)
+            with mc_col1:
+                mc_intended = st.text_area(
+                    "Intended use",
+                    key="mh_up_mc_intended",
+                    placeholder="What this model is designed to predict and for whom.",
+                    height=80,
+                )
+                mc_limitations = st.text_area(
+                    "Limitations",
+                    key="mh_up_mc_limitations",
+                    placeholder="Known limitations, edge cases, or data gaps.",
+                    height=80,
+                )
+                mc_training_data = st.text_input(
+                    "Training data",
+                    key="mh_up_mc_training",
+                    placeholder="e.g. ds_salaries.csv, Kaggle, ~3700 records, 2020-2023",
+                )
+                mc_framework = st.text_input(
+                    "Framework",
+                    key="mh_up_mc_framework",
+                    placeholder="e.g. XGBoost 2.x + sklearn pipeline",
+                )
+            with mc_col2:
+                mc_out_of_scope = st.text_area(
+                    "Out of scope",
+                    key="mh_up_mc_oos",
+                    placeholder="Inputs or use cases this model should not be used for.",
+                    height=80,
+                )
+                mc_ethical = st.text_area(
+                    "Ethical notes",
+                    key="mh_up_mc_ethical",
+                    placeholder="Bias considerations, fairness notes, or known gaps.",
+                    height=80,
+                )
+                mc_authors = st.text_input(
+                    "Authors",
+                    key="mh_up_mc_authors",
+                    placeholder="e.g. SalaryScope Team",
+                )
+                mc_license = st.text_input(
+                    "License",
+                    key="mh_up_mc_license",
+                    placeholder="e.g. MIT",
+                )
+            mc_tags_raw = st.text_input(
+                "Tags (comma-separated)",
+                key="mh_up_mc_tags",
+                placeholder="e.g. salary, data science, xgboost",
+            )
+            st.caption(
+                "Performance metrics and external links can be added by editing "
+                "the registry entry JSON directly after upload, or via the "
+                "Model Card JSON field below."
+            )
+            mc_raw_json = st.text_area(
+                "Raw model_card JSON override (optional)",
+                key="mh_up_mc_raw",
+                placeholder='{"metrics": {"r2": 0.59, "mae": 35913}, "links": {"Dataset": "https://..."}}',
+                height=80,
+                help=(
+                    "Advanced: paste a full or partial model_card JSON object. "
+                    "This is merged with the fields above. "
+                    "Raw JSON takes precedence on key conflicts."
+                ),
+            )
+
+        def _build_model_card_dict() -> dict:
+            """Assemble model_card dict from upload panel widget values."""
+            import json as _json
+            card: dict = {}
+            mc_intended_val  = st.session_state.get("mh_up_mc_intended", "").strip()
+            mc_oos_val       = st.session_state.get("mh_up_mc_oos", "").strip()
+            mc_limitations_v = st.session_state.get("mh_up_mc_limitations", "").strip()
+            mc_ethical_val   = st.session_state.get("mh_up_mc_ethical", "").strip()
+            mc_training_val  = st.session_state.get("mh_up_mc_training", "").strip()
+            mc_framework_val = st.session_state.get("mh_up_mc_framework", "").strip()
+            mc_authors_val   = st.session_state.get("mh_up_mc_authors", "").strip()
+            mc_license_val   = st.session_state.get("mh_up_mc_license", "").strip()
+            mc_tags_val      = st.session_state.get("mh_up_mc_tags", "").strip()
+            mc_raw_val       = st.session_state.get("mh_up_mc_raw", "").strip()
+
+            if mc_intended_val:  card["intended_use"]   = mc_intended_val
+            if mc_oos_val:       card["out_of_scope"]   = mc_oos_val
+            if mc_limitations_v: card["limitations"]    = mc_limitations_v
+            if mc_ethical_val:   card["ethical_notes"]  = mc_ethical_val
+            if mc_training_val:  card["training_data"]  = mc_training_val
+            if mc_framework_val: card["framework"]      = mc_framework_val
+            if mc_authors_val:   card["authors"]        = mc_authors_val
+            if mc_license_val:   card["license"]        = mc_license_val
+            if mc_tags_val:
+                card["tags"] = [t.strip() for t in mc_tags_val.split(",") if t.strip()]
+
+            if mc_raw_val:
+                try:
+                    raw_parsed = _json.loads(mc_raw_val)
+                    if isinstance(raw_parsed, dict):
+                        card.update(raw_parsed)
+                except _json.JSONDecodeError:
+                    pass  # invalid raw JSON is silently ignored at build time
+
+            return card
+        # ==========================================================================
+        # MODEL CARD - END
+        # ==========================================================================
+
         st.divider()
         st.markdown("**Upload Files**")
 
@@ -526,6 +726,44 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
             ),
         )
 
+        # LEXICON UPLOADERS - BEGIN
+        # Bundle-level lexicons override the global app-level JSON files
+        # for resume extraction when this model is loaded. Both are optional.
+        # If omitted, the global app-level lexicons/ files are used as fallback.
+        st.divider()
+        st.markdown("**Resume Extraction Lexicons (optional)**")
+        st.caption(
+            "Upload custom lexicons to override the app-level defaults for resume "
+            "feature extraction when this model is used. Both files are optional and "
+            "independent. Omitting either falls back to the shared global lexicon."
+        )
+        lex_col1, lex_col2 = st.columns(2)
+        with lex_col1:
+            f_skills_lex = st.file_uploader(
+                "skills.json (optional)",
+                type=["json"],
+                key="mh_up_skills_lex",
+                help=(
+                    "Custom skill phrase list for this model. "
+                    "Must match skills.json format: "
+                    "{category_name: [phrase, phrase, ...]}. "
+                    "Overrides the global skills.json for resume extraction."
+                ),
+            )
+        with lex_col2:
+            f_titles_lex = st.file_uploader(
+                "job_titles.json (optional)",
+                type=["json"],
+                key="mh_up_titles_lex",
+                help=(
+                    "Custom job title alias map for this model. "
+                    "Must match job_titles.json format: "
+                    "{Canonical Title: [alias, alias, ...]}. "
+                    "Overrides the global job_titles.json for resume extraction."
+                ),
+            )
+        # LEXICON UPLOADERS - END
+
         # Validate completeness using format-aware checker
         uploaded_names = []
         if f_model:
@@ -551,21 +789,60 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
             disabled=bool(missing) or not display_name or not target,
             type="primary",
         ):
-            aliases_bytes = f_aliases.read() if f_aliases else None
+            aliases_bytes      = f_aliases.read() if f_aliases else None
+            skills_lex_bytes   = f_skills_lex.read() if f_skills_lex else None
+            titles_lex_bytes   = f_titles_lex.read() if f_titles_lex else None
+            model_card_dict    = _build_model_card_dict()
             if is_onnx_upload:
                 _do_upload_onnx(
                     f_model.read(), f_columns.read(), f_schema.read(),
                     display_name, description, target, family_id,
                     user, registry,
-                    aliases_bytes=aliases_bytes,
+                    aliases_bytes    = aliases_bytes,
+                    model_card_dict  = model_card_dict or None,
+                    skills_lex_bytes = skills_lex_bytes,
+                    titles_lex_bytes = titles_lex_bytes,
                 )
             else:
                 _do_upload(
                     f_model.read(), f_columns.read(), f_schema.read(),
                     display_name, description, target, family_id,
                     user, registry,
-                    aliases_bytes=aliases_bytes,
+                    aliases_bytes    = aliases_bytes,
+                    model_card_dict  = model_card_dict or None,
+                    skills_lex_bytes = skills_lex_bytes,
+                    titles_lex_bytes = titles_lex_bytes,
                 )
+
+
+def _upload_lexicon_sidecar(
+    data: Optional[bytes],
+    folder_path: str,
+    filename: str,
+    label: str,
+) -> None:
+    """
+    Upload a lexicon JSON sidecar to the bundle folder on HuggingFace.
+    Silent no-op when data is None (lexicon not provided at upload time).
+    Logs a warning on failure but does not abort the main upload.
+    """
+    if data is None:
+        return
+    try:
+        from app.model_hub._hf_client import upload_file_bytes
+        if not folder_path.endswith("/"):
+            folder_path += "/"
+        upload_file_bytes(
+            path_in_repo   = folder_path + filename,
+            data           = data,
+            commit_message = f"Upload {label} for {folder_path}",
+        )
+    except Exception as exc:
+        _msg(
+            f"Warning: {label} upload failed ({exc}). "
+            "Resume extraction will fall back to global app-level lexicons.",
+            "warning",
+        )
 
 
 def _do_upload(
@@ -579,6 +856,9 @@ def _do_upload(
     user: dict,
     registry: dict,
     aliases_bytes: Optional[bytes] = None,
+    model_card_dict: Optional[dict] = None,
+    skills_lex_bytes: Optional[bytes] = None,
+    titles_lex_bytes: Optional[bytes] = None,
 ) -> None:
     uploaded_by = user.get("email") or user.get("username") or "admin"
 
@@ -602,7 +882,22 @@ def _do_upload(
     for w in result.warnings:
         _msg(w, "warning")
 
-    # Add to registry and push
+    # Upload optional lexicon sidecars to the same bundle folder.
+    # These override global app-level lexicons for this model's resume extraction.
+    _upload_lexicon_sidecar(skills_lex_bytes, result.folder_path, "skills.json",
+                             "skills lexicon")
+    _upload_lexicon_sidecar(titles_lex_bytes, result.folder_path, "job_titles.json",
+                             "job titles lexicon")
+
+    if model_card_dict:
+        result.registry_entry["model_card"] = model_card_dict
+
+    # Track whether bundle-level lexicons were uploaded
+    if skills_lex_bytes:
+        result.registry_entry["has_skills_lexicon"] = True
+    if titles_lex_bytes:
+        result.registry_entry["has_titles_lexicon"] = True
+
     try:
         new_registry = add_model_to_registry(registry, result.registry_entry)
         push_registry(new_registry)
@@ -632,6 +927,9 @@ def _do_upload_onnx(
     user: dict,
     registry: dict,
     aliases_bytes: Optional[bytes] = None,
+    model_card_dict: Optional[dict] = None,
+    skills_lex_bytes: Optional[bytes] = None,
+    titles_lex_bytes: Optional[bytes] = None,
 ) -> None:
     uploaded_by = user.get("email") or user.get("username") or "admin"
 
@@ -654,6 +952,19 @@ def _do_upload_onnx(
 
     for w in result.warnings:
         _msg(w, "warning")
+
+    _upload_lexicon_sidecar(skills_lex_bytes, result.folder_path, "skills.json",
+                             "skills lexicon")
+    _upload_lexicon_sidecar(titles_lex_bytes, result.folder_path, "job_titles.json",
+                             "job titles lexicon")
+
+    if model_card_dict:
+        result.registry_entry["model_card"] = model_card_dict
+
+    if skills_lex_bytes:
+        result.registry_entry["has_skills_lexicon"] = True
+    if titles_lex_bytes:
+        result.registry_entry["has_titles_lexicon"] = True
 
     try:
         new_registry = add_model_to_registry(registry, result.registry_entry)

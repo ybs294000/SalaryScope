@@ -1,0 +1,72 @@
+{
+  "_comment": "Education level lexicon. Each level key maps to a list of regex patterns (applied with re.search, case-insensitive). Levels are checked from highest (3) to lowest (0) and the first match wins. Add new patterns freely.",
+  "_version": "1.0",
+
+  "levels": {
+    "3": {
+      "label": "PhD",
+      "patterns": [
+        "\\bphd\\b",
+        "\\bph\\.d\\b",
+        "\\bdoctorate\\b",
+        "\\bdoctoral\\b",
+        "\\bd\\.phil\\b"
+      ]
+    },
+    "2": {
+      "label": "Master's Degree",
+      "patterns": [
+        "\\bm\\.tech\\b",
+        "\\bmtech\\b",
+        "\\bmaster of technology\\b",
+        "\\bmaster of science\\b",
+        "\\bmsc\\b",
+        "\\bm\\.sc\\b",
+        "\\bm\\.s\\b",
+        "\\bm\\.e\\b",
+        "\\bme\\b",
+        "\\bmba\\b",
+        "\\bmaster(?:'s)?\\b",
+        "\\bmasters\\b",
+        "\\bpostgraduate\\b",
+        "\\bpg diploma\\b",
+        "\\bpgdip\\b"
+      ]
+    },
+    "1": {
+      "label": "Bachelor's Degree",
+      "patterns": [
+        "\\bb\\.tech\\b",
+        "\\bbtech\\b",
+        "\\bbachelor of technology\\b",
+        "\\bbachelor of engineering\\b",
+        "\\bb\\.e\\b",
+        "\\bbe\\b",
+        "\\bb\\.sc\\b",
+        "\\bbsc\\b",
+        "\\bbca\\b",
+        "\\bbachelor(?:'s)?\\b",
+        "\\bundergraduate\\b",
+        "\\bb\\.a\\b",
+        "\\bba\\b",
+        "\\bb\\.com\\b",
+        "\\bbcom\\b",
+        "\\bassociate(?:'s)? degree\\b"
+      ]
+    },
+    "0": {
+      "label": "High School",
+      "patterns": [
+        "\\bhigh school\\b",
+        "\\bsecondary school\\b",
+        "\\b12th grade\\b",
+        "\\bhigher secondary\\b",
+        "\\bhsc\\b",
+        "\\bssc\\b",
+        "\\ba-level\\b",
+        "\\bgcse\\b",
+        "\\bgrade 12\\b"
+      ]
+    }
+  }
+}

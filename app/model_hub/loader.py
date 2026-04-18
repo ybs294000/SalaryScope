@@ -98,6 +98,7 @@ class ModelBundle:
     __slots__ = (
         "model_id", "model", "columns", "schema",
         "model_meta", "has_aliases", "bundle_format",
+        "lexicons",
     )
 
     def __init__(
@@ -109,6 +110,7 @@ class ModelBundle:
         model_meta: dict,
         has_aliases: bool = False,
         bundle_format: str = "pickle",
+        lexicons: Optional[dict] = None,
     ) -> None:
         self.model_id      = model_id
         self.model         = model
@@ -117,6 +119,11 @@ class ModelBundle:
         self.model_meta    = model_meta
         self.has_aliases   = has_aliases
         self.bundle_format = bundle_format   # "onnx" | "pickle"
+        # Dict of per-bundle lexicon overrides for resume extraction.
+        # Keys: "skills" (categorised skill dict), "job_titles" (alias dict).
+        # None when no bundle-level lexicons were uploaded.
+        # Falls back to global app-level JSON files in hub_resume_engine.py.
+        self.lexicons      = lexicons or {}
 
 
 def load_bundle(model_meta: dict, force_reload: bool = False) -> ModelBundle:
@@ -201,6 +208,32 @@ def load_bundle(model_meta: dict, force_reload: bool = False) -> ModelBundle:
         has_aliases = True
         logger.info("[ModelHub] aliases.json merged for '%s'.", model_id)
 
+    # --- Download optional per-bundle lexicon sidecars ---
+    # These override the global app-level lexicons/ JSON files for resume
+    # extraction when this specific model is used.  Both are optional: if
+    # absent, hub_resume_engine.py falls back to the global files silently.
+    # Fetched fresh on every load (force=True) so pushed updates take effect.
+    bundle_lexicons: dict = {}
+    _skills_lex_bytes = _download_optional(
+        bundle_path + "skills.json", MAX_SCHEMA_BYTES, force=True,
+    )
+    if _skills_lex_bytes is not None:
+        try:
+            bundle_lexicons["skills"] = json.loads(_skills_lex_bytes.decode("utf-8"))
+            logger.info("[ModelHub] Bundle skills.json loaded for '%s'.", model_id)
+        except Exception as exc:
+            logger.warning("[ModelHub] skills.json for '%s' invalid JSON: %s", model_id, exc)
+
+    _titles_lex_bytes = _download_optional(
+        bundle_path + "job_titles.json", MAX_SCHEMA_BYTES, force=True,
+    )
+    if _titles_lex_bytes is not None:
+        try:
+            bundle_lexicons["job_titles"] = json.loads(_titles_lex_bytes.decode("utf-8"))
+            logger.info("[ModelHub] Bundle job_titles.json loaded for '%s'.", model_id)
+        except Exception as exc:
+            logger.warning("[ModelHub] job_titles.json for '%s' invalid JSON: %s", model_id, exc)
+
     bundle = ModelBundle(
         model_id      = model_id,
         model         = model,
@@ -209,6 +242,7 @@ def load_bundle(model_meta: dict, force_reload: bool = False) -> ModelBundle:
         model_meta    = model_meta,
         has_aliases   = has_aliases,
         bundle_format = bundle_format,
+        lexicons      = bundle_lexicons if bundle_lexicons else None,
     )
 
     # --- Store in cache ---
