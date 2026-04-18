@@ -307,7 +307,7 @@ def render_manual_prediction_tab(
             st.caption("Range estimated using standard deviation of model residuals observed during training.")
 
             st.divider()
-            st.subheader("Salary Insights & Financial Planning Tools")
+            st.subheader(":material/account_balance: Salary Insights & Financial Planning Tools")
             render_currency_converter(usd_amount=prediction, location_hint=country, widget_key="manual_a1")
             active_currency = get_active_currency("manual_a1")
             active_rates    = get_active_rates()
@@ -334,7 +334,7 @@ def render_manual_prediction_tab(
                                    widget_key="manual_a1_lifestyle", gross_usd=prediction)
 
             st.divider()
-            st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
+            st.subheader(":material/handshake: Salary Negotiation Tips")
 
             negotiation_tips_a1 = generate_negotiation_tips_app1(
                 prediction=prediction,
@@ -354,7 +354,7 @@ def render_manual_prediction_tab(
             st.divider()
             insights_a1 = generate_insights_app1(data["input_details"])
             recs_a1 = generate_recommendations_app1(data["input_details"])
-            st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
+            st.subheader(":material/lightbulb: Career Recommendations")
             render_recommendations(recs_a1)
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
 
@@ -571,7 +571,7 @@ def render_manual_prediction_tab(
             #st.caption("Range estimated using variation across individual trees in the XGBoost model.")
 
             st.divider()
-            st.subheader("Salary Insights & Financial Planning Tools")
+            st.subheader(":material/account_balance: Salary Insights & Financial Planning Tools")
             render_currency_converter(usd_amount=prediction_a2, location_hint=company_location, widget_key="manual_a2")
             active_currency_a2 = get_active_currency("manual_a2")
             active_rates_a2    = get_active_rates()
@@ -635,7 +635,7 @@ def render_manual_prediction_tab(
             #st.caption(f"Domain Focus: {insights['role']}")
             st.divider()
 
-            st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
+            st.subheader(":material/handshake: Salary Negotiation Tips")
 
             negotiation_tips_a2 = generate_negotiation_tips_app2(
                 prediction=prediction_a2,
@@ -653,7 +653,7 @@ def render_manual_prediction_tab(
 
             # Recommendations
             st.divider()
-            st.subheader("Career Recommendations")
+            st.subheader(":material/lightbulb: Career Recommendations")
             render_recommendations(recs_a2)
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
 
