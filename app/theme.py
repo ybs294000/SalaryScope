@@ -440,7 +440,7 @@ DARK_PROFESSIONAL: dict = {
     "gauge_warn_bg":   DGAUGE_WARN,
     "gauge_danger_bg": DGAUGE_DANGER,
 
-    "card_band_border":  INDIGO_500,
+    "card_band_border":  VIOLET_400,
     "card_stage_border": VIOLET_400,
     "util_blue":         "#3B82F6",
     "ci_marker":         "#fef6e4",

@@ -260,23 +260,39 @@ def render_manual_prediction_tab(
             st.markdown("<h3 style='text-align: center;'>Estimated Annual Salary</h3>", unsafe_allow_html=True)
             st.markdown(salary_card_html(f"${prediction:,.2f}"), unsafe_allow_html=True)
             st.divider()
-            st.markdown("<h3 style='text-align: center;'>Estimated Salary Level</h3>", unsafe_allow_html=True)
-            st.markdown(salary_level_card_html(salary_band_label), unsafe_allow_html=True)
-            # -------------------------------------------------------
-            # CAREER STAGE (CLUSTER MODEL)
-            # -------------------------------------------------------
+            # ------------------------------------------------------------------
+            # SALARY LEVEL AND CAREER STAGE
+            # ------------------------------------------------------------------
+            st.markdown("<h3 style='text-align: center;'>Salary Context</h3>", unsafe_allow_html=True)
 
-            st.divider()
-            st.markdown("<h3 style='text-align: center;'>Career Stage</h3>", unsafe_allow_html=True)
+            col_a, col_b = st.columns(2)
 
-            # Display UI (same style as salary band)
-            st.markdown(career_stage_card_html(career_stage_label), unsafe_allow_html=True)
+            with col_a:
+                st.markdown("<h5 style='text-align: center;'>Salary Level</h5>", unsafe_allow_html=True)
+                st.markdown(salary_level_card_html(salary_band_label), unsafe_allow_html=True)
+
+            with col_b:
+                st.markdown("<h5 style='text-align: center;'>Career Stage</h5>", unsafe_allow_html=True)
+                st.markdown(career_stage_card_html(career_stage_label), unsafe_allow_html=True)
 
             st.caption(
-                "Career stage is determined using an unsupervised clustering model based on "
-                "experience and education. It represents your relative position in career progression."
+                "Salary level represents your earning bracket, while career stage reflects your position "
+                "based on experience and education."
             )
-            
+
+            st.divider()
+            st.markdown("<h3 style='text-align: center;'>Breakdown (Approximate)</h3>", unsafe_allow_html=True)
+            col_m, col_w, col_h = st.columns(3)
+            col_m.metric("Monthly (Approx)", f"${monthly:,.2f}")
+            col_w.metric("Weekly (Approx)", f"${weekly:,.2f}")  
+            col_h.metric("Hourly (Approx, 40hr/week)", f"${hourly:,.2f}")
+            st.divider()
+            st.markdown("<h3 style='text-align: center;'>Likely Salary Range (95% Confidence Interval)</h3>", unsafe_allow_html=True)
+            col_low, col_high = st.columns(2)
+            col_low.metric("Lower Estimate", f"${lower_bound:,.2f}")
+            col_high.metric("Upper Estimate", f"${upper_bound:,.2f}")
+            st.caption("Range estimated using standard deviation of model residuals observed during training.")
+
             # -------------------------------------------------------
             # ASSOCIATION INSIGHT (APP 1)
             # -------------------------------------------------------
@@ -292,19 +308,6 @@ def render_manual_prediction_tab(
                 "identifying patterns between education, experience, job role, and salary levels."
             )
             st.caption("Note: This insight reflects general dataset patterns and may not always align with individual predictions.")
-
-            st.divider()
-            st.markdown("<h3 style='text-align: center;'>Breakdown (Approximate)</h3>", unsafe_allow_html=True)
-            col_m, col_w, col_h = st.columns(3)
-            col_m.metric("Monthly (Approx)", f"${monthly:,.2f}")
-            col_w.metric("Weekly (Approx)", f"${weekly:,.2f}")  
-            col_h.metric("Hourly (Approx, 40hr/week)", f"${hourly:,.2f}")
-            st.divider()
-            st.markdown("<h3 style='text-align: center;'>Likely Salary Range (95% Confidence Interval)</h3>", unsafe_allow_html=True)
-            col_low, col_high = st.columns(2)
-            col_low.metric("Lower Estimate", f"${lower_bound:,.2f}")
-            col_high.metric("Upper Estimate", f"${upper_bound:,.2f}")
-            st.caption("Range estimated using standard deviation of model residuals observed during training.")
 
             st.divider()
             st.subheader(":material/account_balance: Salary Insights & Financial Planning Tools")

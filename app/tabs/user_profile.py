@@ -102,6 +102,7 @@ def show_profile():
         x="DateTime",
         y="Predicted Salary",
         color="Model",
+        title="Prediction History",
         color_discrete_map={
             "Random Forest":        get_colorway()[0],
             "XGBoost":              get_colorway()[1],
@@ -117,19 +118,17 @@ def show_profile():
         )
     )
 
-    apply_theme(fig, extra={
-        "xaxis": {"title": "Time"},
-        "yaxis": {"title": "Predicted Salary (USD)"},
-        "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
-        "margin": {"l": 60, "r": 30, "t": 40, "b": 60},
-    })
-
     fig.update_xaxes(
         tickformat="%d %b\n%H:%M",
         nticks=6
     )
-
-    st.plotly_chart(fig, width='stretch', theme=None)
+    fig.update_xaxes(title_text="Time")
+    fig.update_yaxes(title_text="Predicted Salary (USD)")
+    apply_theme(fig, extra={
+        "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+        "margin": {"l": 60, "r": 30, "t": 40, "b": 60},
+    })
+    st.plotly_chart(fig, width='stretch')
 
     st.divider()
 
