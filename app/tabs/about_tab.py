@@ -3,47 +3,197 @@ about_tab.py
 ------------
 Renders the "About" tab for SalaryScope.
 
-This module contains all static informational content about the application,
-including:
-- Overview and purpose of SalaryScope
-- Model descriptions (Model 1 and Model 2)
-- Features and modules
-- Model Hub description (including extended prediction modes)
-- Resume analysis details
-- Scenario analysis and prediction workflow
-- User account system and profile features
-- Technologies used
-- Tab guide and usage instructions
-- Limitations and disclaimers
+Sections
+--------
+- Hero section: app name, tagline, key stat pills, author info, links
+- Quick-start guide (new users)
+- Features & Modules expander
+  - Model 1, Model 2, Model Hub, Resume Analysis,
+    Salary Adjustment, Financial Planning Tools,
+    Prediction Feedback, Scenario Analysis,
+    User Account System, User Profile,
+    Shared System Features, Technologies Used
+- Model Performance Summary expander
+- FAQ expander
+- Privacy & Data Notice expander
+- Tab Guide expander
+- Usage Instructions expander
+- Limitations expander
+- Dataset Citations expander
 
 The content is UI-focused and self-contained, with no dependencies on model
-logic or datasets. It is separated from the main app to improve readability,
-maintainability, and modular structure.
+logic or datasets.
 """
 import streamlit as st
 
-def render_about_tab():
-    st.markdown("## About SalaryScope")
 
-    st.markdown(
-        "SalaryScope is a web application that predicts salary based on factors like "
-        "education, experience, job title, and location. "
-        "It uses machine learning models to give an estimated salary along with supporting insights. "
-        "The application supports manual input, resume-based prediction, batch prediction, and scenario analysis. "
-        "It is designed to help students and job seekers get a general idea of salary expectations. "
-        "It includes post-tax estimation, cost-of-living adjustments, a full suite of financial planning tools, "
-        "and a secure user account system. "
-        "A Model Hub tab allows admins to upload additional trained models and make them available to "
-        "logged-in users through a dynamically generated prediction interface, "
-        "with four prediction modes available per model: Manual, Batch, Resume, and Scenario."
+# ---------------------------------------------------------------------------
+# Shared formatting helpers
+# ---------------------------------------------------------------------------
+
+def _info_card(title: str, body: str, accent: str = "#4F8EF7") -> str:
+    """Return an HTML info card string for st.markdown."""
+    return (
+        f'<div style="border-left:3px solid {accent};background:{accent}11;'
+        f'border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:8px;">'
+        f'<div style="font-size:0.75rem;font-weight:600;color:{accent};margin-bottom:3px;">{title}</div>'
+        f'<div style="font-size:0.875rem;color:var(--text-main,#E2E8F0);">{body}</div>'
+        f'</div>'
     )
 
+
+def render_about_tab():
+
+    # -----------------------------------------------------------------------
+    # Hero section
+    # -----------------------------------------------------------------------
+    st.markdown(
+        """
+        <div style="
+            background: var(--bg-card, #1E293B);
+            border: 1px solid var(--border, #334155);
+            border-radius: 12px;
+            padding: 28px 32px 22px 32px;
+            margin-bottom: 8px;
+        ">
+            <div style="font-size:1.6rem;font-weight:700;margin-bottom:6px;">
+                SalaryScope
+            </div>
+            <div style="font-size:0.95rem;color:var(--text-muted,#94A3B8);margin-bottom:18px;">
+                Salary Prediction System using Machine Learning &nbsp;&middot;&nbsp;
+                Final Year B.Tech Project
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+                <span style="background:#1D4ED833;border:1px solid #3B82F6;
+                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
+                             color:#93C5FD;font-weight:600;">v1.2.0</span>
+                <span style="background:#065F4633;border:1px solid #10B981;
+                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
+                             color:#6EE7B7;font-weight:600;">Python 3.13</span>
+                <span style="background:#4C1D9533;border:1px solid #8B5CF6;
+                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
+                             color:#C4B5FD;font-weight:600;">MIT License</span>
+                <span style="background:#92400E33;border:1px solid #F59E0B;
+                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
+                             color:#FCD34D;font-weight:600;">2 Models + Model Hub</span>
+                <span style="background:#7F1D1D33;border:1px solid #EF4444;
+                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
+                             color:#FCA5A5;font-weight:600;">Streamlit Cloud</span>
+            </div>
+            <div style="font-size:0.875rem;color:var(--text-main,#E2E8F0);
+                        line-height:1.7;margin-bottom:20px;">
+                SalaryScope is a web application that predicts salary based on factors like
+                education, experience, job title, and location.
+                It uses machine learning models to give an estimated salary along with
+                supporting insights. The application supports manual input, resume-based
+                prediction, batch prediction, and scenario analysis, and is designed to help
+                students and job seekers get a general idea of salary expectations.
+                It includes post-tax estimation, cost-of-living adjustments, a full suite
+                of financial planning tools, and a secure user account system.
+                A Model Hub tab allows admins to upload additional trained models and make
+                them available to logged-in users through a dynamically generated prediction
+                interface, with four prediction modes per model: Manual, Batch, Resume, and
+                Scenario.
+            </div>
+            <div style="border-top:1px solid var(--border,#334155);
+                        padding-top:14px;
+                        display:flex;flex-wrap:wrap;gap:20px;align-items:center;">
+                <div>
+                    <div style="font-size:0.7rem;font-weight:600;
+                                color:var(--text-muted,#94A3B8);
+                                text-transform:uppercase;letter-spacing:0.05em;
+                                margin-bottom:2px;">Author</div>
+                    <div style="font-size:0.85rem;color:var(--text-main,#E2E8F0);font-weight:500;">
+                        Yash Shah &nbsp;&middot;&nbsp;
+                        B.Tech Final Year, Computer Engineering &nbsp;&middot;&nbsp;
+                        Gandhinagar Institute of Technology
+                    </div>
+                </div>
+                <div style="display:flex;gap:14px;margin-left:auto;">
+                    <a href="https://github.com/ybs294000/salaryscope" target="_blank"
+                       style="font-size:0.82rem;color:var(--primary,#4F8EF7);
+                              text-decoration:none;font-weight:500;">
+                        GitHub
+                    </a>
+                    <a href="mailto:yashbshah2004@gmail.com"
+                       style="font-size:0.82rem;color:var(--primary,#4F8EF7);
+                              text-decoration:none;font-weight:500;">
+                        Contact
+                    </a>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.divider()
+
+    # -----------------------------------------------------------------------
+    # Quick-start guide
+    # -----------------------------------------------------------------------
+    st.markdown("### Getting Started in 3 Steps")
+    qs1, qs2, qs3 = st.columns(3)
+
+    with qs1:
+        st.markdown(
+            '<div style="background:var(--bg-card,#1E293B);border:1px solid var(--border,#334155);'
+            'border-top:3px solid #3B82F6;border-radius:8px;padding:16px 18px;height:100%;">'
+            '<div style="font-size:1.5rem;font-weight:700;color:#3B82F6;margin-bottom:6px;">1</div>'
+            '<div style="font-weight:600;color:var(--text-main,#E2E8F0);margin-bottom:6px;">Pick a model</div>'
+            '<div style="font-size:0.85rem;color:var(--text-muted,#94A3B8);line-height:1.6;">'
+            'Use the dropdown at the top of the page. '
+            'Model 1 (Random Forest) covers general roles. '
+            'Model 2 (XGBoost) is tuned for data science salaries.'
+            '</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    with qs2:
+        st.markdown(
+            '<div style="background:var(--bg-card,#1E293B);border:1px solid var(--border,#334155);'
+            'border-top:3px solid #10B981;border-radius:8px;padding:16px 18px;height:100%;">'
+            '<div style="font-size:1.5rem;font-weight:700;color:#10B981;margin-bottom:6px;">2</div>'
+            '<div style="font-weight:600;color:var(--text-main,#E2E8F0);margin-bottom:6px;">Choose a prediction mode</div>'
+            '<div style="font-size:0.85rem;color:var(--text-muted,#94A3B8);line-height:1.6;">'
+            'Manual - type your details directly. '
+            'Resume - upload your PDF. '
+            'Batch - upload a file for multiple records. '
+            'Scenario - compare up to 5 what-if situations.'
+            '</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    with qs3:
+        st.markdown(
+            '<div style="background:var(--bg-card,#1E293B);border:1px solid var(--border,#334155);'
+            'border-top:3px solid #F59E0B;border-radius:8px;padding:16px 18px;height:100%;">'
+            '<div style="font-size:1.5rem;font-weight:700;color:#F59E0B;margin-bottom:6px;">3</div>'
+            '<div style="font-weight:600;color:var(--text-main,#E2E8F0);margin-bottom:6px;">Interpret the result</div>'
+            '<div style="font-size:0.85rem;color:var(--text-muted,#94A3B8);line-height:1.6;">'
+            'Use the currency converter, tax estimator, and cost-of-living tools below the result '
+            'to see what the salary means in your location and context.'
+            '</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+    st.caption(
+        "Login is optional for predictions. Create an account to save your prediction history "
+        "and access the Model Hub tab."
+    )
+
+    st.divider()
+
+    # -----------------------------------------------------------------------
+    # Features & Modules
+    # -----------------------------------------------------------------------
     with st.expander(":material/widgets: Features & Modules"):
 
         col_ab1, col_ab2 = st.columns(2)
 
         with col_ab1:
-            st.markdown("### Model 1 — General Salary (Random Forest)")
+            st.markdown("### Model 1 - General Salary (Random Forest)")
             st.markdown("""
 **Dataset:** [General Salary Dataset (Kaggle)](https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country)
 
@@ -92,7 +242,7 @@ def render_about_tab():
             """)
 
         with col_ab2:
-            st.markdown("### Model 2 — Data Science Salary (XGBoost)")
+            st.markdown("### Model 2 - Data Science Salary (XGBoost)")
             st.markdown("""
 **Dataset:** [Data Science Salaries Dataset (Kaggle)](https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023)
 
@@ -131,16 +281,16 @@ def render_about_tab():
 - Available to all logged-in users; upload and management controls are admin-only
 - Two bundle formats supported: ONNX (model.onnx + columns.json, recommended) and Pickle (model.pkl + columns.pkl, legacy)
 - ONNX bundles are loaded via onnxruntime with no arbitrary code execution on deserialisation
-- Each upload creates a new versioned folder in a private HuggingFace dataset repo — existing bundles are never overwritten
+- Each upload creates a new versioned folder in a private HuggingFace dataset repo -- existing bundles are never overwritten
 - A registry file (`models_registry.json`) tracks all uploaded models, their active status, and bundle format
 - Model Card metadata (intended use, limitations, metrics, training data, authors, links) can be attached at upload time and is displayed before loading
 - Users see a dropdown of active models, a Model Card panel, and four prediction modes after loading a bundle
 
 **Four prediction modes per loaded model:**
-- **Manual** — fill in schema fields and predict a single result, shown using the same styled result card as the rest of the application
-- **Batch** — upload a CSV or XLSX file (up to 10,000 rows), run predictions across all rows, and download results as CSV or XLSX with an auto-generated distribution chart; uploading a new file clears previous results automatically
-- **Resume** — upload a PDF resume; features are extracted using NLP and pre-filled into an editable form for review before prediction; includes a resume quality score panel; uploading a new PDF clears previous results automatically
-- **Scenario** — define up to 5 named scenarios, edit inputs directly without a save step, run all scenarios simultaneously, and compare results in a table and bar chart; an optional sensitivity sweep simulates how the prediction changes as one field varies across a range
+- **Manual** - fill in schema fields and predict a single result, shown using the same styled result card as the rest of the application
+- **Batch** - upload a CSV or XLSX file (up to 10,000 rows), run predictions across all rows, and download results as CSV or XLSX with an auto-generated distribution chart; uploading a new file clears previous results automatically
+- **Resume** - upload a PDF resume; features are extracted using NLP and pre-filled into an editable form for review before prediction; includes a resume quality score panel; uploading a new PDF clears previous results automatically
+- **Scenario** - define up to 5 named scenarios, edit inputs directly without a save step, run all scenarios simultaneously, and compare results in a table and bar chart; an optional sensitivity sweep simulates how the prediction changes as one field varies across a range
 
 **Schema system:**
 - `schema.json` defines the input fields, their types, and the Streamlit widget to use (slider, selectbox, number_input, text_input, checkbox)
@@ -179,11 +329,11 @@ def render_about_tab():
 
         st.markdown("### Salary Adjustment & Global Insights")
         st.markdown("""
-        - Basic currency conversion using live exchange rates with fallback support
-        - Basic tax estimation using country-level effective tax models
-        - Cost-of-living adjustment using global indices (US = 100 baseline)
-        - Enables realistic salary comparison across countries using purchasing power (PPP)
-        - Modular design — can be applied independently or combined
+- Basic currency conversion using live exchange rates with fallback support
+- Basic tax estimation using country-level effective tax models
+- Cost-of-living adjustment using global indices (US = 100 baseline)
+- Enables realistic salary comparison across countries using purchasing power (PPP)
+- Modular design -- can be applied independently or combined
         """)
 
         st.divider()
@@ -208,7 +358,7 @@ def render_about_tab():
 - Optional field to enter actual or expected salary in USD
 - Available to both logged-in and anonymous users
 - Feedback is stored in Firestore under a separate `feedback/` collection alongside the prediction inputs and predicted salary
-- Submission is one-time per prediction result within a session — the form is replaced by a confirmation message after submitting
+- Submission is one-time per prediction result within a session -- the form is replaced by a confirmation message after submitting
         """)
 
         st.divider()
@@ -218,7 +368,7 @@ def render_about_tab():
 - Available for both built-in models and all Model Hub models
 - Build up to 5 fully customisable named scenarios in a single session
 - Each scenario accepts the same inputs as manual prediction for the active model
-- Input fields are plain widgets — no save step required before running; values are always current when Run All Scenarios is clicked
+- Input fields are plain widgets -- no save step required before running; values are always current when Run All Scenarios is clicked
 - Run all scenarios simultaneously with a single button click
 - Side-by-side comparison table and horizontal bar chart showing predicted values per scenario
 - For built-in Model 1: charts colored by salary level and career stage; salary confidence interval chart; experience vs salary bubble scatter; sensitivity sweep across 0-40 years experience; education level sweep across High School, Bachelor's, Master's, and PhD
@@ -231,14 +381,14 @@ def render_about_tab():
 
         st.markdown("### User Account System")
         st.markdown("""
-        - Email and password registration and login via Firebase Authentication
-        - Email verification required before full account access
-        - User profile data stored in Firestore
-        - Session management via Streamlit session state (per-browser, 24-hour expiry)
-        - Password policy aligned with NIST SP 800-63B: minimum 12 characters, uppercase, lowercase, digit, special character, no consecutive identical characters, common-password blocklist
-        - Two-layer rate limiting for all authentication actions (session-state layer + Firestore layer)
-        - Secure password reset via email (Firebase OOB code system)
-        - Account management: change password (with re-authentication), delete account (with confirmation)
+- Email and password registration and login via Firebase Authentication
+- Email verification required before full account access
+- User profile data stored in Firestore
+- Session management via Streamlit session state (per-browser, 24-hour expiry)
+- Password policy aligned with NIST SP 800-63B: minimum 12 characters, uppercase, lowercase, digit, special character, no consecutive identical characters, common-password blocklist
+- Two-layer rate limiting for all authentication actions (session-state layer + Firestore layer)
+- Secure password reset via email (Firebase OOB code system)
+- Account management: change password (with re-authentication), delete account (with confirmation)
         """)
 
         st.divider()
@@ -277,7 +427,7 @@ def render_about_tab():
 - Scikit-learn (Random Forest, HistGradientBoostingClassifier, KMeans, PCA, GridSearchCV)
 - XGBoost
 - MLxtend (Apriori association rule mining)
-- spaCy (NLP for resume feature extraction — PhraseMatcher, NER)
+- spaCy (NLP for resume feature extraction -- PhraseMatcher, NER)
 - pdfplumber (PDF text extraction)
 - Plotly / Matplotlib
 - ReportLab (PDF generation)
@@ -292,6 +442,205 @@ def render_about_tab():
 - Babel (Unicode CLDR territory data for country resolution)
         """)
 
+    # -----------------------------------------------------------------------
+    # Model performance summary
+    # -----------------------------------------------------------------------
+    with st.expander(":material/analytics: Model Performance Summary"):
+        st.caption(
+            "Metrics are from held-out test sets evaluated during training. "
+            "Real-world accuracy depends on how closely your profile matches the training data."
+        )
+
+        st.markdown("#### Model 1 - General Salary (Random Forest Regressor)")
+        m1c1, m1c2, m1c3 = st.columns(3)
+        m1c1.metric("Test R2", "0.964", help="Proportion of salary variance explained by the model.")
+        m1c2.metric("MAE", "$4,927", help="Mean Absolute Error -- average prediction error in USD.")
+        m1c3.metric("RMSE", "$9,761", help="Root Mean Squared Error in USD.")
+
+        st.markdown("*Salary level classifier (HistGradientBoosting):*")
+        cl1, cl2, cl3, cl4 = st.columns(4)
+        cl1.metric("Accuracy", "96.6%")
+        cl2.metric("Precision", "96.6%")
+        cl3.metric("Recall", "96.6%")
+        cl4.metric("F1 Score", "96.6%")
+
+        st.divider()
+
+        st.markdown("#### Model 2 - Data Science Salary (XGBoost)")
+        st.caption("Trained on log-transformed target (log1p); metrics reported on the original USD scale.")
+        m2c1, m2c2, m2c3 = st.columns(3)
+        m2c1.metric("Test R2 (log scale)", "0.595", help="Proportion of log-salary variance explained.")
+        m2c2.metric("MAE", "$35,913", help="Mean Absolute Error on the USD scale after inverse transform.")
+        m2c3.metric("RMSE", "$48,774", help="Root Mean Squared Error on the USD scale.")
+
+        st.markdown("""
+**Model comparison context (Model 1):**
+
+| Model | Test R2 | MAE |
+|---|---|---|
+| Linear Regression | 0.800 | $16,884 |
+| Decision Tree | 0.862 | $13,974 |
+| Gradient Boosting | 0.892 | $12,405 |
+| XGBoost (GridSearchCV) | 0.960 | $5,862 |
+| Random Forest (GridSearchCV) -- final | 0.964 | $4,927 |
+
+**Model comparison context (Model 2):**
+
+| Model | Test R2 | MAE |
+|---|---|---|
+| Linear Regression (raw) | 0.349 | $40,169 |
+| Gradient Boosting (raw) | 0.399 | $38,921 |
+| Random Forest (log) | 0.576 | $37,878 |
+| XGBoost (log) | 0.594 | $37,668 |
+| XGBoost (raw + engineered) -- final | 0.595 | $35,913 |
+        """)
+
+    # -----------------------------------------------------------------------
+    # FAQ
+    # -----------------------------------------------------------------------
+    with st.expander(":material/help_center: Frequently Asked Questions"):
+
+        st.markdown("**Which model should I use?**")
+        st.markdown(
+            "Use Model 1 (Random Forest) if you are a student, early-career professional, or work "
+            "outside the data science field -- it covers a broad range of job titles and countries. "
+            "Use Model 2 (XGBoost) if you are in a data science, ML, or AI role -- it was trained "
+            "specifically on data science salaries and captures domain-specific signals like "
+            "employment type, remote ratio, and company size."
+        )
+
+        st.divider()
+
+        st.markdown("**Do I need to log in to use the app?**")
+        st.markdown(
+            "No. Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, "
+            "Model Analytics, and Data Insights are all available without an account. "
+            "Logging in lets you save your prediction history in the Profile tab and access "
+            "the Model Hub. Prediction feedback can be submitted without logging in."
+        )
+
+        st.divider()
+
+        st.markdown("**How accurate are the predictions?**")
+        st.markdown(
+            "Model 1 achieves a test R2 of 0.964 with a mean absolute error of about \\$4,900 on "
+            "the training dataset. Model 2 achieves a test R2 of 0.595 with a mean absolute error "
+            "of about \\$35,900. Both figures are measured on held-out test data and represent "
+            "in-distribution accuracy -- predictions for unusual job roles, countries, or "
+            "experience combinations outside the training data will be less reliable. "
+            "See the Model Performance Summary above for full comparison tables."
+        )
+
+        st.divider()
+
+        st.markdown("**Is my data stored? Is it private?**")
+        st.markdown(
+            "Prediction inputs are stored in Firestore only for logged-in users who have an "
+            "active session. Anonymous users' inputs are not stored anywhere. "
+            "Feedback submissions (accuracy rating, direction, star rating, optional actual salary) "
+            "are stored in a separate Firestore collection and are not linked to any personal "
+            "identifier for anonymous users. Uploaded PDF resumes are processed in memory and "
+            "are never written to disk or stored on any server. "
+            "See the Privacy and Data Notice below for full details."
+        )
+
+        st.divider()
+
+        st.markdown("**What file formats does Batch Prediction accept?**")
+        st.markdown(
+            "CSV, XLSX, JSON, and SQL for the built-in models. "
+            "CSV and XLSX for Model Hub batch prediction. "
+            "Public Google Drive links (file shared as 'Anyone with the link can view') "
+            "are also accepted for the built-in models. "
+            "Download the sample file from the Batch Prediction tab to see the exact "
+            "required column names for the active model."
+        )
+
+        st.divider()
+
+        st.markdown("**My resume PDF did not extract correctly. What should I do?**")
+        st.markdown(
+            "The extraction engine works best on ATS-friendly, text-selectable PDFs -- "
+            "the kind produced by word processors like Microsoft Word or Google Docs when exported to PDF. "
+            "Scanned resumes, image-based PDFs, and heavily formatted documents with tables "
+            "or multi-column layouts often extract poorly. "
+            "If extraction fails or produces wrong values, all fields are editable before "
+            "you click Predict -- you can correct any field manually."
+        )
+
+        st.divider()
+
+        st.markdown("**Can I use the app for multiple countries or currencies?**")
+        st.markdown(
+            "Yes. Predictions are always produced in USD. The currency converter below the result "
+            "supports 100+ currencies with live exchange rates and a local fallback. "
+            "The cost-of-living adjuster lets you see what the USD salary is worth in a different "
+            "country relative to the US baseline. Both tools are optional and independent."
+        )
+
+        st.divider()
+
+        st.markdown("**What is the Model Hub and who can use it?**")
+        st.markdown(
+            "The Model Hub lets admins upload independently trained sklearn-compatible or ONNX models "
+            "and serve them to all logged-in users without changing application code. "
+            "Once a bundle is loaded, users get four prediction modes: Manual, Batch, Resume, and Scenario. "
+            "Only admin accounts can upload bundles, manage the registry, or edit schemas. "
+            "All logged-in users can run predictions."
+        )
+
+        st.divider()
+
+        st.markdown("**How do I save my prediction results?**")
+        st.markdown(
+            "For built-in models, click Prepare PDF Report after a prediction to download a "
+            "formatted PDF summary. Batch results and scenario results can be downloaded as "
+            "CSV or XLSX. If you are logged in, all predictions are automatically saved to "
+            "your prediction history in the Profile tab and can be exported from there."
+        )
+
+    # -----------------------------------------------------------------------
+    # Privacy and data notice
+    # -----------------------------------------------------------------------
+    with st.expander(":material/shield: Privacy and Data Notice"):
+        st.markdown("""
+**What is stored and where**
+
+| Data | Logged-in users | Anonymous users |
+|---|---|---|
+| Prediction inputs and results | Stored in Firestore (linked to your account) | Not stored |
+| Prediction feedback | Stored in Firestore (no personal identifier) | Stored in Firestore (no personal identifier) |
+| Uploaded PDF resumes | Processed in memory only -- never stored | Processed in memory only -- never stored |
+| Uploaded batch files | Processed in memory only -- never stored | Processed in memory only -- never stored |
+| Session data | Held in browser session state (24-hour expiry) | Held in browser session state (24-hour expiry) |
+| Account credentials | Managed by Firebase Authentication -- passwords are never stored in plaintext | N/A |
+
+**What is not done**
+
+- Resume files are never uploaded to any server or third-party storage. Text is extracted in-memory and discarded after the session ends.
+- Batch files are never persisted. They are read into memory, predictions are run, and the file is discarded.
+- No advertising, tracking, or analytics cookies are used.
+- Prediction inputs from anonymous users are not stored and cannot be retrieved.
+- Feedback data is stored without any personal identifier for anonymous users -- it cannot be linked back to a specific person or session.
+
+**Third-party services used**
+
+- **Firebase Authentication and Firestore** -- account management and data storage (Google Cloud)
+- **HuggingFace Dataset Repo** -- Model Hub bundle storage (private repo, token-gated)
+- **ExchangeRate API** (open.er-api.com) -- live currency exchange rates; no personal data is sent
+
+**Data retention**
+
+- Prediction history is retained until the user deletes their account.
+- Account deletion removes all Firestore records linked to the account.
+- Feedback records do not contain personal identifiers and are retained for model improvement purposes.
+
+> This notice is provided for transparency. SalaryScope is an academic project and is not a commercial product. For production deployments, additional data protection measures and formal privacy policies would be appropriate.
+        """)
+
+    # -----------------------------------------------------------------------
+    # Tab Guide
+    # -----------------------------------------------------------------------
     with st.expander(":material/menu_book: Tab Guide"):
         st.markdown("""
 **Manual Prediction**
@@ -304,7 +653,7 @@ def render_about_tab():
 - Upload a PDF resume and click Extract to run NLP-based extraction.
 - The quality panel shows how many fields were auto-extracted and which ones need review.
 - Edit any pre-filled field if needed, then click Predict Salary from Resume.
-- Upload a new PDF at any time — previous extraction results are cleared automatically.
+- Upload a new PDF at any time -- previous extraction results are cleared automatically.
 - Click Clear to reset the tab manually between resumes.
 
 **Batch Prediction**
@@ -315,7 +664,7 @@ def render_about_tab():
 
 **Scenario Analysis**
 - Build up to 5 named scenarios using the same inputs as manual prediction.
-- Edit inputs directly in each scenario panel — no save step is needed.
+- Edit inputs directly in each scenario panel -- no save step is needed.
 - Click Run All Scenarios to generate predictions for every scenario simultaneously.
 - Review the comparison table, salary charts, and confidence interval ranges.
 - Use the sensitivity sweep section to simulate how salary changes as experience or education varies.
@@ -347,6 +696,9 @@ def render_about_tab():
 - Contains the Tab Guide, Usage Instructions, and Limitations for reference.
         """)
 
+    # -----------------------------------------------------------------------
+    # Usage Instructions
+    # -----------------------------------------------------------------------
     with st.expander(":material/help: Usage Instructions"):
         st.markdown("""
 **Getting Started**
@@ -366,7 +718,7 @@ def render_about_tab():
 - Click **Extract** (or **Extract Resume Features** in the built-in tab) to run NLP extraction.
 - Review the extraction quality panel and edit any pre-filled field if the extracted value looks wrong.
 - Click **Predict Salary from Resume** to get results.
-- Upload a new PDF at any time to restart — previous results clear automatically.
+- Upload a new PDF at any time to restart -- previous results clear automatically.
 - After prediction, you can apply currency conversion, tax estimation, and cost-of-living adjustment.
 
 **Batch Prediction**
@@ -377,7 +729,7 @@ def render_about_tab():
 
 **Scenario Analysis**
 - Go to the Scenario Analysis tab after selecting your model.
-- Each scenario panel shows all input fields — edit them directly, no save step needed.
+- Each scenario panel shows all input fields -- edit them directly, no save step needed.
 - Click **Add Scenario** to add more (up to 5) or **Remove** to delete one.
 - Click **Run All Scenarios** to predict salaries for all scenarios at once.
 - Scroll down to view the comparison table, salary charts, and sensitivity sweeps.
@@ -385,7 +737,7 @@ def render_about_tab():
 - Use the export button to save scenario results as CSV.
 
 **Model Hub**
-- Log in first — the tab requires authentication.
+- Log in first -- the tab requires authentication.
 - Select a model from the dropdown and review the Model Card for information about the model.
 - Click **Load Model** to download the bundle from HuggingFace. This only needs to be done once per session.
 - Choose a prediction mode from the tabs: Manual, Batch, Resume, or Scenario.
@@ -404,6 +756,9 @@ def render_about_tab():
 - Select the correct file format from the dropdown after pasting the link.
         """)
 
+    # -----------------------------------------------------------------------
+    # Limitations
+    # -----------------------------------------------------------------------
     with st.expander(":material/warning: Limitations"):
         st.markdown("""
 - The models are trained on limited datasets, so predictions may not always match real-world salaries.
@@ -418,7 +773,56 @@ def render_about_tab():
 - Tax estimation is based on simplified models and approximate effective rates; it does not account for deductions, filing status, or local regulations.
 - Cost-of-living adjustments use country-level indices and may not accurately represent city-level variations or individual lifestyle differences.
 - Combined salary adjustments (tax, currency, cost of living) are indicative and should be interpreted as general estimates rather than precise financial outcomes.
-- Model Hub ONNX bundles (model.onnx) are loaded via onnxruntime and carry no arbitrary code execution risk. Pickle bundles (model.pkl) are deserialized using joblib — only upload pickle files from sources you control entirely.
-- Model Hub predictions are only as reliable as the model and training data used — the system does not validate model quality or dataset coverage.
+- Model Hub ONNX bundles (model.onnx) are loaded via onnxruntime and carry no arbitrary code execution risk. Pickle bundles (model.pkl) are deserialized using joblib -- only upload pickle files from sources you control entirely.
+- Model Hub predictions are only as reliable as the model and training data used -- the system does not validate model quality or dataset coverage.
 - Per-bundle lexicons (skills.json, job_titles.json) in the Model Hub override global lexicons for resume extraction; if not uploaded, the shared app-level lexicons are used as fallback.
+        """)
+
+    # -----------------------------------------------------------------------
+    # Dataset citations
+    # -----------------------------------------------------------------------
+    with st.expander(":material/dataset: Dataset Citations"):
+        st.markdown("""
+**Model 1 - General Salary Dataset**
+
+> Abbootalebi, A. M. (2023). *Salary by Job Title and Country*. Kaggle.
+> https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country
+
+- Covers a broad range of job titles, countries, education levels, and experience bands
+- Used to train the Random Forest Regressor, HistGradientBoosting salary level classifier, KMeans career stage model, and Apriori association rule miner
+
+---
+
+**Model 2 - Data Science Salaries Dataset**
+
+> Chaki, A. (2023). *Data Science Salaries 2023*. Kaggle.
+> https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023
+
+- Covers data science and AI/ML roles across experience levels, employment types, company sizes, and locations
+- Used to train the XGBoost Regressor with log-transformed target and engineered job title features
+
+---
+
+**Exchange Rates**
+
+> Open Exchange Rates. *ExchangeRate-API*. https://open.er-api.com
+> No API key required. Rates are cached in memory and refreshed periodically during a session.
+
+---
+
+**Cost-of-Living Indices**
+
+> Numbeo. *Cost of Living Index by Country*. https://www.numbeo.com/cost-of-living/
+> OECD. *Purchasing Power Parities*. https://data.oecd.org/price/purchasing-power-parities-ppp.htm
+
+Values are used as approximate relative indices for cross-country salary comparison. They are periodically updated in the application and may not reflect current real-time conditions.
+
+---
+
+**Tax Rate Data**
+
+> OECD. *Taxing Wages*. https://www.oecd.org/tax/taxing-wages-20725124.htm
+> Various national government tax authority publications (2023/24 fiscal year).
+
+Effective rates are approximate and used for indicative post-tax estimation only.
         """)
