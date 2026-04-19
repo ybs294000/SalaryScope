@@ -5,8 +5,10 @@ Renders the "About" tab for SalaryScope.
 
 Sections
 --------
-- Hero section: app name, tagline, key stat pills, author info, links
+- Hero section: app name, tagline, key stat pills (incl. prediction modes), author info, links
+- CTA buttons (easy to remove -- single block marked below)
 - Quick-start guide (new users)
+- Example prediction card (easy to remove -- single block marked below)
 - Features & Modules expander
   - Model 1, Model 2, Model Hub, Resume Analysis,
     Salary Adjustment, Financial Planning Tools,
@@ -56,7 +58,7 @@ def render_about_tab():
             padding: 28px 32px 22px 32px;
             margin-bottom: 8px;
         ">
-            <div style="font-size:1.6rem;font-weight:700;margin-bottom:6px;">
+            <div style="font-size:1.6rem;font-weight:700;color:#FFFFFF;margin-bottom:6px;">
                 SalaryScope
             </div>
             <div style="font-size:0.95rem;color:var(--text-muted,#94A3B8);margin-bottom:18px;">
@@ -79,6 +81,9 @@ def render_about_tab():
                 <span style="background:#7F1D1D33;border:1px solid #EF4444;
                              border-radius:20px;padding:4px 12px;font-size:0.78rem;
                              color:#FCA5A5;font-weight:600;">Streamlit Cloud</span>
+                <span style="background:#164E6333;border:1px solid #06B6D4;
+                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
+                             color:#67E8F9;font-weight:600;">4 Prediction Modes</span>
             </div>
             <div style="font-size:0.875rem;color:var(--text-main,#E2E8F0);
                         line-height:1.7;margin-bottom:20px;">
@@ -523,9 +528,9 @@ def render_about_tab():
 
         st.markdown("**How accurate are the predictions?**")
         st.markdown(
-            "Model 1 achieves a test R2 of 0.964 with a mean absolute error of about \\$4,900 on "
+            "Model 1 achieves a test R2 of 0.964 with a mean absolute error of about $4,900 on "
             "the training dataset. Model 2 achieves a test R2 of 0.595 with a mean absolute error "
-            "of about \\$35,900. Both figures are measured on held-out test data and represent "
+            "of about $35,900. Both figures are measured on held-out test data and represent "
             "in-distribution accuracy -- predictions for unusual job roles, countries, or "
             "experience combinations outside the training data will be less reliable. "
             "See the Model Performance Summary above for full comparison tables."

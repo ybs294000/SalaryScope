@@ -305,6 +305,17 @@ def inject_theme_css() -> None:
         "    font-weight: 600 !important;\n"
         "}\n"
 
+        "button[data-baseweb='tab'][aria-selected='true'] {\n"
+        "    background-color: " + primary + " !important;\n"
+        "    color: " + tab_selected_color + " !important;\n"
+        "    font-weight: 600 !important;\n"
+        "    padding: 6px 14px !important;\n"
+        "    border-radius: 6px !important;\n"
+        "}\n"
+
+        "[data-baseweb='tab-highlight'] {\n"
+        "    display: none !important;\n"
+        "}\n"
         # ----------------------------------------------------------------
         # 8. Expander header background and border
         # ----------------------------------------------------------------
