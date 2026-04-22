@@ -418,6 +418,277 @@ def detect_bundle_format(file_names: list[str]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# resume_config.json validation
+# ---------------------------------------------------------------------------
+
+# Keys allowed at the top level of resume_config.json and their expected types.
+# All keys are optional -- the file is a selective override, not a full spec.
+_RESUME_CONFIG_TOP_LEVEL: dict[str, type | tuple] = {
+    "scoring":            dict,
+    "extractors":         dict,
+    "field_name_mapping": list,
+    "preprocessing":      dict,
+}
+
+# Keys allowed inside the "scoring" block
+_SCORING_KEYS: dict[str, type | tuple] = {
+    "experience_max":   (int, float),
+    "education_max":    (int, float),
+    "skills_max":       (int, float),
+    "skills_per_point": (int, float),
+    "thresholds":       dict,
+    "edu_map":          dict,
+}
+
+# Keys allowed inside the "extractors" block
+_EXTRACTOR_KEYS: set[str] = {
+    "experience",
+    "education",
+    "senior_flag",
+    "remote_ratio",
+    "employment_type",
+    "job_title",
+    "age",
+}
+
+
+def validate_resume_config(cfg: Any) -> list[str]:
+    """
+    Validate a parsed resume_config.json dict.
+
+    Returns a list of human-readable issue strings.
+    An empty list means the config is valid.
+
+    Does NOT raise -- callers decide what to do with issues.
+
+    resume_config.json is a selective override file. All keys are optional.
+    Unrecognised keys at any level generate a warning, not an error, so that
+    future engine versions can extend the format without breaking old validators.
+
+    Supported top-level keys
+    ------------------------
+    scoring:            dict   -- override scoring rubric weights and thresholds
+    extractors:         dict   -- override per-extractor keyword lists / params
+    field_name_mapping: list   -- extra (keyword, extractor_id) pairs injected
+                                  at the front of the field-name-to-extractor table
+    preprocessing:      dict   -- override text preprocessing flags
+    """
+    issues: list[str] = []
+
+    if not isinstance(cfg, dict):
+        return ["resume_config.json must be a JSON object (dict)."]
+
+    # Warn on unrecognised top-level keys (forward-compatible -- not an error)
+    for k in cfg:
+        if k not in _RESUME_CONFIG_TOP_LEVEL:
+            issues.append(
+                f"resume_config: unrecognised top-level key '{k}' will be ignored. "
+                f"Supported keys: {sorted(_RESUME_CONFIG_TOP_LEVEL)}."
+            )
+
+    # --- scoring block ---
+    scoring = cfg.get("scoring")
+    if scoring is not None:
+        if not isinstance(scoring, dict):
+            issues.append("resume_config 'scoring' must be a dict.")
+        else:
+            for sk in scoring:
+                if sk not in _SCORING_KEYS:
+                    issues.append(
+                        f"resume_config scoring: unrecognised key '{sk}' will be ignored."
+                    )
+            for key, expected in _SCORING_KEYS.items():
+                val = scoring.get(key)
+                if val is None:
+                    continue
+                if not isinstance(val, expected):
+                    issues.append(
+                        f"resume_config scoring['{key}'] must be {expected}, "
+                        f"got {type(val).__name__}."
+                    )
+            # Validate scoring.thresholds structure if present
+            thresholds = scoring.get("thresholds")
+            if thresholds is not None and isinstance(thresholds, dict):
+                for band_key, band_val in thresholds.items():
+                    if not isinstance(band_val, dict):
+                        issues.append(
+                            f"resume_config scoring.thresholds['{band_key}'] must be a dict "
+                            "with 'max' (number) and 'score' (int) and 'note' (str)."
+                        )
+                        continue
+                    for req in ("max", "score", "note"):
+                        if req not in band_val:
+                            issues.append(
+                                f"resume_config scoring.thresholds['{band_key}'] "
+                                f"is missing required key '{req}'."
+                            )
+            # Validate edu_map if present
+            edu_map = scoring.get("edu_map")
+            if edu_map is not None and isinstance(edu_map, dict):
+                for level_key, level_val in edu_map.items():
+                    try:
+                        int(level_key)
+                    except (ValueError, TypeError):
+                        issues.append(
+                            f"resume_config scoring.edu_map key '{level_key}' must be "
+                            "a string representation of an integer level (e.g. '0', '1')."
+                        )
+                    if not isinstance(level_val, (list, tuple)) or len(level_val) < 2:
+                        issues.append(
+                            f"resume_config scoring.edu_map['{level_key}'] must be a "
+                            "two-element list [score, note_string]."
+                        )
+                    elif not isinstance(level_val[0], (int, float)):
+                        issues.append(
+                            f"resume_config scoring.edu_map['{level_key}'][0] "
+                            "(score) must be a number."
+                        )
+                    elif not isinstance(level_val[1], str):
+                        issues.append(
+                            f"resume_config scoring.edu_map['{level_key}'][1] "
+                            "(note) must be a string."
+                        )
+
+    # --- extractors block ---
+    extractors = cfg.get("extractors")
+    if extractors is not None:
+        if not isinstance(extractors, dict):
+            issues.append("resume_config 'extractors' must be a dict.")
+        else:
+            for ext_id, ext_cfg in extractors.items():
+                if ext_id not in _EXTRACTOR_KEYS:
+                    issues.append(
+                        f"resume_config extractors: unrecognised extractor id '{ext_id}'. "
+                        f"Supported: {sorted(_EXTRACTOR_KEYS)}. "
+                        "This section will be ignored."
+                    )
+                if not isinstance(ext_cfg, dict):
+                    issues.append(
+                        f"resume_config extractors['{ext_id}'] must be a dict of params."
+                    )
+                    continue
+                # experience extractor params
+                if ext_id == "experience":
+                    _val_list_of_str_or_num(ext_cfg, "patterns", issues,
+                                           f"extractors.{ext_id}")
+                    _val_number(ext_cfg, "max_years", issues, f"extractors.{ext_id}")
+                # senior_flag extractor params
+                if ext_id == "senior_flag":
+                    _val_list_of_str(ext_cfg, "keywords", issues,
+                                     f"extractors.{ext_id}")
+                    _val_number(ext_cfg, "experience_threshold", issues,
+                                f"extractors.{ext_id}")
+                # remote_ratio extractor params
+                if ext_id == "remote_ratio":
+                    for subkey in ("remote_keywords", "hybrid_keywords", "onsite_keywords"):
+                        _val_list_of_str(ext_cfg, subkey, issues,
+                                         f"extractors.{ext_id}")
+                # employment_type extractor params
+                if ext_id == "employment_type":
+                    for subkey in ("part_time_keywords", "freelance_keywords",
+                                   "contract_keywords"):
+                        _val_list_of_str(ext_cfg, subkey, issues,
+                                         f"extractors.{ext_id}")
+                # age extractor params
+                if ext_id == "age":
+                    _val_number(ext_cfg, "min_age", issues, f"extractors.{ext_id}")
+                    _val_number(ext_cfg, "max_age", issues, f"extractors.{ext_id}")
+                # job_title extractor params
+                if ext_id == "job_title":
+                    kw_fallback = ext_cfg.get("keyword_fallback")
+                    if kw_fallback is not None:
+                        if not isinstance(kw_fallback, list):
+                            issues.append(
+                                "resume_config extractors.job_title.keyword_fallback "
+                                "must be a list of [keywords_list, title_string] pairs."
+                            )
+                        else:
+                            for idx, pair in enumerate(kw_fallback):
+                                if (
+                                    not isinstance(pair, list)
+                                    or len(pair) != 2
+                                    or not isinstance(pair[0], list)
+                                    or not isinstance(pair[1], str)
+                                ):
+                                    issues.append(
+                                        f"resume_config extractors.job_title"
+                                        f".keyword_fallback[{idx}] must be "
+                                        "[[keyword, ...], title_string]."
+                                    )
+
+    # --- field_name_mapping ---
+    fnm = cfg.get("field_name_mapping")
+    if fnm is not None:
+        if not isinstance(fnm, list):
+            issues.append("resume_config 'field_name_mapping' must be a list.")
+        else:
+            for idx, entry in enumerate(fnm):
+                if (
+                    not isinstance(entry, list)
+                    or len(entry) != 2
+                    or not isinstance(entry[0], str)
+                    or not isinstance(entry[1], str)
+                ):
+                    issues.append(
+                        f"resume_config field_name_mapping[{idx}] must be "
+                        "a two-element list [keyword_string, extractor_id_string]."
+                    )
+
+    # --- preprocessing block ---
+    preprocessing = cfg.get("preprocessing")
+    if preprocessing is not None:
+        if not isinstance(preprocessing, dict):
+            issues.append("resume_config 'preprocessing' must be a dict.")
+        else:
+            strip_urls = preprocessing.get("strip_urls")
+            if strip_urls is not None and not isinstance(strip_urls, bool):
+                issues.append(
+                    "resume_config preprocessing.strip_urls must be a boolean."
+                )
+            max_len = preprocessing.get("max_text_length")
+            if max_len is not None:
+                if not isinstance(max_len, int) or max_len < 100:
+                    issues.append(
+                        "resume_config preprocessing.max_text_length must be an "
+                        "integer >= 100."
+                    )
+
+    return issues
+
+
+# ---------------------------------------------------------------------------
+# Internal type-check helpers for validate_resume_config
+# ---------------------------------------------------------------------------
+
+def _val_list_of_str(d: dict, key: str, issues: list[str], prefix: str) -> None:
+    val = d.get(key)
+    if val is None:
+        return
+    if not isinstance(val, list) or not all(isinstance(x, str) for x in val):
+        issues.append(
+            f"resume_config {prefix}.{key} must be a list of strings."
+        )
+
+
+def _val_list_of_str_or_num(d: dict, key: str, issues: list[str], prefix: str) -> None:
+    val = d.get(key)
+    if val is None:
+        return
+    if not isinstance(val, list):
+        issues.append(f"resume_config {prefix}.{key} must be a list.")
+
+
+def _val_number(d: dict, key: str, issues: list[str], prefix: str) -> None:
+    val = d.get(key)
+    if val is None:
+        return
+    if not isinstance(val, (int, float)):
+        issues.append(
+            f"resume_config {prefix}.{key} must be a number, got {type(val).__name__}."
+        )
+
+
+# ---------------------------------------------------------------------------
 # JSON schema round-trip helper
 # ---------------------------------------------------------------------------
 

@@ -41,9 +41,9 @@ SalaryScope uses two independently trained machine learning models, each backed 
 | `Years of Experience` | Float | 0.0 – 40.0 | Total professional work experience in years |
 | `Education Level` | Integer | 0, 1, 2, 3 | Highest education attained (see encoding below) |
 | `Senior` | Integer | 0, 1 | Whether the role is a senior position (1 = Yes, 0 = No) |
-| `Gender` | String | Male, Female, Other | Self-reported gender |
+| `Gender` | String | Male, Female | Self-reported gender |
 | `Job Title` | String | ~100 canonical titles | Job title; mapped to canonical form via alias table |
-| `Country` | String | ~50 countries + "Other" | Country where the role is based |
+| `Country` | String | 5 countries + "Other" | Country where the role is based |
 | `Salary` | Float | — | Annual gross salary in USD (target variable; not an input) |
 
 ### 2.2 Education Level Encoding

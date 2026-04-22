@@ -150,11 +150,22 @@ def validate_password_strength(password: object) -> list:
     # The try/except is a belt-and-suspenders guard against any unexpected
     # AttributeError if this function is ever called in an unusual context.
     try:
-        if password.lower() in _COMMON_PASSWORDS:
+        pw_lower = password.lower()
+
+        # Check exact match
+        if pw_lower in _COMMON_PASSWORDS:
             errors.append(
-                "This password is too common. "
-                "Please choose a more unique password."
+                "This password is too common. Please choose a more unique password."
             )
+        else:
+            # Check if password starts with a common weak base and is only slightly modified
+            for common in _COMMON_PASSWORDS:
+                if pw_lower.startswith(common) and len(pw_lower) <= len(common) + 3:
+                    errors.append(
+                        "This password is too common. Please choose a more unique password."
+                    )
+                    break
+
     except AttributeError:
         pass
 

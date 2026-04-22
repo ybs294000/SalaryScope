@@ -98,7 +98,7 @@ class ModelBundle:
     __slots__ = (
         "model_id", "model", "columns", "schema",
         "model_meta", "has_aliases", "bundle_format",
-        "lexicons",
+        "lexicons", "resume_config",
     )
 
     def __init__(
@@ -111,6 +111,7 @@ class ModelBundle:
         has_aliases: bool = False,
         bundle_format: str = "pickle",
         lexicons: Optional[dict] = None,
+        resume_config: Optional[dict] = None,
     ) -> None:
         self.model_id      = model_id
         self.model         = model
@@ -124,6 +125,11 @@ class ModelBundle:
         # None when no bundle-level lexicons were uploaded.
         # Falls back to global app-level JSON files in hub_resume_engine.py.
         self.lexicons      = lexicons or {}
+        # Optional per-bundle resume extraction configuration loaded from
+        # resume_config.json.  When present, overrides engine defaults for
+        # scoring weights, extractor keyword lists, and field-name mappings.
+        # Empty dict means no override file was found -- engine uses its defaults.
+        self.resume_config = resume_config or {}
 
 
 def load_bundle(model_meta: dict, force_reload: bool = False) -> ModelBundle:
@@ -234,6 +240,30 @@ def load_bundle(model_meta: dict, force_reload: bool = False) -> ModelBundle:
         except Exception as exc:
             logger.warning("[ModelHub] job_titles.json for '%s' invalid JSON: %s", model_id, exc)
 
+    # --- Download optional per-bundle resume extraction config ---
+    # resume_config.json overrides engine defaults (scoring, extractor keyword
+    # lists, field-name-to-extractor mappings) for this specific model bundle.
+    # Fetched fresh on every load so pushed updates take effect immediately.
+    bundle_resume_config: dict = {}
+    _resume_cfg_bytes = _download_optional(
+        bundle_path + "resume_config.json", MAX_SCHEMA_BYTES, force=True,
+    )
+    if _resume_cfg_bytes is not None:
+        try:
+            parsed_cfg = json.loads(_resume_cfg_bytes.decode("utf-8"))
+            if isinstance(parsed_cfg, dict):
+                bundle_resume_config = parsed_cfg
+                logger.info("[ModelHub] Bundle resume_config.json loaded for '%s'.", model_id)
+            else:
+                logger.warning(
+                    "[ModelHub] resume_config.json for '%s' is not a dict -- ignored.",
+                    model_id,
+                )
+        except Exception as exc:
+            logger.warning(
+                "[ModelHub] resume_config.json for '%s' invalid JSON: %s", model_id, exc,
+            )
+
     bundle = ModelBundle(
         model_id      = model_id,
         model         = model,
@@ -243,6 +273,7 @@ def load_bundle(model_meta: dict, force_reload: bool = False) -> ModelBundle:
         has_aliases   = has_aliases,
         bundle_format = bundle_format,
         lexicons      = bundle_lexicons if bundle_lexicons else None,
+        resume_config = bundle_resume_config if bundle_resume_config else None,
     )
 
     # --- Store in cache ---

@@ -23,6 +23,72 @@ Design principles
 5. The engine is stateless -- it builds all matchers once (cached via
    functools.lru_cache) and holds no mutable state.
 
+Per-bundle resume_config.json (new)
+------------------------------------
+A model bundle can include an optional resume_config.json sidecar file.
+When present, loader.py loads it into ModelBundle.resume_config and
+hub_resume_tab.py passes it into extract_all_fields().
+
+resume_config.json is a selective override -- every key is optional.
+Missing keys fall back to the engine built-in defaults so existing bundles
+without the file continue to work identically.
+
+Supported top-level keys in resume_config.json:
+
+  scoring (dict):
+      experience_max   (number) -- max points for experience (default 40)
+      education_max    (number) -- max points for education  (default 30)
+      skills_max       (number) -- max points for skills     (default 30)
+      skills_per_point (number) -- multiplier per skill      (default 3)
+      thresholds (dict):
+          Override experience scoring bands.  Each key is a band name
+          (arbitrary string); each value is {max, score, note}.
+          Bands are sorted by 'max' ascending at runtime.
+          Example:
+              "thresholds": {
+                  "entry":  {"max": 2,   "score": 10, "note": "Entry level"},
+                  "mid":    {"max": 5,   "score": 25, "note": "Mid level"},
+                  "senior": {"max": 999, "score": 40, "note": "Senior level"}
+              }
+      edu_map (dict):
+          Override education level scoring.  Keys are string level ints.
+          Example: {"0": [5, "High school"], "1": [15, "Bachelor"]}
+
+  extractors (dict):
+      Per-extractor override configs.  Supported extractor ids:
+        experience:
+            patterns          (list of regex strings) -- replaces built-in patterns
+            max_years         (number)                -- upper bound (default 50)
+        senior_flag:
+            keywords          (list of strings)       -- replaces built-in list
+            experience_threshold (number)             -- auto-senior threshold (default 6)
+        remote_ratio:
+            remote_keywords   (list of strings)       -- replaces built-in list
+            hybrid_keywords   (list of strings)       -- replaces built-in list
+            onsite_keywords   (list of strings)       -- replaces built-in list
+        employment_type:
+            part_time_keywords (list of strings)      -- replaces built-in detection
+            freelance_keywords (list of strings)
+            contract_keywords  (list of strings)
+        age:
+            min_age           (int)                   -- default 16
+            max_age           (int)                   -- default 80
+        job_title:
+            keyword_fallback  (list of [[keywords], title] pairs)
+
+  field_name_mapping (list):
+      Extra [keyword_string, extractor_id_string] pairs injected at the
+      front of the field-name-to-extractor lookup table.  These take priority
+      over built-in defaults.  Example:
+          "field_name_mapping": [
+              ["years_exp", "experience"],
+              ["tech_stack", "skills_list"]
+          ]
+
+  preprocessing (dict):
+      strip_urls       (bool, default true)  -- remove http/www URLs
+      max_text_length  (int,  default 0)     -- truncate text if > 0
+
 Schema field extension hook
 ---------------------------
 A schema field can carry an optional "extractor" key that overrides the
@@ -309,14 +375,35 @@ def extract_text_from_pdf(uploaded_file: Any) -> str:
 # Text preprocessing
 # ---------------------------------------------------------------------------
 
-def preprocess_text(text: str) -> str:
-    """Normalise whitespace, strip URLs and null bytes."""
+def preprocess_text(text: str, resume_config: dict | None = None) -> str:
+    """
+    Normalise whitespace, strip URLs and null bytes.
+
+    When resume_config provides a 'preprocessing' block, the following
+    overrides are applied:
+      strip_urls       (bool, default True)  -- strip http/www URLs
+      max_text_length  (int,  default 0)     -- truncate text if > 0
+    """
+    cfg = {}
+    if resume_config:
+        cfg = resume_config.get("preprocessing") or {}
+
     text = text.replace("\x00", " ")
-    text = re.sub(r"https?://\S+", " ", text)
-    text = re.sub(r"\bwww\.\S+\b", " ", text)
+
+    strip_urls = cfg.get("strip_urls", True)
+    if strip_urls:
+        text = re.sub(r"https?://\S+", " ", text)
+        text = re.sub(r"\bwww\.\S+\b", " ", text)
+
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{2,}", "\n\n", text)
-    return text.strip()
+    text = text.strip()
+
+    max_len = cfg.get("max_text_length", 0)
+    if isinstance(max_len, int) and max_len > 0:
+        text = text[:max_len]
+
+    return text
 
 
 # ---------------------------------------------------------------------------
@@ -344,12 +431,35 @@ _EXP_PATTERNS = [
 
 def _extract_experience(text: str, field: dict, context: dict) -> ExtractionResult:
     """Extract numeric years of experience."""
+    resume_config = context.get("resume_config") or {}
+    ext_cfg = (resume_config.get("extractors") or {}).get("experience") or {}
+
+    # Build the pattern list from config or fall back to module-level defaults.
+    # Config patterns (if provided) replace the defaults entirely so the model
+    # owner has full control.  Each entry in config must be a valid regex string.
+    patterns = _EXP_PATTERNS
+    cfg_patterns = ext_cfg.get("patterns")
+    if cfg_patterns and isinstance(cfg_patterns, list):
+        built: list[re.Pattern] = []
+        for pat_str in cfg_patterns:
+            try:
+                built.append(re.compile(pat_str, re.IGNORECASE))
+            except re.error as exc:
+                logger.warning(
+                    "resume_config extractors.experience.patterns: bad regex '%s': %s",
+                    pat_str, exc,
+                )
+        if built:
+            patterns = built
+
+    max_years = float(ext_cfg.get("max_years", 50))
+
     candidates: list[float] = []
-    for pat in _EXP_PATTERNS:
+    for pat in patterns:
         for m in pat.finditer(text):
             try:
                 val = float(m.group(1))
-                if 0.0 <= val <= 50.0:
+                if 0.0 <= val <= max_years:
                     candidates.append(val)
             except (ValueError, IndexError):
                 pass
@@ -476,17 +586,26 @@ def _extract_country_iso(text: str, field: dict, context: dict) -> ExtractionRes
 
 def _extract_senior_flag(text: str, field: dict, context: dict) -> ExtractionResult:
     """Extract seniority as 0 or 1."""
-    senior_kws = [
+    resume_config = context.get("resume_config") or {}
+    ext_cfg = (resume_config.get("extractors") or {}).get("senior_flag") or {}
+
+    # Allow bundle to extend or replace the default keyword list
+    default_kws = [
         "senior", "sr.", "lead", "principal", "staff",
         "head", "director", "vp", "chief", "manager",
     ]
+    senior_kws = ext_cfg.get("keywords") if ext_cfg.get("keywords") else default_kws
+
+    # Bundle can raise or lower the experience threshold for auto-seniority
+    exp_threshold = float(ext_cfg.get("experience_threshold", 6))
+
     text_lower = text.lower()
     for kw in senior_kws:
         if re.search(r"\b" + re.escape(kw) + r"\b", text_lower):
             return ExtractionResult(value=1, found=True, source=f"keyword:{kw}", raw=kw)
 
-    exp_result = _extract_experience(text, {}, {})
-    if exp_result.found and float(exp_result.value) >= 6:
+    exp_result = _extract_experience(text, {}, context)
+    if exp_result.found and float(exp_result.value) >= exp_threshold:
         return ExtractionResult(
             value=1, found=True,
             source="experience_threshold", raw=str(exp_result.value),
@@ -498,7 +617,9 @@ def _extract_senior_flag(text: str, field: dict, context: dict) -> ExtractionRes
 def _extract_job_title(text: str, field: dict, context: dict) -> ExtractionResult:
     """Extract job title from lexicon aliases, longest match first."""
     allowed: list[str] | None = context.get("allowed_values")
-    titles_map = _load_job_titles()
+    resume_config = context.get("resume_config") or {}
+    ext_cfg = (resume_config.get("extractors") or {}).get("job_title") or {}
+
     # Use bundle job titles if provided, falling back to global lexicon.
     titles_map = _resolve_job_titles(context.get("bundle_lexicons"))
 
@@ -523,8 +644,10 @@ def _extract_job_title(text: str, field: dict, context: dict) -> ExtractionResul
                 source=f"alias:{alias}", raw=alias,
             )
 
-    # Keyword fallback
-    kw_map = [
+    # Keyword fallback: config replaces the built-in list when provided.
+    # Config format: [[["kw1", "kw2"], "Title"], ...]
+    # Built-in format (same structure internally):
+    builtin_kw_map = [
         (["data engineer", "etl", "pipeline"], "Data Engineer"),
         (["data scientist", "machine learning", "deep learning"], "Data Scientist"),
         (["data analyst", "business analyst", "analytics"], "Data Analyst"),
@@ -532,6 +655,27 @@ def _extract_job_title(text: str, field: dict, context: dict) -> ExtractionResul
         (["web developer", "frontend", "backend", "full stack"], "Web Developer"),
         (["devops", "site reliability", "cloud engineer"], "DevOps Engineer"),
     ]
+
+    cfg_fallback = ext_cfg.get("keyword_fallback")
+    if cfg_fallback and isinstance(cfg_fallback, list):
+        # Build from config: each entry is [keywords_list, title_string]
+        kw_map: list[tuple[list[str], str]] = []
+        for pair in cfg_fallback:
+            if (
+                isinstance(pair, list)
+                and len(pair) == 2
+                and isinstance(pair[0], list)
+                and isinstance(pair[1], str)
+            ):
+                kw_map.append((pair[0], pair[1]))
+            else:
+                logger.warning(
+                    "resume_config extractors.job_title.keyword_fallback: "
+                    "skipping malformed entry %r", pair,
+                )
+    else:
+        kw_map = builtin_kw_map
+
     for keywords, title in kw_map:
         if allowed is not None and title not in allowed:
             continue
@@ -551,23 +695,61 @@ def _extract_job_title(text: str, field: dict, context: dict) -> ExtractionResul
 
 def _extract_employment_type(text: str, field: dict, context: dict) -> ExtractionResult:
     """Extract employment type as FT / PT / CT / FL."""
+    resume_config = context.get("resume_config") or {}
+    ext_cfg = (resume_config.get("extractors") or {}).get("employment_type") or {}
+
     text_lower = text.lower()
-    if re.search(r"\bpart[-\s]?time\b", text_lower) or re.search(r"\bintern(ship)?\b", text_lower):
-        return ExtractionResult(value="PT", found=True, source="keyword:part-time")
-    if re.search(r"\bfreelance(r)?\b", text_lower) or re.search(r"\bself[-\s]?employed\b", text_lower):
-        return ExtractionResult(value="FL", found=True, source="keyword:freelance")
-    if re.search(r"\bcontract(or)?\b", text_lower) or re.search(r"\bconsult(ing|ant)\b", text_lower):
-        return ExtractionResult(value="CT", found=True, source="keyword:contract")
+
+    # Each keyword group can be overridden by config.  Config replaces defaults
+    # entirely for that group when present.
+    pt_kws  = ext_cfg.get("part_time_keywords")  or []
+    fl_kws  = ext_cfg.get("freelance_keywords")  or []
+    ct_kws  = ext_cfg.get("contract_keywords")   or []
+
+    # Default regex-based detection (runs when config does not supply keywords)
+    if pt_kws:
+        if any(re.search(r"\b" + re.escape(kw) + r"\b", text_lower) for kw in pt_kws):
+            return ExtractionResult(value="PT", found=True, source="keyword:part-time")
+    else:
+        if re.search(r"\bpart[-\s]?time\b", text_lower) or re.search(r"\bintern(ship)?\b", text_lower):
+            return ExtractionResult(value="PT", found=True, source="keyword:part-time")
+
+    if fl_kws:
+        if any(re.search(r"\b" + re.escape(kw) + r"\b", text_lower) for kw in fl_kws):
+            return ExtractionResult(value="FL", found=True, source="keyword:freelance")
+    else:
+        if re.search(r"\bfreelance(r)?\b", text_lower) or re.search(r"\bself[-\s]?employed\b", text_lower):
+            return ExtractionResult(value="FL", found=True, source="keyword:freelance")
+
+    if ct_kws:
+        if any(re.search(r"\b" + re.escape(kw) + r"\b", text_lower) for kw in ct_kws):
+            return ExtractionResult(value="CT", found=True, source="keyword:contract")
+    else:
+        if re.search(r"\bcontract(or)?\b", text_lower) or re.search(r"\bconsult(ing|ant)\b", text_lower):
+            return ExtractionResult(value="CT", found=True, source="keyword:contract")
+
     default = field.get("default", "FT")
     return ExtractionResult(value=default, found=True, source="default_full_time")
 
 
 def _extract_remote_ratio(text: str, field: dict, context: dict) -> ExtractionResult:
     """Extract remote ratio as 0, 50, or 100."""
+    resume_config = context.get("resume_config") or {}
+    ext_cfg = (resume_config.get("extractors") or {}).get("remote_ratio") or {}
+
     text_lower = text.lower()
-    remote_kws = ["fully remote", "100% remote", "remote work", "work from home", "wfh", "remote position"]
-    hybrid_kws = ["hybrid", "partial remote", "flexible working", "flex work"]
-    onsite_kws = ["on-site", "onsite", "on site", "in office", "in-office"]
+
+    # Keyword groups: config fully replaces defaults for any group supplied
+    remote_kws = ext_cfg.get("remote_keywords") or [
+        "fully remote", "100% remote", "remote work",
+        "work from home", "wfh", "remote position",
+    ]
+    hybrid_kws = ext_cfg.get("hybrid_keywords") or [
+        "hybrid", "partial remote", "flexible working", "flex work",
+    ]
+    onsite_kws = ext_cfg.get("onsite_keywords") or [
+        "on-site", "onsite", "on site", "in office", "in-office",
+    ]
 
     for kw in remote_kws:
         if kw in text_lower:
@@ -605,16 +787,26 @@ def _extract_skills_str(text: str, field: dict, context: dict) -> ExtractionResu
 
 def _extract_age(text: str, field: dict, context: dict) -> ExtractionResult:
     """Extract age as integer."""
+    resume_config = context.get("resume_config") or {}
+    ext_cfg = (resume_config.get("extractors") or {}).get("age") or {}
+
+    min_age = int(ext_cfg.get("min_age", 16))
+    max_age = int(ext_cfg.get("max_age", 80))
+
     m = re.search(r"\bage[:\s]+(\d{2})\b", text, re.IGNORECASE)
     if m:
         val = int(m.group(1))
-        if 16 <= val <= 80:
+        if min_age <= val <= max_age:
             return ExtractionResult(value=val, found=True, source="regex:age_label")
-    pat = re.compile(r"\b(1[89]|[2-5]\d|6[0-5])\s*(?:years?\s+)?old\b", re.IGNORECASE)
+    pat = re.compile(
+        r"\b(" + str(min_age) + r"|[2-5]\d|6[0-5])\s*(?:years?\s+)?old\b",
+        re.IGNORECASE,
+    )
     m2 = pat.search(text)
     if m2:
         val = int(m2.group(1))
-        return ExtractionResult(value=val, found=True, source="regex:years_old")
+        if min_age <= val <= max_age:
+            return ExtractionResult(value=val, found=True, source="regex:years_old")
     default = int(field.get("default", 28))
     return ExtractionResult(value=default, found=False, source="no_match_default")
 
@@ -712,18 +904,38 @@ _FIELD_NAME_TO_EXTRACTOR: list[tuple[str, str]] = [
 ]
 
 
-def _select_extractor(field_def: dict) -> str | None:
+def _select_extractor(field_def: dict, resume_config: dict | None = None) -> str | None:
     """
     Return extractor identifier for a schema field.
 
-    Checks the explicit "extractor" key first, then falls back to keyword
-    matching against the field name.  Returns None if no match.
+    Checks the explicit "extractor" key first, then bundle field_name_mapping
+    entries (from resume_config), then falls back to the module-level keyword
+    table.  Returns None if no match.
+
+    Bundle field_name_mapping entries are prepended to the lookup so they take
+    priority over the built-in defaults without replacing them.  Each entry is
+    a [keyword_string, extractor_id_string] pair.
     """
     explicit = field_def.get("extractor")
     if explicit:
         return str(explicit)
 
     name_lower = field_def.get("name", "").lower()
+
+    # Bundle-level extra mappings (highest priority after explicit override)
+    if resume_config:
+        extra_mappings = resume_config.get("field_name_mapping") or []
+        for entry in extra_mappings:
+            if (
+                isinstance(entry, list)
+                and len(entry) == 2
+                and isinstance(entry[0], str)
+                and isinstance(entry[1], str)
+            ):
+                if entry[0].lower() in name_lower:
+                    return entry[1]
+
+    # Built-in module-level mappings
     for keyword, extractor_id in _FIELD_NAME_TO_EXTRACTOR:
         if keyword in name_lower:
             return extractor_id
@@ -811,6 +1023,7 @@ def extract_all_fields(
     schema_fields: list[dict],
     compute_score: bool = True,
     bundle_lexicons: dict | None = None,
+    resume_config: dict | None = None,
 ) -> ResumeExtractionOutput:
     """
     Extract values for every field in schema_fields from raw_text.
@@ -829,20 +1042,27 @@ def extract_all_fields(
                       global JSON files in the lexicons/ directory.
                       This dict is passed in from ModelBundle.lexicons which
                       loader.py populates at bundle load time.
+    resume_config   : Optional dict loaded from resume_config.json in the model
+                      bundle.  When present, selectively overrides engine defaults
+                      for scoring weights, extractor keyword lists, extractor
+                      patterns, field-name-to-extractor mappings, and text
+                      preprocessing flags.  All keys are optional -- missing keys
+                      fall back to built-in defaults.
+                      Passed in from ModelBundle.resume_config by hub_resume_tab.py.
 
     Returns
     -------
     ResumeExtractionOutput with all extracted values, provenance, and score.
     """
-    text = preprocess_text(raw_text)
+    text = preprocess_text(raw_text, resume_config=resume_config)
 
     extracted: dict[str, Any] = {}
     results:   dict[str, ExtractionResult] = {}
     unmatched: list[str] = []
 
     for fld in schema_fields:
-        name     = fld.get("name", "")
-        extractor_id = _select_extractor(fld)
+        name         = fld.get("name", "")
+        extractor_id = _select_extractor(fld, resume_config=resume_config)
 
         if extractor_id is None:
             unmatched.append(name)
@@ -855,13 +1075,15 @@ def extract_all_fields(
             continue
 
         # Build context for the extractor.
-        # bundle_lexicons is passed through so individual extractors
-        # (skills, job_title) can use bundle-level data without global state.
+        # bundle_lexicons and resume_config are passed through so individual
+        # extractors can use bundle-level data without global state.
         context: dict = {}
         if fld.get("values"):
             context["allowed_values"] = list(fld["values"])
         if bundle_lexicons:
             context["bundle_lexicons"] = bundle_lexicons
+        if resume_config:
+            context["resume_config"] = resume_config
 
         try:
             result = extractor_fn(text, fld, context)
@@ -893,7 +1115,7 @@ def extract_all_fields(
 
     score: ResumeScore | None = None
     if compute_score:
-        score = _compute_score(extracted, results, skills_flat)
+        score = _compute_score(extracted, results, skills_flat, resume_config=resume_config)
 
     return ResumeExtractionOutput(
         extracted  = extracted,
@@ -912,16 +1134,40 @@ def _compute_score(
     extracted: dict[str, Any],
     results: dict[str, ExtractionResult],
     skills: list[str],
+    resume_config: dict | None = None,
 ) -> ResumeScore:
     """
     Compute a resume quality score from extracted fields.
 
-    Scoring rubric (max 100):
+    Default scoring rubric (max 100):
         Experience  : 0-40  (by years found)
         Education   : 0-30  (by level found)
         Skills      : 0-30  (by count)
+
+    When resume_config provides a 'scoring' block, the following keys override
+    the defaults:
+        experience_max   (int/float) -- max points for experience dimension
+        education_max    (int/float) -- max points for education dimension
+        skills_max       (int/float) -- max points for skills dimension
+        skills_per_point (int/float) -- skill count multiplier (default 3)
+        thresholds       (dict)      -- experience band overrides:
+                                       {band_name: {max, score, note}}
+                                       Bands are sorted by 'max' ascending.
+                                       The last band (highest max) is the catch-all.
+        edu_map          (dict)      -- education level overrides:
+                                       {"0": [score, note], "1": [...], ...}
     """
-    # Experience: find the largest numeric value from any "experience" extractor.
+    scoring_cfg: dict = {}
+    if resume_config:
+        scoring_cfg = resume_config.get("scoring") or {}
+
+    exp_max         = float(scoring_cfg.get("experience_max",   40))
+    edu_max         = float(scoring_cfg.get("education_max",    30))
+    skills_max      = float(scoring_cfg.get("skills_max",       30))
+    skills_per_pt   = float(scoring_cfg.get("skills_per_point",  3))
+
+    # --- Experience score ---
+    # Find the largest numeric value from any "experience" extractor.
     # Uses extractor_id (not field name) so it works with any schema field names.
     exp_val = 0.0
     for res in results.values():
@@ -932,37 +1178,74 @@ def _compute_score(
         ):
             exp_val = max(exp_val, float(res.value))
 
-    if exp_val <= 0:
-        exp_score, exp_note = 0, "No experience information found"
-    elif exp_val <= 1:
-        exp_score, exp_note = 8, "Entry-level experience"
-    elif exp_val <= 3:
-        exp_score, exp_note = 18, "Early professional experience"
-    elif exp_val <= 6:
-        exp_score, exp_note = 28, "Solid professional experience"
-    elif exp_val <= 10:
-        exp_score, exp_note = 36, "Strong professional experience"
+    cfg_thresholds = scoring_cfg.get("thresholds")
+    if cfg_thresholds and isinstance(cfg_thresholds, dict):
+        # Sort bands by 'max' ascending so we find the first band that fits.
+        bands = sorted(
+            cfg_thresholds.values(),
+            key=lambda b: b.get("max", 0) if isinstance(b, dict) else 0,
+        )
+        exp_score, exp_note = int(exp_max), "Highly experienced profile"
+        for band in bands:
+            if not isinstance(band, dict):
+                continue
+            band_max = band.get("max", 0)
+            if exp_val <= band_max:
+                exp_score = int(band.get("score", 0))
+                exp_note  = str(band.get("note", ""))
+                break
     else:
-        exp_score, exp_note = 40, "Highly experienced profile"
+        # Built-in default bands
+        if exp_val <= 0:
+            exp_score, exp_note = 0, "No experience information found"
+        elif exp_val <= 1:
+            exp_score, exp_note = 8, "Entry-level experience"
+        elif exp_val <= 3:
+            exp_score, exp_note = 18, "Early professional experience"
+        elif exp_val <= 6:
+            exp_score, exp_note = 28, "Solid professional experience"
+        elif exp_val <= 10:
+            exp_score, exp_note = 36, "Strong professional experience"
+        else:
+            exp_score, exp_note = int(exp_max), "Highly experienced profile"
 
-    # Education: find the first result from the "education" extractor.
+    # --- Education score ---
+    # Find the first result from the "education" extractor.
     # Uses extractor_id so any schema field name works.
     edu_val = 1  # default: bachelor
     for res in results.values():
         if res.extractor_id == "education" and isinstance(res.value, int):
             edu_val = res.value
             break
-    edu_map = {
-        0: (5,  "High school level"),
-        1: (15, "Bachelor's level"),
-        2: (22, "Master's level"),
-        3: (30, "PhD level"),
-    }
-    edu_score, edu_note = edu_map.get(edu_val, (10, "Education level unknown"))
 
-    # Skills
+    cfg_edu_map = scoring_cfg.get("edu_map")
+    if cfg_edu_map and isinstance(cfg_edu_map, dict):
+        # Keys are string level ints: {"0": [score, note], ...}
+        entry = cfg_edu_map.get(str(edu_val))
+        if (
+            entry
+            and isinstance(entry, (list, tuple))
+            and len(entry) >= 2
+        ):
+            edu_score = int(entry[0])
+            edu_note  = str(entry[1])
+        else:
+            edu_score, edu_note = int(edu_max // 2), "Education level unknown"
+    else:
+        default_edu_map = {
+            0: (5,  "High school level"),
+            1: (15, "Bachelor's level"),
+            2: (22, "Master's level"),
+            3: (30, "PhD level"),
+        }
+        edu_score, edu_note = default_edu_map.get(edu_val, (10, "Education level unknown"))
+
+    # Clamp to configured max in case config bands exceed it
+    edu_score = min(edu_score, int(edu_max))
+
+    # --- Skills score ---
     skill_count = len(skills)
-    skill_score = min(skill_count * 3, 30)
+    skill_score = min(int(skill_count * skills_per_pt), int(skills_max))
     if skill_count == 0:
         skill_note = "No skills detected"
     elif skill_count <= 3:

@@ -213,14 +213,17 @@ def render_hub_resume_mode(
             return
 
         with st.spinner("Extracting features..."):
-            # Provide bundle-level lexicons if they were loaded.
-            # Falls back to global app lexicons inside extract_all_fields.
-            bundle_lexicons = getattr(active_bundle, "lexicons", None) or {}
+            # Provide bundle-level lexicons and resume config if they were loaded.
+            # Both fall back to global app defaults inside extract_all_fields when
+            # not present, so existing bundles without these sidecars are unaffected.
+            bundle_lexicons  = getattr(active_bundle, "lexicons",       None) or {}
+            bundle_res_cfg   = getattr(active_bundle, "resume_config",  None) or {}
             output = _engine.extract_all_fields(
-                raw_text       = raw_text,
-                schema_fields  = fields,
-                compute_score  = True,
+                raw_text        = raw_text,
+                schema_fields   = fields,
+                compute_score   = True,
                 bundle_lexicons = bundle_lexicons,
+                resume_config   = bundle_res_cfg or None,
             )
 
         st.session_state[keys["text"]]    = raw_text

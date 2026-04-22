@@ -20,7 +20,7 @@
     <img src="https://img.shields.io/badge/Model%20Storage-HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=white&labelColor=2D3748" alt="Model Storage: HuggingFace" />
   </a>
   <a>
-    <img src="https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.2.0" />
+    <img src="https://img.shields.io/badge/version-1.3.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.3.0" />
   </a>
 </p>
 
@@ -99,6 +99,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Financial planning tools: CTC breakdown, take-home salary, savings potential, loan affordability, budget allocation, investment growth projection, emergency fund planning, lifestyle budget split
 - Model Hub: upload and serve additional trained models with four schema-driven prediction modes (Manual, Batch, Resume, Scenario) and a Model Card per model
 - Per-bundle lexicons: Model Hub models can supply custom skill and job title lexicons that override global defaults for resume extraction
+- Per-bundle resume config: Model Hub models can supply a `resume_config.json` that overrides extraction scoring weights, extractor keyword lists, experience thresholds, and field-name mappings for that specific model, without changing any code
 
 ---
 
@@ -179,6 +180,7 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Extraction is data-driven: all skill phrases, job title aliases, education patterns, and country aliases are loaded from JSON lexicons under `app/model_hub/extended_modes/lexicons/` — extendable without code changes
 - Skill coverage spans 20+ professional domains: programming languages, data science, ML/AI, cloud, data engineering, MLOps, mechanical and civil engineering, electrical and electronics, aerospace, chemical and process engineering, energy and environment, pharmaceutical and drug development, biotechnology and life sciences, neuroscience, mathematics and statistics, and cybersecurity
 - Model Hub models can supply per-bundle `skills.json` and `job_titles.json` lexicons that override global defaults for that specific model; falls back to global lexicons when absent
+- Model Hub models can supply a per-bundle `resume_config.json` that overrides extraction engine defaults (scoring weights, extractor keyword lists, experience thresholds, field-name-to-extractor mappings, and text preprocessing) for that specific model without touching any code; falls back to engine defaults when absent
 - Uploading a new PDF clears previous extraction results automatically; a Clear button is also available
 - Extracted features are fully editable before prediction
 - Supports both Model 1 and Model 2 pipelines, and all Model Hub models
@@ -399,25 +401,27 @@ Admins train models offline and upload a bundle in one of two formats:
 
 **ONNX format (recommended):**
 
-| File | Purpose |
-|---|---|
-| `model.onnx` | ONNX-serialised computation graph — no arbitrary code execution on load |
-| `columns.json` | JSON array of feature column names the model expects |
-| `schema.json` | Defines the user-facing input fields and their UI widget types |
-| `aliases.json` | Optional display labels for selectbox model values |
-| `skills.json` | Optional per-bundle skill lexicon for resume extraction (overrides global) |
-| `job_titles.json` | Optional per-bundle job title alias map for resume extraction (overrides global) |
+| File | Required | Purpose |
+|---|---|---|
+| `model.onnx` | Yes | ONNX-serialised computation graph — no arbitrary code execution on load |
+| `columns.json` | Yes | JSON array of feature column names the model expects |
+| `schema.json` | Yes | Defines the user-facing input fields and their UI widget types |
+| `aliases.json` | No | Display labels for selectbox model values |
+| `skills.json` | No | Per-bundle skill lexicon for resume extraction (overrides global) |
+| `job_titles.json` | No | Per-bundle job title alias map for resume extraction (overrides global) |
+| `resume_config.json` | No | Per-bundle resume extraction config (overrides engine defaults for scoring, keywords, thresholds, and field mappings) |
 
 **Pickle format (legacy, backward-compatible):**
 
-| File | Purpose |
-|---|---|
-| `model.pkl` | Trained sklearn-compatible estimator, serialized with joblib |
-| `columns.pkl` | Ordered list of feature column names the model expects |
-| `schema.json` | Defines the user-facing input fields and their UI widget types |
-| `aliases.json` | Optional display labels for selectbox model values |
-| `skills.json` | Optional per-bundle skill lexicon for resume extraction (overrides global) |
-| `job_titles.json` | Optional per-bundle job title alias map for resume extraction (overrides global) |
+| File | Required | Purpose |
+|---|---|---|
+| `model.pkl` | Yes | Trained sklearn-compatible estimator, serialized with joblib |
+| `columns.pkl` | Yes | Ordered list of feature column names the model expects |
+| `schema.json` | Yes | Defines the user-facing input fields and their UI widget types |
+| `aliases.json` | No | Display labels for selectbox model values |
+| `skills.json` | No | Per-bundle skill lexicon for resume extraction (overrides global) |
+| `job_titles.json` | No | Per-bundle job title alias map for resume extraction (overrides global) |
+| `resume_config.json` | No | Per-bundle resume extraction config (overrides engine defaults for scoring, keywords, thresholds, and field mappings) |
 
 Each upload creates a versioned folder in a private HuggingFace dataset repo (`models/model_<timestamp>_<id>/`). Bundles are never overwritten. A registry file (`models_registry.json`) tracks all uploaded models, their active status, and their bundle format.
 
@@ -436,10 +440,11 @@ Each upload creates a versioned folder in a private HuggingFace dataset repo (`m
 - Attach Model Card metadata (intended use, out-of-scope, limitations, ethical notes, metrics, training data, authors, license, tags, links) at upload time via structured form fields and a raw JSON override
 - Upload an optional aliases.json alongside the bundle, or push one separately after upload
 - Upload optional per-bundle lexicons (skills.json, job_titles.json) to override global resume extraction defaults for this specific model
+- Upload an optional resume_config.json alongside the bundle, or push one separately after upload, to override extraction engine defaults (scoring weights, keyword lists, experience thresholds, field-name mappings, preprocessing) for this specific model
 - Activate or deactivate models from the Registry Manager
 - Roll back to an earlier version within a model family
 - Edit or create schema.json using a visual field builder with multi-column layout settings and result card label, then download it
-- Upload a replacement schema.json or aliases.json to an existing bundle without re-uploading the model
+- Upload a replacement schema.json, aliases.json, or resume_config.json to an existing bundle without re-uploading the model
 
 ### Schema system
 
@@ -474,6 +479,156 @@ Supported `ui` values: `slider`, `selectbox`, `number_input`, `text_input`, `che
 
 **Optional per-field extractor hint (Resume mode):**
 - `extractor` — explicitly selects which resume extractor to use for this field, overriding the default name-based selection. Supported values: `experience`, `education`, `country_name`, `country_iso`, `senior_flag`, `job_title`, `employment_type`, `remote_ratio`, `skills_list`, `skills_str`, `age`.
+
+### resume_config.json — per-bundle extraction override
+
+An optional `resume_config.json` sidecar can be included in any bundle to override the resume extraction engine defaults for that specific model. Every key is optional — include only the settings you want to change. Bundles without this file continue to use the engine built-in defaults exactly as before.
+
+`resume_config.json` is validated before upload (same as `aliases.json`) and can be pushed to an existing bundle without re-uploading the model via the Schema Editor tab.
+
+#### Supported top-level keys
+
+| Key | Type | Purpose |
+|---|---|---|
+| `scoring` | object | Override scoring dimension weights and rubric |
+| `extractors` | object | Override per-extractor keyword lists, patterns, and thresholds |
+| `field_name_mapping` | array | Prepend extra keyword-to-extractor-id mappings |
+| `preprocessing` | object | Override text preprocessing flags |
+
+#### scoring block
+
+```json
+"scoring": {
+  "experience_max":   40,
+  "education_max":    30,
+  "skills_max":       30,
+  "skills_per_point": 3,
+
+  "thresholds": {
+    "entry":  { "max": 2,   "score": 8,  "note": "Entry level" },
+    "mid":    { "max": 8,   "score": 20, "note": "Mid-level" },
+    "senior": { "max": 9999,"score": 40, "note": "Senior level" }
+  },
+
+  "edu_map": {
+    "0": [5,  "High school level"],
+    "1": [15, "Bachelor level"],
+    "2": [22, "Master level"],
+    "3": [30, "PhD level"]
+  }
+}
+```
+
+- `experience_max`, `education_max`, `skills_max` — maximum points for each scoring dimension. The three values do not need to sum to 100; the total is capped at 100 after summing.
+- `skills_per_point` — points awarded per detected skill. `skill_score = min(skill_count * skills_per_point, skills_max)`.
+- `thresholds` — named experience scoring bands. Each key is an arbitrary band name; each value requires `max` (upper bound in years), `score` (points to award), and `note` (display string). Bands are sorted by `max` ascending at runtime; the first band whose `max` >= detected years is applied.
+- `edu_map` — education level scoring. Keys are string level integers (`"0"`, `"1"`, ...). Each value is a `[score, note]` pair. The engine's `education` extractor returns an integer level (0 = lowest education, 3 = highest by default). If your model's education field maps to a different number of levels you can extend the map to cover them (e.g. add `"4"` for a fifth level).
+
+#### extractors block
+
+Each key is a supported extractor identifier. Only include extractors you want to override.
+
+```json
+"extractors": {
+  "experience": {
+    "max_years": 35,
+    "patterns": [
+      "(\\d+(?:\\.\\d+)?)\\+?\\s*(?:years?|yrs?)\\s+(?:of\\s+)?(?:engineering)?\\s*experience",
+      "(\\d+(?:\\.\\d+)?)\\+?\\s*(?:years?|yrs?)"
+    ]
+  },
+
+  "senior_flag": {
+    "keywords": ["senior", "lead", "principal", "professor", "fellow"],
+    "experience_threshold": 13
+  },
+
+  "remote_ratio": {
+    "remote_keywords":  ["fully remote", "wfh", "distributed team"],
+    "hybrid_keywords":  ["hybrid", "flexible working", "split week"],
+    "onsite_keywords":  ["on-site", "lab-based", "campus-based"]
+  },
+
+  "employment_type": {
+    "part_time_keywords":  ["part-time", "intern", "trainee"],
+    "freelance_keywords":  ["freelance", "independent consultant"],
+    "contract_keywords":   ["contract", "fixed-term", "research fellowship"]
+  },
+
+  "age": {
+    "min_age": 18,
+    "max_age": 80
+  },
+
+  "job_title": {
+    "keyword_fallback": [
+      [["aerospace engineer", "aeronautical engineer"], "Aerospace Engineer"],
+      [["data scientist", "applied scientist"],         "Data Scientist"]
+    ]
+  }
+}
+```
+
+**Supported extractor ids and their override params:**
+
+| Extractor id | Params | Effect |
+|---|---|---|
+| `experience` | `max_years` (number), `patterns` (list of regex strings) | Replaces the built-in pattern list when `patterns` is provided. `max_years` caps the upper bound of valid values found. |
+| `senior_flag` | `keywords` (list of strings), `experience_threshold` (number) | Replaces the built-in keyword list when `keywords` is provided. `experience_threshold` overrides the years-of-experience auto-senior threshold (default 6). |
+| `remote_ratio` | `remote_keywords`, `hybrid_keywords`, `onsite_keywords` (each a list of strings) | Replaces the built-in keyword list for whichever groups are provided. Missing groups fall back to built-in. |
+| `employment_type` | `part_time_keywords`, `freelance_keywords`, `contract_keywords` (each a list of strings) | Same per-group replacement pattern as remote_ratio. |
+| `age` | `min_age` (int), `max_age` (int) | Overrides the valid age range for the age extractor. |
+| `job_title` | `keyword_fallback` (list of `[[keywords], title]` pairs) | Replaces the entire built-in keyword fallback list. Each entry is `[[kw1, kw2, ...], "Canonical Title"]`. Canonical titles must match a value in the schema field's `values` list exactly. |
+
+All keyword overrides for a given group replace the built-in list entirely for that group — they do not append. To keep a built-in keyword, include it explicitly in the override list.
+
+#### field_name_mapping
+
+```json
+"field_name_mapping": [
+  ["years_experience", "experience"],
+  ["work_mode",        "remote_ratio"],
+  ["is_management",    "senior_flag"]
+]
+```
+
+Each entry is a `[keyword_string, extractor_id_string]` pair. These are prepended to the built-in field-name lookup table and take priority over it. The keyword is matched as a substring of the lowercased schema field name. This allows models with non-standard field names (such as `years_experience` instead of `experience_years`) to route correctly without adding an explicit `"extractor"` key to every field in `schema.json`.
+
+#### preprocessing block
+
+```json
+"preprocessing": {
+  "strip_urls":      true,
+  "max_text_length": 0
+}
+```
+
+- `strip_urls` (bool, default `true`) — remove http and www URLs from the resume text before extraction. Useful to disable if URLs contain domain names the country extractor should read.
+- `max_text_length` (int, default `0`) — truncate extracted text to this many characters before any extraction. `0` means no truncation. Useful for very long academic CVs where truncating early improves extraction speed at the cost of missing content in the tail.
+
+#### Validation rules
+
+`resume_config.json` is validated by `validator.validate_resume_config()` before upload. Rules:
+
+- Unrecognised top-level keys produce a warning but do not block upload (forward-compatible).
+- Unrecognised extractor ids produce a warning and the section is ignored.
+- `thresholds` entries must each have `max` (number), `score` (number), and `note` (string).
+- `edu_map` keys must be string integers; values must be `[score, note]` pairs.
+- `field_name_mapping` entries must each be a two-element `[string, string]` list.
+- `keyword_fallback` entries must each be `[[string, ...], string]`.
+- Structural errors (wrong types, malformed JSON) block upload.
+
+#### Relationship to other per-bundle sidecars
+
+`resume_config.json` controls **how** extraction runs (scoring, keywords, thresholds). The lexicon sidecars control **what** it recognises:
+
+| Sidecar | Controls |
+|---|---|
+| `skills.json` | Which skill phrases are detected (replaces global skills lexicon) |
+| `job_titles.json` | Which job title aliases are recognised (replaces global job titles lexicon) |
+| `resume_config.json` | Scoring weights, extractor keyword lists, experience thresholds, field-name routing |
+
+All three are independent and optional. Any combination is valid.
 
 ### Column mapping
 
@@ -581,15 +736,15 @@ salaryscope/
 │   │   ├── registry.py                  # Registry read/write (models_registry.json)
 │   │   ├── loader.py                    # Bundle download, deserialization, session cache
 │   │   ├── predictor.py                 # Feature vector construction and model.predict()
-│   │   ├── schema_parser.py             # schema.json → Streamlit widgets
+│   │   ├── schema_parser.py             # schema.json -> Streamlit widgets
 │   │   ├── uploader.py                  # Bundle validation and upload to HuggingFace
-│   │   ├── validator.py                 # Schema and schema–columns consistency checks
+│   │   ├── validator.py                 # Schema, aliases, and resume_config validation
 │   │   └── extended_modes/              # Schema-driven prediction modes for Model Hub
 │   │       ├── __init__.py
 │   │       ├── hub_manual_tab.py        # Manual prediction mode
 │   │       ├── hub_batch_tab.py         # Batch prediction mode (CSV/XLSX, file-change auto-clear)
 │   │       ├── hub_resume_tab.py        # Resume analysis mode (PDF extraction, auto-clear)
-│   │       ├── hub_resume_engine.py     # Data-driven extraction engine (spaCy + JSON lexicons)
+│   │       ├── hub_resume_engine.py     # Data-driven extraction engine (spaCy + JSON lexicons + resume_config)
 │   │       ├── hub_scenario_tab.py      # Scenario analysis mode (plain widgets, no save step)
 │   │       ├── model_card.py            # Model Card UI component
 │   │       ├── schema_plots.py          # Chart renderer for schema plots key
@@ -597,7 +752,7 @@ salaryscope/
 │   │           ├── skills.json          # 450+ skills across 20+ categories
 │   │           ├── job_titles.json      # 50+ canonical titles with alias lists
 │   │           ├── education.json       # Education level regex patterns
-│   │           └── countries.json       # Country aliases → display names and ISO-2 codes
+│   │           └── countries.json       # Country aliases -> display names and ISO-2 codes
 │   │
 │   ├── tabs/
 │   │   ├── manual_prediction_tab.py     # Manual Prediction
@@ -648,7 +803,7 @@ salaryscope/
 │   ├── module_reference.md              # All public functions documented
 │   ├── deployment.md                    # Deployment and operations guide
 │   ├── testing.md                       # Test plan, unit tests, manual test cases
-│   └── model_hub_extended_schema.md     # Extended schema reference (plots, scenario_sweep, lexicons, extractors)
+│   └── model_hub_extended_schema.md     # Extended schema reference (plots, scenario_sweep, lexicons, extractors, resume_config)
 │   
 ├── samples/                             # Sample input files for batch prediction
 ├── assets/                              # Branding and visual assets
@@ -829,9 +984,9 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 9. In Scenario mode: fill in each scenario panel directly (no save step needed) and click Run All Scenarios
 
 **Admin only:**
-- Go to the **Upload Bundle** tab, fill in model card metadata, select ONNX or Pickle format, optionally attach aliases.json and custom lexicons (skills.json, job_titles.json), and upload
+- Go to the **Upload Bundle** tab, fill in model card metadata, select ONNX or Pickle format, optionally attach aliases.json, custom lexicons (skills.json, job_titles.json), and a resume_config.json, and upload
 - Use the **Registry Manager** to activate, deactivate, or roll back models
-- Use the **Schema Editor** to build or validate a schema.json visually, including plots and scenario_sweep configuration
+- Use the **Schema Editor** to build or validate a schema.json visually, including plots and scenario_sweep configuration; use the **Upload / Validate** sub-tab to push a replacement schema.json, aliases.json, or resume_config.json to an existing bundle
 
 ### Model Analytics
 - Navigate to the **Model Analytics** tab to view full model diagnostics, comparison charts, and download the analytics PDF report
@@ -894,7 +1049,7 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 * Session management with 24-hour expiry enforced via `st.session_state`
 * Firebase-managed authentication — no passwords stored in Firestore or application code
 * Rate limit records in Firestore keyed by SHA-256 hash prefix of user email — PII is never stored in document IDs
-* Model Hub upload restricted to admin users; file size limits enforced pre- and post-download (model files 200 MB max, schema/aliases/lexicons 512 KB max); ONNX bundles loaded via onnxruntime (no arbitrary code execution); pickle bundles audited via joblib security log on every load; per-bundle lexicon JSON files are plain data with no execution risk
+* Model Hub upload restricted to admin users; file size limits enforced pre- and post-download (model files 200 MB max, schema/aliases/lexicons 512 KB max, resume_config.json 256 KB max); ONNX bundles loaded via onnxruntime (no arbitrary code execution); pickle bundles audited via joblib security log on every load; per-bundle lexicon and config JSON files are plain data with no execution risk
 * Admin role determined by server-side email comparison only (case-insensitive, from `st.secrets`)
 
 > Note: These features are implemented for application-level security and demonstration purposes. For production systems, additional hardening would be appropriate.
@@ -1004,8 +1159,9 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Enhance financial estimation modules (CTC, take-home, savings, loan) with more accurate country-specific rules and real-world datasets.
 - Integrate detailed tax systems with deductions, exemptions, and region-specific regulations for improved take-home accuracy.
 - Extend ONNX support in the Model Hub to additional model architectures beyond sklearn-compatible estimators (e.g. PyTorch, TensorFlow via tf2onnx).
-- Add education, country, and experience pattern lexicons as optional per-bundle sidecars (currently only skills and job titles are per-bundle overridable).
+- Add education and country pattern lexicons as optional per-bundle sidecars (currently skills, job titles, and extraction config are per-bundle overridable; education patterns and country aliases still use only global lexicons).
 - Expose the spaCy model version as a configurable parameter in the extraction engine to support multilingual resume parsing.
+- Allow `resume_config.json` to declare custom extractor functions by reference (plugin pattern) so model owners can add entirely new field extractors without forking the engine.
 - Add city-level cost-of-living data to improve the granularity of COL adjustments beyond country averages.
 - Implement real-time salary market data integration for more current predictions.
 - Add Google OAuth as an alternative authentication method (infrastructure is partially scaffolded).
@@ -1025,6 +1181,7 @@ Detailed project documentation is available in the `docs/` directory:
 | [`module_reference.md`](docs/module_reference.md) | Every public function documented with parameters, returns, and side effects |
 | [`deployment.md`](docs/deployment.md) | Firebase setup, HuggingFace setup, Streamlit Cloud deployment, secrets reference |
 | [`testing.md`](docs/testing.md) | Test plan, unit test code, manual test cases, and test results log template |
+| [`model_hub_extended_schema.md`](docs/model_hub_extended_schema.md) | Extended schema reference: plots, scenario_sweep, per-bundle lexicons (skills.json, job_titles.json), extractor hints, and resume_config.json full format |
 
 
 ---

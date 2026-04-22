@@ -60,8 +60,9 @@ from app.model_hub.validator import (
     validate_bundle_files,
     detect_bundle_format,
     validate_aliases,
+    validate_resume_config,
 )
-from app.model_hub.uploader import upload_bundle, upload_bundle_onnx, upload_schema_only, upload_aliases_only
+from app.model_hub.uploader import upload_bundle, upload_bundle_onnx, upload_schema_only, upload_aliases_only, upload_resume_config_only
 
 # ==========================================================================
 # EXTENDED MODES - BEGIN
@@ -764,6 +765,50 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
             )
         # LEXICON UPLOADERS - END
 
+        # RESUME CONFIG UPLOADER - BEGIN
+        # resume_config.json selectively overrides extraction engine defaults
+        # (scoring weights, extractor keyword lists, field-name-to-extractor
+        # mappings, text preprocessing flags) for this specific bundle.
+        # Completely optional -- omitting it leaves all engine defaults unchanged.
+        st.divider()
+        st.markdown("**Resume Extraction Config (optional)**")
+        st.caption(
+            "Upload a resume_config.json to override extraction engine defaults "
+            "for this specific model. All keys are optional -- only include the "
+            "settings you want to change. See hub_resume_engine.py for the full "
+            "format reference."
+        )
+        f_resume_cfg = st.file_uploader(
+            "resume_config.json (optional)",
+            type=["json"],
+            key="mh_up_resume_cfg",
+            help=(
+                "Per-bundle resume extraction config. Supported top-level keys: "
+                "'scoring' (weight overrides), 'extractors' (keyword/pattern lists), "
+                "'field_name_mapping' (extra field-name to extractor-id pairs), "
+                "'preprocessing' (strip_urls, max_text_length). "
+                "Omitting this file leaves all engine defaults active."
+            ),
+        )
+        # Show a live validation preview as soon as a file is selected
+        if f_resume_cfg is not None:
+            _rc_preview_bytes = f_resume_cfg.read()
+            f_resume_cfg.seek(0)
+            try:
+                import json as _json_rc
+                _rc_parsed = _json_rc.loads(_rc_preview_bytes.decode("utf-8"))
+                _rc_issues = validate_resume_config(_rc_parsed)
+                if _rc_issues:
+                    for _iss in _rc_issues:
+                        # Warnings (unrecognised keys) are advisory only
+                        _kind = "warning" if "unrecognised" in _iss else "error"
+                        _msg(_iss, _kind)
+                else:
+                    _msg("resume_config.json is valid.", "success")
+            except Exception as _rc_exc:
+                _msg(f"resume_config.json is not valid JSON: {_rc_exc}", "error")
+        # RESUME CONFIG UPLOADER - END
+
         # Validate completeness using format-aware checker
         uploaded_names = []
         if f_model:
@@ -789,29 +834,32 @@ def _render_upload_panel(registry: dict, user: dict) -> None:
             disabled=bool(missing) or not display_name or not target,
             type="primary",
         ):
-            aliases_bytes      = f_aliases.read() if f_aliases else None
-            skills_lex_bytes   = f_skills_lex.read() if f_skills_lex else None
-            titles_lex_bytes   = f_titles_lex.read() if f_titles_lex else None
-            model_card_dict    = _build_model_card_dict()
+            aliases_bytes        = f_aliases.read()    if f_aliases    else None
+            skills_lex_bytes     = f_skills_lex.read() if f_skills_lex else None
+            titles_lex_bytes     = f_titles_lex.read() if f_titles_lex else None
+            resume_cfg_bytes     = f_resume_cfg.read() if f_resume_cfg else None
+            model_card_dict      = _build_model_card_dict()
             if is_onnx_upload:
                 _do_upload_onnx(
                     f_model.read(), f_columns.read(), f_schema.read(),
                     display_name, description, target, family_id,
                     user, registry,
-                    aliases_bytes    = aliases_bytes,
-                    model_card_dict  = model_card_dict or None,
-                    skills_lex_bytes = skills_lex_bytes,
-                    titles_lex_bytes = titles_lex_bytes,
+                    aliases_bytes       = aliases_bytes,
+                    model_card_dict     = model_card_dict or None,
+                    skills_lex_bytes    = skills_lex_bytes,
+                    titles_lex_bytes    = titles_lex_bytes,
+                    resume_cfg_bytes    = resume_cfg_bytes,
                 )
             else:
                 _do_upload(
                     f_model.read(), f_columns.read(), f_schema.read(),
                     display_name, description, target, family_id,
                     user, registry,
-                    aliases_bytes    = aliases_bytes,
-                    model_card_dict  = model_card_dict or None,
-                    skills_lex_bytes = skills_lex_bytes,
-                    titles_lex_bytes = titles_lex_bytes,
+                    aliases_bytes       = aliases_bytes,
+                    model_card_dict     = model_card_dict or None,
+                    skills_lex_bytes    = skills_lex_bytes,
+                    titles_lex_bytes    = titles_lex_bytes,
+                    resume_cfg_bytes    = resume_cfg_bytes,
                 )
 
 
@@ -859,21 +907,23 @@ def _do_upload(
     model_card_dict: Optional[dict] = None,
     skills_lex_bytes: Optional[bytes] = None,
     titles_lex_bytes: Optional[bytes] = None,
+    resume_cfg_bytes: Optional[bytes] = None,
 ) -> None:
     uploaded_by = user.get("email") or user.get("username") or "admin"
 
     with st.spinner("Validating and uploading bundle..."):
         try:
             result = upload_bundle(
-                model_bytes   = model_bytes,
-                columns_bytes = columns_bytes,
-                schema_bytes  = schema_bytes,
-                display_name  = display_name,
-                description   = description,
-                target        = target,
-                uploaded_by   = uploaded_by,
-                family_id     = family_id or None,
-                aliases_bytes = aliases_bytes if aliases_bytes else None,
+                model_bytes         = model_bytes,
+                columns_bytes       = columns_bytes,
+                schema_bytes        = schema_bytes,
+                display_name        = display_name,
+                description         = description,
+                target              = target,
+                uploaded_by         = uploaded_by,
+                family_id           = family_id or None,
+                aliases_bytes       = aliases_bytes if aliases_bytes else None,
+                resume_config_bytes = resume_cfg_bytes if resume_cfg_bytes else None,
             )
         except (ValueError, RuntimeError) as exc:
             _msg(f"Upload failed: {exc}", "error")
@@ -892,11 +942,13 @@ def _do_upload(
     if model_card_dict:
         result.registry_entry["model_card"] = model_card_dict
 
-    # Track whether bundle-level lexicons were uploaded
+    # Track whether bundle-level sidecars were uploaded
     if skills_lex_bytes:
         result.registry_entry["has_skills_lexicon"] = True
     if titles_lex_bytes:
         result.registry_entry["has_titles_lexicon"] = True
+    # has_resume_config is already set by upload_bundle when resume_config_bytes
+    # was provided -- no extra flag needed here.
 
     try:
         new_registry = add_model_to_registry(registry, result.registry_entry)
@@ -930,21 +982,23 @@ def _do_upload_onnx(
     model_card_dict: Optional[dict] = None,
     skills_lex_bytes: Optional[bytes] = None,
     titles_lex_bytes: Optional[bytes] = None,
+    resume_cfg_bytes: Optional[bytes] = None,
 ) -> None:
     uploaded_by = user.get("email") or user.get("username") or "admin"
 
     with st.spinner("Validating and uploading ONNX bundle..."):
         try:
             result = upload_bundle_onnx(
-                onnx_bytes         = onnx_bytes,
-                columns_json_bytes = columns_json_bytes,
-                schema_bytes       = schema_bytes,
-                display_name       = display_name,
-                description        = description,
-                target             = target,
-                uploaded_by        = uploaded_by,
-                family_id          = family_id or None,
-                aliases_bytes      = aliases_bytes if aliases_bytes else None,
+                onnx_bytes          = onnx_bytes,
+                columns_json_bytes  = columns_json_bytes,
+                schema_bytes        = schema_bytes,
+                display_name        = display_name,
+                description         = description,
+                target              = target,
+                uploaded_by         = uploaded_by,
+                family_id           = family_id or None,
+                aliases_bytes       = aliases_bytes if aliases_bytes else None,
+                resume_config_bytes = resume_cfg_bytes if resume_cfg_bytes else None,
             )
         except (ValueError, RuntimeError) as exc:
             _msg(f"Upload failed: {exc}", "error")
@@ -965,6 +1019,8 @@ def _do_upload_onnx(
         result.registry_entry["has_skills_lexicon"] = True
     if titles_lex_bytes:
         result.registry_entry["has_titles_lexicon"] = True
+    # has_resume_config is already set by upload_bundle_onnx when resume_cfg_bytes
+    # was provided -- no extra flag needed here.
 
     try:
         new_registry = add_model_to_registry(registry, result.registry_entry)
@@ -1046,6 +1102,20 @@ def _render_registry_manager(registry: dict) -> None:
             _fmt = model.get("bundle_format", "pickle")
             _fmt_label = ":material/lock: ONNX" if _fmt == "onnx" else ":material/warning: Pickle"
             st.caption(f"Format: {_fmt_label}")
+
+            # Show optional sidecar badges so admins can see at a glance what
+            # was uploaded alongside the core bundle files.
+            _sidecar_parts = []
+            if model.get("has_aliases"):
+                _sidecar_parts.append("aliases.json")
+            if model.get("has_skills_lexicon"):
+                _sidecar_parts.append("skills.json")
+            if model.get("has_titles_lexicon"):
+                _sidecar_parts.append("job_titles.json")
+            if model.get("has_resume_config"):
+                _sidecar_parts.append("resume_config.json")
+            if _sidecar_parts:
+                st.caption(f"Sidecars: {', '.join(_sidecar_parts)}")
 
             btn_col1, btn_col2, btn_col3 = st.columns(3)
 
@@ -1419,3 +1489,56 @@ def _render_schema_upload_validator() -> None:
                 )
             except (ValueError, RuntimeError) as exc:
                 _msg(f"Push failed: {exc}", "error")
+
+    st.divider()
+    st.markdown("**Push resume_config.json to existing bundle (optional)**")
+    st.caption(
+        "Upload a new or replacement resume_config.json sidecar. "
+        "The file is validated before upload. "
+        "Affects resume extraction scoring, keyword lists, and field mappings "
+        "for this bundle only. All keys are optional -- include only overrides."
+    )
+    f_rc_push = st.file_uploader(
+        "resume_config.json",
+        type=["json"],
+        key="mh_sv_resume_cfg",
+        help=(
+            "Supported top-level keys: scoring, extractors, "
+            "field_name_mapping, preprocessing. "
+            "See hub_resume_engine.py for the full format reference."
+        ),
+    )
+    if f_rc_push is not None:
+        _rc_push_bytes = f_rc_push.read()
+        f_rc_push.seek(0)
+        try:
+            import json as _json_rc_push
+            _rc_push_parsed = _json_rc_push.loads(_rc_push_bytes.decode("utf-8"))
+            _rc_push_issues = validate_resume_config(_rc_push_parsed)
+            if _rc_push_issues:
+                for _iss in _rc_push_issues:
+                    _kind = "warning" if "unrecognised" in _iss else "error"
+                    _msg(_iss, _kind)
+            else:
+                _msg("resume_config.json is valid.", "success")
+        except Exception as _rc_push_exc:
+            _msg(f"resume_config.json is not valid JSON: {_rc_push_exc}", "error")
+
+    if st.button(
+        ":material/cloud_upload: Push resume_config.json",
+        key="mh_sv_push_resume_cfg",
+        disabled=not bundle_path or not model_id or not f_rc_push,
+    ):
+        try:
+            upload_resume_config_only(
+                resume_config_bytes = f_rc_push.read(),
+                model_id            = model_id,
+                bundle_path         = bundle_path,
+            )
+            _msg(
+                f"resume_config.json pushed to '{bundle_path}'. "
+                "Cache cleared — next Load Model will use the updated config.",
+                "success",
+            )
+        except (ValueError, RuntimeError) as exc:
+            _msg(f"Push failed: {exc}", "error")
