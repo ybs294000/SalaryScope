@@ -3,12 +3,6 @@
   "_version": "1.0",
 
   "display_names": {
-    "united states of america": "USA",
-    "united states": "USA",
-    "usa": "USA",
-    "u.s.a": "USA",
-    "u.s": "USA",
-    "america": "USA",
     "united kingdom": "UK",
     "great britain": "UK",
     "england": "UK",
@@ -70,7 +64,13 @@
     "argentina": "Argentina",
     "colombia": "Colombia",
     "chile": "Chile",
-    "peru": "Peru"
+    "peru": "Peru",
+    "united states of america": "USA",
+    "united states": "USA",
+    "usa": "USA",
+    "u.s.a": "USA",
+    "u.s": "USA",
+    "america": "USA"
   },
 
   "iso_codes": {
