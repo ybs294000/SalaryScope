@@ -85,6 +85,8 @@ from app.tabs.user_profile import show_profile
 
 from app.tabs.model_hub_tab import render_model_hub_tab
 
+from app.tabs.hr_tools_tab import render_hr_tools_tab
+
 from app.tabs.appearance_panel import render_appearance_panel
 
 from app.utils.theme_css import inject_theme_css
@@ -1410,6 +1412,8 @@ if st.session_state.logged_in:
     if is_admin():
         tabs.append(":material/admin_panel_settings: Admin")
 
+tabs.append(":material/corporate_fare: HR Tools")
+
 tabs.append(":material/info: About")
 
 tab_objects = st.tabs(tabs)
@@ -1637,6 +1641,38 @@ if ":material/admin_panel_settings: Admin" in tabs:
             st.stop()
 
         show_admin_panel(st.session_state.username)
+
+# ==================================================
+#
+# ==================================================
+hr_index = tabs.index(":material/corporate_fare: HR Tools")
+with tab_objects[hr_index]:
+    render_hr_tools_tab(
+        is_app1=IS_APP1,
+        app1_model=app1_model if IS_APP1 else None,
+        app1_salary_band_model=app1_salary_band_model if IS_APP1 else None,
+        app1_job_titles=app1_job_titles,
+        app1_countries=app1_countries,
+        app1_genders=app1_genders,
+        app2_model=app2_model if not IS_APP1 else None,
+        app2_job_titles=app2_job_titles,
+        app2_experience_levels=app2_experience_levels,
+        app2_employment_types=app2_employment_types,
+        app2_company_sizes=app2_company_sizes,
+        app2_remote_ratios=app2_remote_ratios,
+        app2_country_display_options=app2_country_display_options,
+        app2_employee_residence_display_options=app2_employee_residence_display_options,
+        SALARY_BAND_LABELS=SALARY_BAND_LABELS,
+        EXPERIENCE_MAP=EXPERIENCE_MAP,
+        EMPLOYMENT_MAP=EMPLOYMENT_MAP,
+        COMPANY_SIZE_MAP=COMPANY_SIZE_MAP,
+        REMOTE_MAP=REMOTE_MAP,
+        EXPERIENCE_REVERSE=EXPERIENCE_REVERSE,
+        EMPLOYMENT_REVERSE=EMPLOYMENT_REVERSE,
+        COMPANY_SIZE_REVERSE=COMPANY_SIZE_REVERSE,
+        COUNTRY_NAME_MAP=COUNTRY_NAME_MAP,
+        title_features=title_features,
+        )
 # ==================================================
 # TAB 10: ABOUT (Merged from both apps)
 # ==================================================
