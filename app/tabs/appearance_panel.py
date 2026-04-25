@@ -50,6 +50,7 @@ Usage
 
 import streamlit as st
 
+from app.utils.config_writer import write_theme_to_config
 from app.theme import (
     BUILTIN_THEMES,
     THEME_ORDER,
@@ -131,12 +132,19 @@ def _apply(theme_id: str, overrides: dict = None) -> None:
     """
     Write base theme + overrides as a merged dict into THEME_KEY.
     get_token() reads this on every call so all helpers pick up the change.
+    Also writes the active theme into config.toml so Streamlit's native
+    widget colours (slider, checkbox, radio, progress bar, etc.) update
+    to match the chosen theme on the next render.
     """
     overrides = overrides or {}
     base = dict(BUILTIN_THEMES.get(theme_id, DARK_PROFESSIONAL))
     base.update(overrides)
     st.session_state[THEME_KEY]     = base
     st.session_state[_OVERRIDE_KEY] = overrides
+    # Write the resolved theme into config.toml [theme] flat block.
+    # Streamlit re-reads config.toml when it changes, so native widget
+    # colours will reflect this theme on the very next rerun.
+    write_theme_to_config(base)
 
 
 def _swatch_row(theme: dict) -> str:
@@ -303,6 +311,9 @@ def render_appearance_panel() -> None:
                 st.session_state.pop(_OVERRIDE_KEY, None)
                 st.session_state.pop(_LAST_DARK_KEY, None)
                 reset_theme()
+                # Restore the default theme in config.toml so Streamlit
+                # native widgets revert to Dark Professional colours.
+                write_theme_to_config(DARK_PROFESSIONAL)
                 st.rerun()
 
         st.divider()

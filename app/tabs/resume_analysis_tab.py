@@ -858,17 +858,17 @@ salary_card_html(f"${prediction_a2_r:,.2f}"),
             st.markdown("<h3 style='text-align: center;'>Estimated Annual Salary</h3>", unsafe_allow_html=True)
             st.markdown(salary_card_html(f"${prediction:,.2f}"), unsafe_allow_html=True)
 
-            st.divider()
-            st.markdown("<h3 style='text-align: center;'>Estimated Salary Level</h3>", unsafe_allow_html=True)
-            st.markdown(salary_level_card_html(salary_band_label), unsafe_allow_html=True)
-
-            st.divider()
-            st.markdown("<h3 style='text-align: center;'>Career Stage</h3>", unsafe_allow_html=True)
-            st.markdown(career_stage_card_html(career_stage_label), unsafe_allow_html=True)
-
+            st.markdown("<h3 style='text-align: center;'>Salary Context</h3>", unsafe_allow_html=True)
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown("<h5 style='text-align: center;'>Salary Level</h5>", unsafe_allow_html=True)
+                st.markdown(salary_level_card_html(salary_band_label), unsafe_allow_html=True)
+            with col_b:
+                st.markdown("<h5 style='text-align: center;'>Career Stage</h5>", unsafe_allow_html=True)
+                st.markdown(career_stage_card_html(career_stage_label), unsafe_allow_html=True)
             st.caption(
-                "Career stage is determined using an unsupervised clustering model based on "
-                "experience and education. It represents your relative position in career progression."
+                "Salary level represents your earning bracket, while career stage reflects your position "
+                "based on experience and education."
             )
 
             st.divider()
@@ -920,7 +920,7 @@ association_insight_card_html(assoc_text_a1_improved),
             # -------------------------------------------------------
             st.divider()
 
-            st.markdown("<h3 style='text-align: left;'>Salary Negotiation Tips</h3>", unsafe_allow_html=True)
+            st.subheader(":material/handshake: Salary Negotiation Tips")
 
             negotiation_tips_a1_r = generate_negotiation_tips_app1(
                 prediction=prediction,
@@ -945,7 +945,7 @@ association_insight_card_html(assoc_text_a1_improved),
 
             insights_a1_r = generate_insights_app1(data["input_details"])
 
-            st.markdown("<h3 style='text-align: left;'>Career Recommendations</h3>", unsafe_allow_html=True)
+            st.subheader(":material/tips_and_updates: Career Recommendations")
 
             recs_a1_r = generate_recommendations_app1(data["input_details"])
             render_recommendations(recs_a1_r)

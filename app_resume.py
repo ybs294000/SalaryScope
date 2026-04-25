@@ -48,6 +48,7 @@ from app.utils.ctc_utils import render_ctc_adjuster
 from app.utils.takehome_utils import render_takehome_adjuster
 from app.utils.savings_utils import render_savings_adjuster
 from app.utils.loan_utils import render_loan_adjuster
+from app.utils.fire_utils import render_fire_calculator
 from app.utils.feedback import feedback_ui
 
 # -------------------------
@@ -104,19 +105,22 @@ from app.theme import (
     COLOR_TEXT_MAIN    as _TEXT_MAIN,
     COLOR_TEXT_MUTED   as _TEXT_MUTED,
 )
-
-if "db_initialized" not in st.session_state:
-    init_db()
-    create_prediction_table()
-    st.session_state.db_initialized = True
 # --------------------------------------------------
 # Page Config
 # --------------------------------------------------
 st.set_page_config(
     page_title="SalaryScope",
     layout="wide",
-    #page_icon="SalaryScope_Icon.png"
+    page_icon="assets/salaryscope_logo2.png"
 )
+
+# ------------------------------------------------
+# DATABASE INITIALIZATION
+# -------------------------------------------------
+if "db_initialized" not in st.session_state:
+    init_db()
+    create_prediction_table()
+    st.session_state.db_initialized = True
 # ============================================================
 # DARK PROFESSIONAL — App 1 Theme (applied globally)
 # ============================================================
@@ -359,7 +363,7 @@ def get_base64_image(path):
     with open(path, "rb") as img:
         return base64.b64encode(img.read()).decode()
 
-logo_base64 = get_base64_image("static/android-chrome-1024x1024.png")
+logo_base64 = get_base64_image("assets/salaryscope_logo2.png")
 # ================================================
 #   APP1 DROPWDOWNS
 # ================================================
@@ -1243,29 +1247,16 @@ for key in [
 # ==================================================
 # TITLE
 # ==================================================
-st.markdown(
-    f"""
-    <div style="display:flex;
-                justify-content:center;
-                align-items:center;
-                gap:14px;
-                margin-bottom:6px;">
-        <img src="data:image/png;base64,{logo_base64}" width="70">
-                <h1 style="margin:0;
-                   background: linear-gradient(135deg, #4F8EF7 0%, #60A5FA 50%, #93C5FD 100%);
-                   -webkit-background-clip:text;
-                   -webkit-text-fill-color:transparent;
-                   background-clip:text;">
-            SalaryScope
-        </h1>
-    </div>
+_logo_html = f'<img src="data:image/png;base64,{logo_base64}" width="62" style="display:block;">' if logo_base64 else '<span style="font-size:40px;line-height:1;">💼</span>'
 
-    <h3 style="text-align:center; color:#9BA3B0; font-weight:400; margin-top:0;">
-        Salary Prediction System using Machine Learning
-    </h3>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown(f"""
+<div style="display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:6px;">
+<div style="width:82px;height:82px;display:flex;justify-content:center;align-items:center;border-radius:22px;background:rgba(79,142,247,0.12);border:1px solid rgba(79,142,247,0.25);">{_logo_html}</div>
+<h1 style="margin:0;background:linear-gradient(135deg,#4F8EF7 0%,#60A5FA 50%,#93C5FD 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">SalaryScope</h1>
+</div>
+<h3 style="text-align:center;color:#9BA3B0;font-weight:400;margin-top:0;">Salary Prediction System using Machine Learning</h3>
+""", unsafe_allow_html=True)
+
 st.divider()
 
 # ==================================================
@@ -1409,7 +1400,7 @@ tabs = [
     ":material/analytics: Scenario Analysis", 
     ":material/model_training: Model Analytics",
     ":material/insights: Data Insights",
-    ":material/hub: Model Hub",  
+    ":material/apps: Model Hub",  
 ]
 
 if st.session_state.logged_in:
@@ -1616,7 +1607,7 @@ with tab_objects[5]:
 # ==================================================
 # TAB 7: MODEL HUB
 # ==================================================
-with tab_objects[tabs.index(":material/hub: Model Hub")]:
+with tab_objects[tabs.index(":material/apps: Model Hub")]:
     render_model_hub_tab(
         user={"username": st.session_state.username} if st.session_state.logged_in else None,
         is_admin_user=is_admin() if st.session_state.logged_in else False,

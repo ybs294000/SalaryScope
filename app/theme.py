@@ -459,64 +459,91 @@ DARK_MIDNIGHT: dict = {
     "name": "Dark Midnight",
     "mode": "dark",
 
+    # Surfaces -- deep navy scale, darker and bluer than Dark Professional.
+    # MN_* primitives give Midnight its distinct identity: the page feels
+    # like deep ocean rather than the neutral charcoal of Dark Professional.
     "surface_base":    MN_950,
     "surface_raised":  MN_900,
     "surface_overlay": MN_800,
     "surface_sunken":  MN_750,
 
+    # Borders -- navy-tinted, matching the surface scale
     "border_default":  MN_500,
     "border_subtle":   MN_450,
     "border_strong":   MN_400,
 
+    # Text -- TMID_* has a slight blue cast that complements the navy surfaces.
+    # Still highly legible; contrast ratio equivalent to TDARK_* on DARK_*.
     "text_primary":    TMID_PRIMARY,
     "text_secondary":  TMID_MUTED,
     "text_disabled":   TMID_FAINT,
     "text_inverse":    WHITE,
     "text_banner":     TMID_BANNER,
 
+    # Accent -- violet, weight-for-weight relative to Dark Professional blue:
+    #   BLUE_600 -> VIOLET_600   accent_primary
+    #   BLUE_700 -> VIOLET_500   accent_hover
+    #   BLUE_500 -> VIOLET_400   accent_bright
     "accent_primary":  VIOLET_600,
     "accent_hover":    VIOLET_500,
     "accent_bright":   VIOLET_400,
 
+    # Chart -- Midnight-specific surfaces so charts sit in the same deep navy
     "chart_paper":     MN_900,
     "chart_plot":      MN_800,
     "chart_hover_bg":  MN_HOVER,
 
-    "status_success":  "#10B981",
+    # Status -- identical to Dark Professional (semantic colors are universal)
+    "status_success":  TEAL_500,
     "status_warning":  AMBER_400,
     "status_error":    RED_500,
     "status_info":     VIOLET_400,
 
+    # Cards -- GRAD_DARK_B is the dedicated Midnight card gradient top
+    # (#1A1035: very deep purple-navy), distinct from DP's #1B2A45.
     "card_grad_start": GRAD_DARK_B,
     "card_grad_end":   MN_800,
-    "util_card_start": "#141025",
+    "util_card_start": MN_750,
     "util_card_end":   MN_800,
     "util_card_border":MN_450,
 
+    # Banners -- MNBANNER_* are navy-tinted equivalents of DBANNER_*
     "banner_info_bg":  MNBANNER_INFO,
     "banner_ok_bg":    MNBANNER_SUCCESS,
     "banner_warn_bg":  MNBANNER_WARN,
     "banner_err_bg":   MNBANNER_ERROR,
 
+    # Status boxes -- MNSTATUS_* equivalents of DSTATUS_*
     "status_info_bg":    MNSTATUS_INFO,
     "status_success_bg": MNSTATUS_SUCCESS,
     "status_warn_bg":    MNSTATUS_WARN,
     "status_error_bg":   MNSTATUS_ERROR,
 
+    # Gauge zones -- navy equivalents of DGAUGE_*
     "gauge_safe_bg":   MN_HOVER,
     "gauge_warn_bg":   "#201808",
     "gauge_danger_bg": "#200A0A",
 
+    # Card accent slots -- violet replaces blue at matching weight
     "card_band_border":  VIOLET_400,
-    "card_stage_border": PURPLE_600,
+    "card_stage_border": VIOLET_500,
     "util_blue":         VIOLET_600,
     "ci_marker":         "#EDE9FE",
     "hub_card_bg":       MN_800,
     "hub_card_accent":   VIOLET_400,
 
+    # Colorway -- 8 perceptually distinct hues, no family repeats.
+    # Slot 0: violet (accent), slot 3: INDIGO_500 (blue-indigo, distinct from
+    # violet) replaces the plain VIOLET_400 repeat that was there before.
     "colorway": [
-        VIOLET_400, CYAN_500, TEAL_400, PINK_500,
-        AMBER_400, PURPLE_600, CYAN_400, AMBER_500,
+        VIOLET_400,    # 0 -- violet       (primary accent)
+        CYAN_500,      # 1 -- sky blue
+        TEAL_400,      # 2 -- emerald green
+        INDIGO_500,    # 3 -- blue-indigo   (distinct from violet at slot 0)
+        AMBER_400,     # 4 -- amber
+        AMBER_500,     # 5 -- orange
+        "#F472B6",     # 6 -- pink
+        CYAN_400,      # 7 -- cyan-blue
     ],
 }
 
@@ -593,7 +620,7 @@ DARK_VIOLET: dict = {
     "name": "Dark Violet",
     "mode": "dark",
 
-    # Surfaces -- identical to Dark Professional (same neutral dark scale)
+    # Surfaces -- identical to Dark Professional
     "surface_base":    DARK_950,
     "surface_raised":  DARK_800,
     "surface_overlay": DARK_700,
@@ -611,24 +638,26 @@ DARK_VIOLET: dict = {
     "text_inverse":    WHITE,
     "text_banner":     TDARK_BANNER,
 
-    # Accent -- VIOLET_500 (#8B5CF6) is the violet equivalent of BLUE_600:
-    # same perceptual weight, clearly violet (not indigo, not purple-pink).
-    "accent_primary":  VIOLET_500,   # #8B5CF6
-    "accent_hover":    VIOLET_600,   # #7C3AED
-    "accent_bright":   VIOLET_400,   # #A78BFA -- bright for value text on dark bg
+    # Accent -- violet replaces blue, weight-for-weight:
+    #   BLUE_600 -> VIOLET_600   accent_primary
+    #   BLUE_700 -> VIOLET_500   accent_hover
+    #   BLUE_500 -> VIOLET_400   accent_bright
+    "accent_primary":  VIOLET_600,
+    "accent_hover":    VIOLET_500,
+    "accent_bright":   VIOLET_400,
 
     # Chart -- identical to Dark Professional
     "chart_paper":     DARK_800,
     "chart_plot":      DARK_700,
     "chart_hover_bg":  DARK_HOVER,
 
-    # Status -- identical to Dark Professional (violet only for info)
+    # Status -- identical to Dark Professional
     "status_success":  TEAL_500,
     "status_warning":  AMBER_400,
     "status_error":    RED_500,
     "status_info":     VIOLET_400,
 
-    # Cards -- identical surfaces to Dark Professional
+    # Cards -- identical to Dark Professional
     "card_grad_start": GRAD_DARK_A,
     "card_grad_end":   DARK_700,
     "util_card_start": DARK_650,
@@ -652,25 +681,24 @@ DARK_VIOLET: dict = {
     "gauge_warn_bg":   DGAUGE_WARN,
     "gauge_danger_bg": DGAUGE_DANGER,
 
-    # Card-specific accent slots -- violet variants
-    "card_band_border":  VIOLET_400,  # #A78BFA -- brighter violet for band card
-    "card_stage_border": VIOL_A_300,  # #A5B4FC -- indigo-violet for stage card
-    "util_blue":         VIOLET_500,  # violet replaces blue in banners
+    # Card accent slots -- violet replaces blue at matching weight
+    "card_band_border":  VIOLET_400,
+    "card_stage_border": VIOLET_500,
+    "util_blue":         VIOLET_600,
     "ci_marker":         "#fef6e4",
     "hub_card_bg":       DARK_700,
     "hub_card_accent":   VIOLET_400,
 
-    # Colorway -- violet as series-1 anchor, same supporting cast as
-    # Dark Professional but leading with violet instead of blue.
+    # Colorway -- only index 0 (BLUE_500) replaced with VIOLET_400
     "colorway": [
-        VIOLET_400,    # 0 -- violet (primary, chart series 1)
-        CYAN_500,      # 1 -- sky blue (cool contrast)
-        TEAL_400,      # 2 -- emerald (success-adjacent)
-        VIOLET_500,    # 3 -- deeper violet (same family, darker)
-        AMBER_400,     # 4 -- amber (warm contrast)
-        AMBER_500,     # 5 -- orange
-        PINK_500,      # 6 -- hot pink (vibrant)
-        CYAN_400,      # 7 -- cyan
+        VIOLET_400,    # 0 -- violet  (replaces BLUE_500)
+        CYAN_500,      # 1 -- unchanged
+        TEAL_400,      # 2 -- unchanged
+        VIOLET_400,    # 3 -- unchanged
+        AMBER_400,     # 4 -- unchanged
+        AMBER_500,     # 5 -- unchanged
+        "#F472B6",     # 6 -- unchanged
+        CYAN_400,      # 7 -- unchanged
     ],
 }
 
@@ -680,7 +708,7 @@ DARK_EMERALD: dict = {
     "name": "Dark Emerald",
     "mode": "dark",
 
-    # Surfaces -- identical to Dark Professional (same neutral dark scale)
+    # Surfaces -- identical to Dark Professional
     "surface_base":    DARK_950,
     "surface_raised":  DARK_800,
     "surface_overlay": DARK_700,
@@ -698,25 +726,26 @@ DARK_EMERALD: dict = {
     "text_inverse":    WHITE,
     "text_banner":     TDARK_BANNER,
 
-    # Accent -- EMER_500 (#10B981) is the emerald equivalent of BLUE_600:
-    # same perceptual weight, pure emerald (not lime, not teal, not neon).
-    "accent_primary":  EMER_500,    # #10B981
-    "accent_hover":    EMER_600,    # #059669
-    "accent_bright":   EMER_400,    # #34D399 -- bright for value text on dark bg
+    # Accent -- emerald replaces blue, weight-for-weight:
+    #   BLUE_600 -> EMER_500   accent_primary
+    #   BLUE_700 -> EMER_600   accent_hover
+    #   BLUE_500 -> EMER_400   accent_bright
+    "accent_primary":  EMER_500,
+    "accent_hover":    EMER_600,
+    "accent_bright":   EMER_400,
 
     # Chart -- identical to Dark Professional
     "chart_paper":     DARK_800,
     "chart_plot":      DARK_700,
     "chart_hover_bg":  DARK_HOVER,
 
-    # Status -- identical to Dark Professional (emerald only for info)
-    # success uses a deeper emerald so it reads distinct from the accent
-    "status_success":  EMER_600,    # #059669 -- deeper so it reads as "done"
+    # Status -- identical to Dark Professional
+    "status_success":  TEAL_500,
     "status_warning":  AMBER_400,
     "status_error":    RED_500,
-    "status_info":     EMER_400,    # lighter emerald for info
+    "status_info":     EMER_400,
 
-    # Cards -- identical surfaces to Dark Professional
+    # Cards -- identical to Dark Professional
     "card_grad_start": GRAD_DARK_A,
     "card_grad_end":   DARK_700,
     "util_card_start": DARK_650,
@@ -740,25 +769,24 @@ DARK_EMERALD: dict = {
     "gauge_warn_bg":   DGAUGE_WARN,
     "gauge_danger_bg": DGAUGE_DANGER,
 
-    # Card-specific accent slots -- emerald variants
-    "card_band_border":  EMER_400,  # #34D399 -- brighter emerald for band card
-    "card_stage_border": TEAL_300,  # #6EE7B7 -- mint for stage card
-    "util_blue":         EMER_500,  # emerald replaces blue in banners
+    # Card accent slots -- emerald replaces blue at matching weight
+    "card_band_border":  EMER_400,
+    "card_stage_border": EMER_500,
+    "util_blue":         EMER_500,
     "ci_marker":         "#fef6e4",
     "hub_card_bg":       DARK_700,
     "hub_card_accent":   EMER_400,
 
-    # Colorway -- emerald as series-1 anchor, same supporting cast as
-    # Dark Professional but leading with emerald instead of blue.
+    # Colorway -- only index 0 (BLUE_500) replaced with EMER_400
     "colorway": [
-        EMER_400,      # 0 -- emerald (primary, chart series 1)
-        CYAN_500,      # 1 -- sky blue (cool contrast)
-        VIOL_A_400,    # 2 -- indigo-violet (purple contrast)
-        EMER_500,      # 3 -- deeper emerald (same family, darker)
-        AMBER_400,     # 4 -- amber (warm contrast)
-        AMBER_500,     # 5 -- orange
-        PINK_500,      # 6 -- pink (complementary contrast)
-        CYAN_400,      # 7 -- cyan
+        EMER_400,      # 0 -- emerald  (replaces BLUE_500)
+        CYAN_500,      # 1 -- unchanged
+        TEAL_400,      # 2 -- unchanged
+        VIOLET_400,    # 3 -- unchanged
+        AMBER_400,     # 4 -- unchanged
+        AMBER_500,     # 5 -- unchanged
+        "#F472B6",     # 6 -- unchanged
+        CYAN_400,      # 7 -- unchanged
     ],
 }
 

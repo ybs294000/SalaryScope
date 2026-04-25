@@ -24,7 +24,7 @@ from app.utils.budget_utils import render_budget_planner
 from app.utils.investment_utils import render_investment_estimator
 from app.utils.emergency_fund_utils import render_emergency_fund_planner
 from app.utils.lifestyle_utils import render_lifestyle_split
-
+from app.utils.fire_utils import render_fire_calculator
 from app.utils.feedback import feedback_ui
 from app.theme import (
     salary_card_html,
@@ -348,6 +348,13 @@ def render_manual_prediction_tab(
             render_lifestyle_split(net_monthly_usd=net_monthly, location_hint=country,
                                    widget_key="manual_a1_lifestyle", gross_usd=prediction)
 
+            render_fire_calculator(
+                annual_salary_usd=prediction,
+                location_hint=country,
+                widget_key="manual_a1_fire",
+                net_monthly_usd=net_monthly,
+                savings_monthly_usd=monthly_savings_a1,
+            )
             st.divider()
             st.subheader(":material/handshake: Salary Negotiation Tips")
 
@@ -369,7 +376,7 @@ def render_manual_prediction_tab(
             st.divider()
             insights_a1 = generate_insights_app1(data["input_details"])
             recs_a1 = generate_recommendations_app1(data["input_details"])
-            st.subheader(":material/lightbulb: Career Recommendations")
+            st.subheader(":material/tips_and_updates: Career Recommendations")
             render_recommendations(recs_a1)
             st.caption("These recommendations focus on long-term career growth and skill development based on your profile.")
 
@@ -600,6 +607,7 @@ def render_manual_prediction_tab(
             net_monthly_a2 = th_a2.get("net_monthly_a2", prediction_a2 / 12)
             sav_a2 = render_savings_adjuster(net_monthly_usd=net_monthly_a2, location_hint=company_location,
                                      widget_key="manual_a2_sav", gross_usd=prediction_a2)
+
             render_loan_adjuster(net_monthly_usd=net_monthly_a2, location_hint=company_location,
                                  widget_key="manual_a2_loan", gross_usd=prediction_a2)
             render_budget_planner(net_monthly_usd=net_monthly_a2, location_hint=company_location,
@@ -611,6 +619,13 @@ def render_manual_prediction_tab(
                                           widget_key="manual_a2_ef", gross_usd=prediction_a2)
             render_lifestyle_split(net_monthly_usd=net_monthly_a2, location_hint=company_location,
                                    widget_key="manual_a2_lifestyle", gross_usd=prediction_a2)
+            render_fire_calculator(
+                annual_salary_usd=prediction_a2,
+                location_hint=company_location,
+                widget_key="manual_a2_fire",
+                net_monthly_usd=net_monthly_a2,
+                savings_monthly_usd=monthly_savings_a2,
+            )
            # render_currency_converter(
            #     usd_amount=prediction_a2,       # or prediction_a2 for App 2
            #     location_hint=company_location,       # or company_location for App 2

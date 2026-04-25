@@ -193,7 +193,7 @@ def render_model_hub_tab(
     """
     st.header(":material/hub: Model Hub")
     st.caption(
-        "Run predictions using community-trained models. "
+        "Run predictions using curated models available in the hub. "
         "Each model has its own input schema and target variable."
     )
 
