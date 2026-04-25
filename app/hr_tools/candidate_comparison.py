@@ -3,23 +3,22 @@ hr_tools/candidate_comparison.py
 ---------------------------------
 Candidate Comparison Tool.
 
-HR enters profiles for 2 to 5 candidates. The tool predicts expected
-salary for each, displays a side-by-side comparison, and flags salary
-spread across candidates. Each candidate can have an individual HR
-override (e.g. to reflect a known expectation or counter-offer).
+HR enters profiles for 2-5 candidates. The tool predicts expected
+salary for each and displays a side-by-side comparison.
+
+Performance: override state is read from session_state before predict(),
+so each candidate runs exactly one model.predict() call per render.
 
 Standalone: removing this file removes only this sub-tab.
 """
 
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 
 from app.hr_tools.predict_helpers import (
     predict_app1,
     predict_app2,
 )
-
 
 _EDUCATION_LABELS = {
     "High School": 0,
@@ -28,22 +27,17 @@ _EDUCATION_LABELS = {
     "PhD":         3,
 }
 
-_EDU_REVERSE = {v: k for k, v in _EDUCATION_LABELS.items()}
-
 
 def render_candidate_comparison(**kwargs):
 
-    is_app1 = kwargs.get("is_app1", True)
+    is_app1        = kwargs.get("is_app1", True)
     title_features = kwargs.get("title_features")
 
     st.markdown("### Candidate Comparison")
     st.caption(
         "Compare expected salary for up to 5 candidates side by side. "
-        "Enter each candidate's profile and optionally override the model estimate "
-        "with a known candidate expectation or counter-offer. "
-        "Use this during offer planning to understand compensation spread across shortlisted candidates."
+        "Use the override checkbox per candidate to substitute a known expectation or counter-offer."
     )
-
     st.divider()
 
     n_candidates = st.number_input(
@@ -59,7 +53,7 @@ def render_candidate_comparison(**kwargs):
 
 
 # ---------------------------------------------------------------------------
-# App 1 comparison
+# App 1
 # ---------------------------------------------------------------------------
 
 def _render_app1_comparison(kwargs, title_features, n: int):
@@ -90,31 +84,15 @@ def _render_app1_comparison(kwargs, title_features, n: int):
             gender   = st.selectbox("Gender", app1_genders, key=f"cc_a1_gender_{i}")
             senior   = st.selectbox("Senior", [0, 1], format_func=lambda x: "Yes" if x else "No", key=f"cc_a1_senior_{i}")
 
-            # Initial prediction
-            init = predict_app1(
-                model=app1_model,
-                salary_band_model=app1_salary_band_model,
-                job_title=job,
-                country=country,
-                years_experience=yrs,
-                education_level=_EDUCATION_LABELS[edu_lbl],
-                age=age,
-                gender=gender,
-                is_senior=senior,
-                title_features=title_features,
-                SALARY_BAND_LABELS=SALARY_BAND_LABELS,
-            )
-
-            st.caption(f"Model estimate: **${init['predicted_usd']:,.0f}**")
-
-            apply_ov = st.checkbox("Apply override", key=f"cc_a1_ov_apply_{i}")
-            ov_val   = None
-            ov_note  = ""
-            if apply_ov:
+            # Read override state before predict — one predict() call per candidate.
+            ov_apply  = st.checkbox("Apply override", key=f"cc_a1_ov_apply_{i}")
+            ov_val    = None
+            ov_note   = ""
+            if ov_apply:
                 ov_val  = st.number_input(
                     "Candidate expectation / override (USD)",
                     min_value=10_000, max_value=2_000_000,
-                    value=int(round(init["predicted_usd"] / 1000) * 1000),
+                    value=st.session_state.get(f"cc_a1_ov_val_{i}", 80_000),
                     step=1_000,
                     key=f"cc_a1_ov_val_{i}",
                 )
@@ -124,7 +102,7 @@ def _render_app1_comparison(kwargs, title_features, n: int):
                     placeholder="e.g. Candidate stated expectation",
                 )
 
-            final = predict_app1(
+            result = predict_app1(
                 model=app1_model,
                 salary_band_model=app1_salary_band_model,
                 job_title=job,
@@ -136,24 +114,21 @@ def _render_app1_comparison(kwargs, title_features, n: int):
                 is_senior=senior,
                 title_features=title_features,
                 SALARY_BAND_LABELS=SALARY_BAND_LABELS,
-                override_usd=ov_val,
+                override_usd=float(ov_val) if ov_apply and ov_val else None,
                 override_reason=ov_note,
             )
 
-            results.append({
-                "name":    name,
-                "job":     job,
-                "country": country,
-                "yrs":     yrs,
-                "edu":     edu_lbl,
-                "result":  final,
-            })
+            st.caption(f"Model: **${result['predicted_usd']:,.0f}**")
+            if result["override_applied"]:
+                st.caption(f"Override: **${result['final_usd']:,.0f}**")
+
+            results.append({"name": name, "job": job, "country": country, "result": result})
 
     _render_comparison_output(results)
 
 
 # ---------------------------------------------------------------------------
-# App 2 comparison
+# App 2
 # ---------------------------------------------------------------------------
 
 def _render_app2_comparison(kwargs, title_features, n: int):
@@ -164,7 +139,7 @@ def _render_app2_comparison(kwargs, title_features, n: int):
     app2_employment_types   = kwargs.get("app2_employment_types", [])
     app2_company_sizes      = kwargs.get("app2_company_sizes", [])
     app2_remote_ratios      = kwargs.get("app2_remote_ratios", [0, 50, 100])
-    app2_country_display_options = kwargs.get("app2_country_display_options", [])
+    app2_country_display_options            = kwargs.get("app2_country_display_options", [])
     app2_employee_residence_display_options = kwargs.get("app2_employee_residence_display_options", [])
     EXPERIENCE_MAP    = kwargs.get("EXPERIENCE_MAP", {})
     EMPLOYMENT_MAP    = kwargs.get("EMPLOYMENT_MAP", {})
@@ -189,12 +164,12 @@ def _render_app2_comparison(kwargs, title_features, n: int):
     for i, col in enumerate(cols):
         with col:
             st.markdown(f"**Candidate {i + 1}**")
-            name    = st.text_input("Name / ID", value=f"Candidate {i + 1}", key=f"cc_a2_name_{i}")
-            job     = st.selectbox("Job Title", app2_job_titles, key=f"cc_a2_job_{i}")
-            exp_sel = st.selectbox("Experience Level", exp_display, key=f"cc_a2_exp_{i}")
-            emp_sel = st.selectbox("Employment Type", emp_display, key=f"cc_a2_emp_{i}")
-            loc_sel = st.selectbox("Company Location", app2_country_display_options, key=f"cc_a2_loc_{i}")
-            res_sel = st.selectbox("Residence", app2_employee_residence_display_options, key=f"cc_a2_res_{i}")
+            name       = st.text_input("Name / ID", value=f"Candidate {i + 1}", key=f"cc_a2_name_{i}")
+            job        = st.selectbox("Job Title", app2_job_titles, key=f"cc_a2_job_{i}")
+            exp_sel    = st.selectbox("Experience Level", exp_display, key=f"cc_a2_exp_{i}")
+            emp_sel    = st.selectbox("Employment Type", emp_display, key=f"cc_a2_emp_{i}")
+            loc_sel    = st.selectbox("Company Location", app2_country_display_options, key=f"cc_a2_loc_{i}")
+            res_sel    = st.selectbox("Residence", app2_employee_residence_display_options, key=f"cc_a2_res_{i}")
             size_sel   = st.selectbox("Company Size", size_display, key=f"cc_a2_size_{i}")
             remote_sel = st.selectbox("Work Mode", remote_display, key=f"cc_a2_remote_{i}")
 
@@ -202,37 +177,20 @@ def _render_app2_comparison(kwargs, title_features, n: int):
             res_code = res_sel.split("(")[-1].rstrip(")") if "(" in res_sel else res_sel
             rem_val  = app2_remote_ratios[remote_display.index(remote_sel)]
 
-            init = predict_app2(
-                model=app2_model,
-                job_title=job,
-                experience_level=exp_sel,
-                employment_type=emp_sel,
-                company_location=loc_code,
-                employee_residence=res_code,
-                remote_ratio=rem_val,
-                company_size=size_sel,
-                title_features=title_features,
-                EXPERIENCE_REVERSE=EXPERIENCE_REVERSE,
-                EMPLOYMENT_REVERSE=EMPLOYMENT_REVERSE,
-                COMPANY_SIZE_REVERSE=COMPANY_SIZE_REVERSE,
-            )
-
-            st.caption(f"Model estimate: **${init['predicted_usd']:,.0f}**")
-
-            apply_ov = st.checkbox("Apply override", key=f"cc_a2_ov_apply_{i}")
+            ov_apply = st.checkbox("Apply override", key=f"cc_a2_ov_apply_{i}")
             ov_val   = None
             ov_note  = ""
-            if apply_ov:
+            if ov_apply:
                 ov_val  = st.number_input(
                     "Override (USD)",
                     min_value=10_000, max_value=2_000_000,
-                    value=int(round(init["predicted_usd"] / 1000) * 1000),
+                    value=st.session_state.get(f"cc_a2_ov_val_{i}", 80_000),
                     step=1_000,
                     key=f"cc_a2_ov_val_{i}",
                 )
                 ov_note = st.text_input("Override reason", key=f"cc_a2_ov_reason_{i}")
 
-            final = predict_app2(
+            result = predict_app2(
                 model=app2_model,
                 job_title=job,
                 experience_level=exp_sel,
@@ -245,24 +203,21 @@ def _render_app2_comparison(kwargs, title_features, n: int):
                 EXPERIENCE_REVERSE=EXPERIENCE_REVERSE,
                 EMPLOYMENT_REVERSE=EMPLOYMENT_REVERSE,
                 COMPANY_SIZE_REVERSE=COMPANY_SIZE_REVERSE,
-                override_usd=ov_val,
+                override_usd=float(ov_val) if ov_apply and ov_val else None,
                 override_reason=ov_note,
             )
 
-            results.append({
-                "name":   name,
-                "job":    job,
-                "country": loc_sel,
-                "yrs":    exp_sel,
-                "edu":    size_sel,
-                "result": final,
-            })
+            st.caption(f"Model: **${result['predicted_usd']:,.0f}**")
+            if result["override_applied"]:
+                st.caption(f"Override: **${result['final_usd']:,.0f}**")
+
+            results.append({"name": name, "job": job, "country": loc_sel, "result": result})
 
     _render_comparison_output(results)
 
 
 # ---------------------------------------------------------------------------
-# Shared comparison output
+# Shared output
 # ---------------------------------------------------------------------------
 
 def _render_comparison_output(results: list[dict]):
@@ -273,12 +228,10 @@ def _render_comparison_output(results: list[dict]):
     st.divider()
     st.markdown("#### Comparison Summary")
 
-    names        = [r["name"] for r in results]
-    model_vals   = [r["result"]["predicted_usd"] for r in results]
-    final_vals   = [r["result"]["final_usd"] for r in results]
-    overridden   = [r["result"]["override_applied"] for r in results]
+    names      = [r["name"] for r in results]
+    model_vals = [r["result"]["predicted_usd"] for r in results]
+    final_vals = [r["result"]["final_usd"] for r in results]
 
-    # Summary metrics
     m_cols = st.columns(len(results))
     for col, r in zip(m_cols, results):
         delta_str = None
@@ -286,28 +239,13 @@ def _render_comparison_output(results: list[dict]):
             diff = r["result"]["final_usd"] - r["result"]["predicted_usd"]
             sign = "+" if diff >= 0 else ""
             delta_str = f"{sign}${diff:,.0f} vs model"
-        col.metric(
-            r["name"],
-            f"${r['result']['final_usd']:,.0f}",
-            delta=delta_str,
-            delta_color="off",
-        )
+        col.metric(r["name"], f"${r['result']['final_usd']:,.0f}", delta=delta_str, delta_color="off")
 
-    # Bar chart
+    import plotly.graph_objects as go
+
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        name="Model Estimate",
-        x=names,
-        y=model_vals,
-        marker_color="#4F8EF7",
-    ))
-    fig.add_trace(go.Bar(
-        name="Final / Override",
-        x=names,
-        y=final_vals,
-        marker_color="#60A5FA",
-        opacity=0.75,
-    ))
+    fig.add_trace(go.Bar(name="Model Estimate", x=names, y=model_vals, marker_color="#4F8EF7"))
+    fig.add_trace(go.Bar(name="Final / Override", x=names, y=final_vals, marker_color="#60A5FA", opacity=0.75))
     fig.update_layout(
         barmode="group",
         yaxis_title="Annual Salary (USD)",
@@ -316,11 +254,10 @@ def _render_comparison_output(results: list[dict]):
         font_color="#C9D1D9",
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
         margin=dict(t=40, b=20),
-        height=340,
+        height=320,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    # Spread analysis
     if len(final_vals) > 1:
         spread = max(final_vals) - min(final_vals)
         st.info(
@@ -328,23 +265,18 @@ def _render_comparison_output(results: list[dict]):
             "A wide spread may indicate inconsistent role definitions or varying candidate seniority."
         )
 
-    # Export table
-    export_rows = []
-    for r in results:
-        export_rows.append({
-            "Candidate":             r["name"],
-            "Job Title":             r["job"],
-            "Model Estimate (USD)":  round(r["result"]["predicted_usd"], 0),
-            "Override Applied":      r["result"]["override_applied"],
-            "Final Salary (USD)":    round(r["result"]["final_usd"], 0),
-            "Notes":                 r["result"]["note"],
-        })
-
-    export_df = pd.DataFrame(export_rows)
+    export_rows = [{
+        "Candidate":            r["name"],
+        "Job Title":            r["job"],
+        "Model Estimate (USD)": round(r["result"]["predicted_usd"], 0),
+        "Override Applied":     r["result"]["override_applied"],
+        "Final Salary (USD)":   round(r["result"]["final_usd"], 0),
+        "Notes":                r["result"]["note"],
+    } for r in results]
 
     st.download_button(
         label=":material/download: Export Comparison (CSV)",
-        data=export_df.to_csv(index=False),
+        data=pd.DataFrame(export_rows).to_csv(index=False),
         file_name="candidate_comparison.csv",
         mime="text/csv",
         key="cc_export",

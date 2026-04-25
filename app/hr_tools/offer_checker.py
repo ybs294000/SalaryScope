@@ -3,23 +3,17 @@ hr_tools/offer_checker.py
 --------------------------
 Offer Competitiveness Checker.
 
-HR inputs a role profile and the salary they are planning to offer.
-The tool predicts the model-estimated market rate and shows the
-delta between the planned offer and the estimate.
+HR inputs a role profile and their planned offer salary. The tool
+predicts the model-estimated market rate and shows the delta.
 
-Deliberately avoids framing as "above market" or "below market"
-(dataset is too small for that claim) and instead frames the result
-as a comparison against the model's training distribution.
-
-An HR override allows replacing the model estimate with an internal
-reference salary (e.g. from a salary survey).
+Performance: override state is read from session_state before predict()
+so exactly one model.predict() call is made per render.
 
 Standalone: removing this file removes only this sub-tab.
 """
 
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 
 from app.hr_tools.predict_helpers import (
     predict_app1,
@@ -36,16 +30,13 @@ def render_offer_checker(**kwargs):
     st.markdown("### Offer Competitiveness Checker")
     st.caption(
         "Enter a planned offer and compare it against the model's salary estimate for the role. "
-        "Use this as a quick sanity check before sending an offer letter. "
-        "If the model estimate does not reflect your internal data or a salary survey, "
-        "use the override section to substitute your own reference figure."
+        "If the model estimate does not reflect your internal data, use the override to substitute "
+        "your own reference figure."
     )
     st.caption(
         ":material/info: The model was trained on a publicly available dataset. "
-        "The comparison is against that distribution — not against live market data. "
         "Treat the result as a directional guide, not a definitive market benchmark."
     )
-
     st.divider()
 
     if is_app1:
@@ -55,7 +46,7 @@ def render_offer_checker(**kwargs):
 
 
 # ---------------------------------------------------------------------------
-# App 1 checker
+# App 1
 # ---------------------------------------------------------------------------
 
 def _render_app1_checker(kwargs, title_features):
@@ -76,10 +67,9 @@ def _render_app1_checker(kwargs, title_features):
         job     = st.selectbox("Job Title", app1_job_titles, key="oc_a1_job")
         country = st.selectbox("Country", app1_countries, key="oc_a1_country")
     with col2:
-        yrs    = st.number_input("Years of Experience", 0.0, 40.0, 5.0, 0.5, key="oc_a1_yrs")
-        edu    = st.selectbox(
-            "Education Level",
-            [0, 1, 2, 3],
+        yrs = st.number_input("Years of Experience", 0.0, 40.0, 5.0, 0.5, key="oc_a1_yrs")
+        edu = st.selectbox(
+            "Education Level", [0, 1, 2, 3],
             format_func=lambda x: {0: "High School", 1: "Bachelor", 2: "Master", 3: "PhD"}[x],
             index=1, key="oc_a1_edu",
         )
@@ -88,21 +78,10 @@ def _render_app1_checker(kwargs, title_features):
         gender = st.selectbox("Gender", app1_genders, key="oc_a1_gender")
         senior = st.selectbox("Senior Role", [0, 1], format_func=lambda x: "Yes" if x else "No", key="oc_a1_senior")
 
-    initial = predict_app1(
-        model=app1_model,
-        salary_band_model=app1_salary_band_model,
-        job_title=job,
-        country=country,
-        years_experience=yrs,
-        education_level=edu,
-        age=age,
-        gender=gender,
-        is_senior=senior,
-        title_features=title_features,
-        SALARY_BAND_LABELS=SALARY_BAND_LABELS,
-    )
-
-    override_val, override_reason = render_override_widget("oc_a1", initial["predicted_usd"])
+    # Read override state before predict — one predict() call only.
+    override_active = st.session_state.get("oc_a1_apply_override", False)
+    override_val    = st.session_state.get("oc_a1_override_val", None) if override_active else None
+    override_reason = st.session_state.get("oc_a1_override_reason", "") if override_active else ""
 
     result = predict_app1(
         model=app1_model,
@@ -116,15 +95,16 @@ def _render_app1_checker(kwargs, title_features):
         is_senior=senior,
         title_features=title_features,
         SALARY_BAND_LABELS=SALARY_BAND_LABELS,
-        override_usd=override_val,
+        override_usd=float(override_val) if override_active and override_val else None,
         override_reason=override_reason,
     )
 
+    render_override_widget("oc_a1", result["predicted_usd"])
     _render_checker_output(result, key_prefix="oc_a1", job_title=job)
 
 
 # ---------------------------------------------------------------------------
-# App 2 checker
+# App 2
 # ---------------------------------------------------------------------------
 
 def _render_app2_checker(kwargs, title_features):
@@ -135,7 +115,7 @@ def _render_app2_checker(kwargs, title_features):
     app2_employment_types   = kwargs.get("app2_employment_types", [])
     app2_company_sizes      = kwargs.get("app2_company_sizes", [])
     app2_remote_ratios      = kwargs.get("app2_remote_ratios", [0, 50, 100])
-    app2_country_display_options = kwargs.get("app2_country_display_options", [])
+    app2_country_display_options            = kwargs.get("app2_country_display_options", [])
     app2_employee_residence_display_options = kwargs.get("app2_employee_residence_display_options", [])
     EXPERIENCE_MAP    = kwargs.get("EXPERIENCE_MAP", {})
     EMPLOYMENT_MAP    = kwargs.get("EMPLOYMENT_MAP", {})
@@ -170,22 +150,9 @@ def _render_app2_checker(kwargs, title_features):
     res_code = res_sel.split("(")[-1].rstrip(")") if "(" in res_sel else res_sel
     rem_val  = app2_remote_ratios[remote_display.index(remote_sel)]
 
-    initial = predict_app2(
-        model=app2_model,
-        job_title=job,
-        experience_level=exp_sel,
-        employment_type=emp_sel,
-        company_location=loc_code,
-        employee_residence=res_code,
-        remote_ratio=rem_val,
-        company_size=size_sel,
-        title_features=title_features,
-        EXPERIENCE_REVERSE=EXPERIENCE_REVERSE,
-        EMPLOYMENT_REVERSE=EMPLOYMENT_REVERSE,
-        COMPANY_SIZE_REVERSE=COMPANY_SIZE_REVERSE,
-    )
-
-    override_val, override_reason = render_override_widget("oc_a2", initial["predicted_usd"])
+    override_active = st.session_state.get("oc_a2_apply_override", False)
+    override_val    = st.session_state.get("oc_a2_override_val", None) if override_active else None
+    override_reason = st.session_state.get("oc_a2_override_reason", "") if override_active else ""
 
     result = predict_app2(
         model=app2_model,
@@ -200,10 +167,11 @@ def _render_app2_checker(kwargs, title_features):
         EXPERIENCE_REVERSE=EXPERIENCE_REVERSE,
         EMPLOYMENT_REVERSE=EMPLOYMENT_REVERSE,
         COMPANY_SIZE_REVERSE=COMPANY_SIZE_REVERSE,
-        override_usd=override_val,
+        override_usd=float(override_val) if override_active and override_val else None,
         override_reason=override_reason,
     )
 
+    render_override_widget("oc_a2", result["predicted_usd"])
     _render_checker_output(result, key_prefix="oc_a2", job_title=job)
 
 
@@ -239,25 +207,14 @@ def _render_checker_output(result: dict, key_prefix: str, job_title: str):
         st.info(f":material/edit: Reference is HR override. {result['note']}")
 
     m1, m2, m3 = st.columns(3)
-    m1.metric(
-        "Reference Salary",
-        f"${reference:,.0f}",
-        help="Model estimate or HR override.",
-    )
-    m2.metric(
-        "Planned Offer",
-        f"${planned_offer:,.0f}",
-    )
-    m3.metric(
-        "Offer vs Reference",
-        f"{sign}{delta_pct:.1f}%",
-        delta=f"{sign}${delta:,.0f}",
-        delta_color="normal",
-    )
+    m1.metric("Reference Salary", f"${reference:,.0f}", help="Model estimate or HR override.")
+    m2.metric("Planned Offer", f"${planned_offer:,.0f}")
+    m3.metric("Offer vs Reference", f"{sign}{delta_pct:.1f}%", delta=f"{sign}${delta:,.0f}", delta_color="normal")
 
-    # Gauge chart showing offer relative to reference
     gauge_min = int(reference * 0.6)
     gauge_max = int(reference * 1.4)
+
+    import plotly.graph_objects as go
 
     fig = go.Figure(go.Indicator(
         mode="gauge+number+delta",
@@ -269,52 +226,40 @@ def _render_checker_output(result: dict, key_prefix: str, job_title: str):
             "axis": {"range": [gauge_min, gauge_max], "tickformat": "$,.0f"},
             "bar":  {"color": "#4F8EF7"},
             "steps": [
-                {"range": [gauge_min, reference * 0.9], "color": "#374151"},
+                {"range": [gauge_min, reference * 0.9],  "color": "#374151"},
                 {"range": [reference * 0.9, reference * 1.1], "color": "#1F3A5F"},
-                {"range": [reference * 1.1, gauge_max], "color": "#1E3A3A"},
+                {"range": [reference * 1.1, gauge_max],  "color": "#1E3A3A"},
             ],
-            "threshold": {
-                "line": {"color": "#60A5FA", "width": 3},
-                "thickness": 0.85,
-                "value": reference,
-            },
+            "threshold": {"line": {"color": "#60A5FA", "width": 3}, "thickness": 0.85, "value": reference},
         },
     ))
     fig.update_layout(
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         font_color="#C9D1D9",
-        height=320,
+        height=300,
         margin=dict(t=60, b=20),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    # Interpretive guidance
     if delta_pct < -20:
         st.warning(
             ":material/arrow_downward: The planned offer is more than 20% below the reference estimate. "
-            "This may affect candidate acceptance probability. Consider whether the role or profile "
-            "definition accurately matches the model inputs, or use the override to provide a more "
-            "appropriate reference figure."
+            "Consider whether the profile inputs accurately represent the role, or use the override to "
+            "provide a more appropriate reference figure."
         )
     elif delta_pct < -10:
         st.warning(
             ":material/arrow_downward: The planned offer is moderately below the reference estimate. "
-            "Review whether benefits, equity, or non-cash compensation close the gap."
+            "Review whether benefits or non-cash compensation close the gap."
         )
     elif delta_pct <= 10:
-        st.success(
-            ":material/check_circle: The planned offer is within 10% of the reference estimate."
-        )
+        st.success(":material/check_circle: The planned offer is within 10% of the reference estimate.")
     else:
-        st.success(
-            ":material/arrow_upward: The planned offer is above the reference estimate. "
-            "This is a competitive offer for this profile."
-        )
+        st.success(":material/arrow_upward: The planned offer is above the reference estimate.")
 
-    # Export
     export_df = pd.DataFrame([{
-        "Job Title":             job_title,
+        "Job Title":              job_title,
         "Reference Salary (USD)": round(reference, 0),
         "Override Applied":       result["override_applied"],
         "Model Estimate (USD)":   round(result["predicted_usd"], 0),
