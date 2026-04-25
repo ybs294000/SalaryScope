@@ -36,6 +36,7 @@ from app.theme import (
     get_token,
 )
 from app.core.database import save_prediction
+from app.utils.salary_card import render_salary_card_download
 
 
 def render_manual_prediction_tab(
@@ -414,6 +415,16 @@ def render_manual_prediction_tab(
                     width='stretch',
                     disabled=True
                 )
+            # ------------- SALARY CARD DOWNLOAD (App 1) -------------
+            render_salary_card_download(
+                predicted_usd = data["prediction"],
+                job_title     = data["input_details"]["Job Title"],
+                location      = data["input_details"]["Country"],
+                model_name    = "Model 1 — General Salary",
+                band_label    = data["salary_band_label"],
+                career_stage  = data["career_stage_label"],
+                key           = "card_dl_manual_a1",
+            )                
     # ------------------------------------------------------------------
     # APP 2 — Manual Prediction
     # ------------------------------------------------------------------
