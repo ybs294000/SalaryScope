@@ -7,6 +7,8 @@ import spacy
 import streamlit as st
 from spacy.matcher import PhraseMatcher
 
+from app.utils.country_utils import resolve_iso2
+
 
 # ============================================================
 # CACHE NLP MODEL
@@ -241,18 +243,48 @@ JOB_TITLE_ALIASES.update({
 })
 EDUCATION_PATTERNS = {
     3: [
-        "phd", "ph.d", "doctorate", "doctoral"
+        "phd", "ph.d", "doctorate", "doctoral",
+        # German
+        "doktorat", "promotion", "doktorarbeit",
+        # French
+        "doctorat", "th\u00e8se",
+        # Spanish
+        "doctorado",
+        # Portuguese
+        "doutorado", "doutoramento"
     ],
     2: [
         "m.tech", "mtech", "master of technology", "master of science", "msc",
-        "m.sc", "ms", "m.e", "me", "mba", "master's", "masters"
+        "m.sc", "ms", "m.e", "me", "mba", "master's", "masters",
+        # German
+        "masterarbeit", "magister", "diplom",
+        # French
+        "mast\u00e8re", "master recherche",
+        # Spanish
+        "m\u00e1ster", "maestria", "maestr\u00eda",
+        # Portuguese
+        "mestrado", "mestre"
     ],
     1: [
         "b.tech", "btech", "bachelor of technology", "bachelor of engineering",
-        "b.e", "be", "b.sc", "bsc", "bca", "bachelor", "undergraduate"
+        "b.e", "be", "b.sc", "bsc", "bca", "bachelor", "undergraduate",
+        # German
+        "bachelorarbeit", "bachelor-studium",
+        # French
+        "licence",
+        # Spanish/Portuguese
+        "licenciatura", "licenciado"
     ],
     0: [
-        "high school", "secondary school", "12th", "12th grade", "higher secondary"
+        "high school", "secondary school", "12th", "12th grade", "higher secondary",
+        # German/Austrian
+        "abitur", "matura",
+        # French
+        "baccalaur\u00e9at",
+        # Spanish
+        "bachillerato",
+        # Portuguese
+        "ensino m\u00e9dio", "segundo grau"
     ]
 }
 
@@ -359,7 +391,15 @@ def extract_experience_years(text: str) -> float:
     patterns = [
         r"(\d+(?:\.\d+)?)\+?\s*(?:years|year|yrs|yr)\s+(?:of\s+)?experience",
         r"experience\s+(?:of\s+)?(\d+(?:\.\d+)?)\+?\s*(?:years|year|yrs|yr)",
-        r"(\d+(?:\.\d+)?)\+?\s*(?:years|year|yrs|yr)"
+        r"(\d+(?:\.\d+)?)\+?\s*(?:years|year|yrs|yr)",
+        # German: "5 Jahre/Jahren Berufserfahrung", "5 Jahre/Jahren Erfahrung"
+        r"(\d+(?:\.\d+)?)\+?\s*jahren?\s+(?:berufs)?erfahrung",
+        # French: "5 ans d'expérience" -- any char after d handles all apostrophe variants
+        r"(\d+(?:\.\d+)?)\+?\s*an[sn]?\s+d.exp[e\u00e9]rience",
+        # Spanish: "5 años de experiencia"
+        r"(\d+(?:\.\d+)?)\+?\s*a[n\u00f1]os?\s+de\s+experiencia",
+        # Portuguese: "5 anos de experiência"
+        r"(\d+(?:\.\d+)?)\+?\s*anos?\s+de\s+experi[\u00eae]ncia",
     ]
 
     values = []
@@ -736,28 +776,40 @@ APP2_COUNTRY_TO_ISO_A2: Dict[str, str] = {
     "united kingdom": "GB", "uk": "GB", "england": "GB",
     "canada": "CA",
     "spain": "ES",
+    "espana": "ES", "españa": "ES",
     "india": "IN",
+    "bharat": "IN", "hindustan": "IN",
     "germany": "DE",
+    "deutschland": "DE",
     "france": "FR",
     "portugal": "PT",
     "brazil": "BR",
+    "brasil": "BR",
     "greece": "GR",
     "netherlands": "NL", "holland": "NL",
+    "nederland": "NL",
     "australia": "AU",
     "mexico": "MX",
+    "méxico": "MX", "mexico": "MX",
     "pakistan": "PK",
     "italy": "IT",
+    "italia": "IT",
     "ireland": "IE",
     "japan": "JP",
+    "nippon": "JP", "nihon": "JP",
     "nigeria": "NG",
     "argentina": "AR",
     "austria": "AT",
+    "osterreich": "AT", "österreich": "AT",
     "poland": "PL",
+    "polska": "PL",
     "belgium": "BE",
     "turkey": "TR",
+    "turkiye": "TR", "türkiye": "TR",
     "puerto rico": "PR",
     "singapore": "SG",
     "switzerland": "CH",
+    "schweiz": "CH", "suisse": "CH",
     "russia": "RU",
     "ukraine": "UA",
     "slovenia": "SI",
@@ -932,7 +984,7 @@ def extract_country_iso_a2(text: str, allowed_iso_codes_a2: List[str]) -> Tuple[
         for ent in doc.ents:
             if ent.label_ in {"GPE", "LOC"}:
                 ent_lower = ent.text.lower().strip()
-                iso = APP2_COUNTRY_TO_ISO_A2.get(ent_lower)
+                iso = resolve_iso2(ent.text) or APP2_COUNTRY_TO_ISO_A2.get(ent_lower)
                 if iso and iso in allowed_iso_codes_a2:
                     return iso, f"ner:{ent_lower}"
     except Exception:
@@ -940,7 +992,8 @@ def extract_country_iso_a2(text: str, allowed_iso_codes_a2: List[str]) -> Tuple[
 
     # Plain text scan (longest match first)
     for phrase, iso in sorted_map:
-        if iso not in allowed_iso_codes_a2:
+        resolved_iso = resolve_iso2(phrase) or iso
+        if resolved_iso not in allowed_iso_codes_a2:
             continue
         # Use word-boundary aware search for short codes
         if len(phrase) <= 2:
@@ -950,7 +1003,7 @@ def extract_country_iso_a2(text: str, allowed_iso_codes_a2: List[str]) -> Tuple[
             continue
         else:
             if phrase in text_l:
-                return iso, f"alias_match:{phrase}"
+                return resolved_iso, f"alias_match:{phrase}"
 
     default = "US" if "US" in allowed_iso_codes_a2 else allowed_iso_codes_a2[0]
     return default, "default"

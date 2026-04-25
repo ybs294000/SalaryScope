@@ -59,6 +59,14 @@ try:
 except Exception:
     _CURRENCY_AVAILABLE = False
 
+try:
+    from app.core.resume_lang import detect_resume_language, render_language_badge
+    _LANG_DETECT_AVAILABLE = True
+except Exception:
+    _LANG_DETECT_AVAILABLE = False
+    def detect_resume_language(text): return {}
+    def render_language_badge(result): pass
+
 _KEY_PREFIX = "mh_ext_resume"
 
 
@@ -212,6 +220,8 @@ def render_hub_resume_mode(
             )
             return
 
+        st.session_state[keys["text"] + "_lang"] = detect_resume_language(raw_text)
+
         with st.spinner("Extracting features..."):
             # Provide bundle-level lexicons and resume config if they were loaded.
             # Both fall back to global app defaults inside extract_all_fields when
@@ -302,6 +312,15 @@ def _render_extraction_quality(
 ) -> None:
     total = len(fields)
     found = sum(1 for r in output.results.values() if r.found)
+
+    # Language detection badge — reads from session state set during extraction.
+    # Scans all session state keys ending in '_lang' that hold a lang result dict.
+    _lang_result = {}
+    for _k, _v in st.session_state.items():
+        if isinstance(_k, str) and _k.endswith("_lang") and isinstance(_v, dict) and "code" in _v:
+            _lang_result = _v
+            break
+    render_language_badge(_lang_result)
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Schema Fields",  total)

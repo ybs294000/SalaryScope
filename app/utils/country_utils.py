@@ -29,6 +29,7 @@ Design notes
 
 from __future__ import annotations
 
+import unicodedata
 from typing import Optional
 
 from babel import Locale
@@ -71,6 +72,7 @@ _ALIAS_TABLE: dict[str, str] = {
     "United Kingdom":         "GB",
     "Jersey":                 "JE",
     # Europe -- Western
+    "Deutschland":            "DE",
     "Germany":                "DE",
     "France":                 "FR",
     "Netherlands":            "NL",
@@ -142,6 +144,8 @@ _ALIAS_TABLE: dict[str, str] = {
     "Turkey":                 "TR",
     # South Asia
     "India":                  "IN",
+    "Bharat":                 "IN",
+    "Hindustan":              "IN",
     "Pakistan":               "PK",
     "Bangladesh":             "BD",
     "Sri Lanka":              "LK",
@@ -182,6 +186,7 @@ _ALIAS_TABLE: dict[str, str] = {
     "Central African Republic": "CF",
     # Latin America
     "Brazil":                 "BR",
+    "Brasil":                 "BR",
     "Argentina":              "AR",
     "Chile":                  "CL",
     "Colombia":               "CO",
@@ -202,6 +207,20 @@ _ALIAS_TABLE: dict[str, str] = {
     "Puerto Rico":            "PR",
     "Bahamas":                "BS",
 }
+
+
+def _normalize_country_text(value: str) -> str:
+    """
+    Normalize country strings for resilient alias matching.
+
+    This keeps matching tolerant to:
+    - case differences
+    - accent marks (e.g. "España" -> "espana")
+    - repeated internal whitespace
+    """
+    text = unicodedata.normalize("NFKD", value)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return " ".join(text.strip().lower().split())
 
 
 # ---------------------------------------------------------------------------
@@ -286,9 +305,20 @@ def resolve_iso2(location: Optional[str]) -> Optional[str]:
         if alias.lower() == lower:
             return iso
 
+    # 3b. Accent-insensitive / whitespace-normalized alias match
+    normalized = _normalize_country_text(raw)
+    for alias, iso in _ALIAS_TABLE.items():
+        if _normalize_country_text(alias) == normalized:
+            return iso
+
     # 4. Case-insensitive match against full CLDR territory names
     for code, name in _LOCALE.territories.items():
         if name.lower() == lower:
+            return code.upper()
+
+    # 5. Accent-insensitive / whitespace-normalized CLDR name match
+    for code, name in _LOCALE.territories.items():
+        if _normalize_country_text(name) == normalized:
             return code.upper()
 
     return None

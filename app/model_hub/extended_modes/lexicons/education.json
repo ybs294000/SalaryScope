@@ -1,6 +1,7 @@
 {
   "_comment": "Education level lexicon. Each level key maps to a list of regex patterns (applied with re.search, case-insensitive). Levels are checked from highest (3) to lowest (0) and the first match wins. Add new patterns freely.",
-  "_version": "1.0",
+  "_version": "1.1",
+  "_languages": "English, German (de), French (fr), Spanish (es), Portuguese (pt)",
 
   "levels": {
     "3": {
@@ -10,7 +11,19 @@
         "\\bph\\.d\\b",
         "\\bdoctorate\\b",
         "\\bdoctoral\\b",
-        "\\bd\\.phil\\b"
+        "\\bd\\.phil\\b",
+
+        "\\bdoktorat\\b",
+        "\\bpromotion\\b",
+        "\\bdoktorarbeit\\b",
+
+        "\\bdoctorat\\b",
+        "\\bth\\u00e8se\\b",
+
+        "\\bdoctorado\\b",
+
+        "\\bdoutorado\\b",
+        "\\bdoutoramento\\b"
       ]
     },
     "2": {
@@ -30,7 +43,21 @@
         "\\bmasters\\b",
         "\\bpostgraduate\\b",
         "\\bpg diploma\\b",
-        "\\bpgdip\\b"
+        "\\bpgdip\\b",
+
+        "\\bmasterarbeit\\b",
+        "\\bmagister\\b",
+        "\\bdiplom\\b",
+
+        "\\bmast\\u00e8re\\b",
+        "\\bmaster\\s+recherche\\b",
+
+        "\\bm\\u00e1ster\\b",
+        "\\bmaestria\\b",
+        "\\bmaestría\\b",
+
+        "\\bmestrado\\b",
+        "\\bmestre\\b"
       ]
     },
     "1": {
@@ -51,7 +78,17 @@
         "\\bba\\b",
         "\\bb\\.com\\b",
         "\\bbcom\\b",
-        "\\bassociate(?:'s)? degree\\b"
+        "\\bassociate(?:'s)? degree\\b",
+
+        "\\bbachelorarbeit\\b",
+        "\\bbachelor-studium\\b",
+
+        "\\blicence\\b",
+
+        "\\blicenciatura\\b",
+        "\\blicenciado\\b",
+
+        "\\bgradua[c\\u00e7][a\\u00e3]o\\b"
       ]
     },
     "0": {
@@ -65,7 +102,18 @@
         "\\bssc\\b",
         "\\ba-level\\b",
         "\\bgcse\\b",
-        "\\bgrade 12\\b"
+        "\\bgrade 12\\b",
+
+        "\\babitur\\b",
+        "\\bmatura\\b",
+
+        "\\bbaccalaur[e\\u00e9]at\\b",
+        "\\b\\bbac\\b",
+
+        "\\bbachillerato\\b",
+
+        "\\bensino\\s+m[e\\u00e9]dio\\b",
+        "\\bsegundo\\s+grau\\b"
       ]
     }
   }

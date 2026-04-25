@@ -426,6 +426,26 @@ _EXP_PATTERNS = [
         r"(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)",
         re.IGNORECASE,
     ),
+    # German: "5 Jahre/Jahren Berufserfahrung", "5 Jahre/Jahren Erfahrung"
+    re.compile(
+        r"(\d+(?:\.\d+)?)\+?\s*jahren?\s+(?:berufs)?erfahrung",
+        re.IGNORECASE,
+    ),
+    # French: "5 ans d'expérience" -- any char after d handles all apostrophe variants
+    re.compile(
+        r"(\d+(?:\.\d+)?)\+?\s*an[sn]?\s+d.exp[e\u00e9]rience",
+        re.IGNORECASE,
+    ),
+    # Spanish: "5 años de experiencia"
+    re.compile(
+        r"(\d+(?:\.\d+)?)\+?\s*a[n\u00f1]os?\s+de\s+experiencia",
+        re.IGNORECASE,
+    ),
+    # Portuguese: "5 anos de experiência", "5 anos de experiencia"
+    re.compile(
+        r"(\d+(?:\.\d+)?)\+?\s*anos?\s+de\s+experi[\u00eae]ncia",
+        re.IGNORECASE,
+    ),
 ]
 
 

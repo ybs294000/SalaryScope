@@ -34,6 +34,15 @@ from app.core.database import save_prediction
 
 from app.utils.salary_card import render_salary_card_download
 
+try:
+    from app.core.resume_lang import detect_resume_language, render_language_badge
+    _LANG_DETECT_AVAILABLE = True
+except ImportError:
+    _LANG_DETECT_AVAILABLE = False
+    def detect_resume_language(text): return {}
+    def render_language_badge(result): pass
+
+
 def render_resume_tab(
     IS_APP1,
     # App 1 resources
@@ -232,6 +241,8 @@ def render_resume_tab(
 
             st.divider()
             st.subheader("Resume Score Breakdown")
+
+            render_language_badge(st.session_state.get("resume_lang_a2", {}))
 
             col_s1, col_s2, col_s3, col_s4 = st.columns(4)
             col_s1.metric("Total Score", f"{score_a2['total_score_a2']}/100")
@@ -568,6 +579,8 @@ salary_card_html(f"${prediction_a2_r:,.2f}"),
                             st.error("Could not extract readable text from the PDF.")
                             st.stop()
 
+                        st.session_state.resume_lang_a2 = detect_resume_language(raw_text_a2)
+
                         feats_a2 = extract_resume_features_a2(
                             raw_text=raw_text_a2,
                             allowed_job_titles_a2=app2_job_titles,
@@ -676,6 +689,8 @@ salary_card_html(f"${prediction_a2_r:,.2f}"),
 
             st.divider()
             st.subheader("Resume Score Breakdown")
+
+            render_language_badge(st.session_state.get("resume_lang", {}))
 
             col_s1, col_s2, col_s3, col_s4 = st.columns(4)
             col_s1.metric("Total Score", f"{score_data['total_score']}/100")
@@ -1048,6 +1063,8 @@ association_insight_card_html(assoc_text_a1_improved),
                         if not raw_text.strip():
                             st.error("Could not extract readable text from the PDF.")
                             st.stop()
+
+                        st.session_state.resume_lang = detect_resume_language(raw_text)
 
                         features = extract_resume_features(
                             raw_text=raw_text,
