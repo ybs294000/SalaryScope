@@ -6,6 +6,42 @@ The format is based on Keep a Changelog, and this project loosely follows Semant
 
 ---
 
+## [1.3.0] - 2026-04-25
+
+### Added
+
+* HR Tools tab (`app/tabs/hr_tools_tab.py`) — dedicated employer-facing section with five compensation planning tools accessible via inner sub-tabs:
+  * **Hiring Budget Estimator** (`app/hr_tools/hiring_budget.py`) — estimates total annual payroll cost for an open role given headcount and adjustable employer cost assumptions (benefits %, overhead %, one-time recruiting cost); model estimate shown with full cost breakdown bar chart and CSV export
+  * **Salary Benchmarking Table** (`app/hr_tools/benchmarking_table.py`) — generates a reference grid of model predictions across all experience levels for a selected role and location; grid is editable in-place via `st.data_editor` with HR Override, Band Min, Band Max, and Internal Notes columns; visualised as a grouped bar chart with band markers; CSV export
+  * **Candidate Comparison** (`app/hr_tools/candidate_comparison.py`) — side-by-side salary estimate comparison for 2 to 5 candidates; each candidate has independent profile inputs and an optional individual override; salary spread across candidates is flagged; CSV export
+  * **Offer Competitiveness Checker** (`app/hr_tools/offer_checker.py`) — compares a planned offer against the model's salary estimate for a given profile using a Plotly gauge chart; tiered interpretive guidance (>20% below, 10–20% below, within 10%, above); CSV export
+  * **Team Compensation Audit** (`app/hr_tools/team_audit.py`) — CSV upload of current team salaries; vectorised batch prediction run once on upload with result cached in session state; global percentage adjustment for systematic model offset; configurable underpaid/overpaid thresholds; scatter plot of current vs reference, delta histogram, flagged records table, full audit table in expander; CSV export; sample template download
+
+* `app/hr_tools/` package — all HR tool business logic isolated here, independent of `app/tabs/`:
+  * `predict_helpers.py` — single-row inference wrappers for App 1 (`predict_app1`) and App 2 (`predict_app2`), each calling `model.predict()` exactly once per invocation; `render_override_widget()` shared UI component; `batch_predict_app1()` and `batch_predict_app2()` vectorised batch helpers for team audit
+  * `__init__.py` — package marker
+
+* HR override system present in all five tools:
+  * Every single-row tool exposes a collapsible override expander allowing HR to substitute the model estimate with an internal reference value
+  * Override reason captured as free text and included in all CSV exports alongside the original model estimate
+  * Override state is read from `st.session_state` before `model.predict()` is called, so each tool runs exactly one predict call per render regardless of override state
+
+### Changed
+
+* Tab list in `app_resume.py` extended with `:material/corporate_fare: HR Tools` inserted before About; rendering block follows the same pattern as all other tabs; three-line change only
+* README updated to v1.3.0: HR Tools section added to Key Features, Features table, Project Structure, and Future Scope
+* `about_tab.py` updated: HR & Employer Tools section added to Features & Modules expander; Tab Guide entry added for HR Tools; Usage Instructions entry added for HR Tools; hero version pill updated to v1.3.0; Shared System Features tab list updated
+
+### Performance
+
+* All single-row tools (Hiring Budget, Offer Checker, Candidate Comparison) read override widget state from `st.session_state` before running inference, eliminating the previous double-predict pattern where `model.predict()` was called once for the widget default and again for the final result
+* Benchmarking Table predictions cached via `@st.cache_data` keyed on all input parameters; grid recomputes only when inputs change, not on every widget interaction
+* Team Audit batch predictions cached in `st.session_state` keyed on file name and row count; threshold and adjustment controls recompute only Pandas operations, not model inference
+* Team Audit batch loop replaced with vectorised `batch_predict_app1` / `batch_predict_app2` helpers that build the full feature DataFrame once and call `model.predict()` once for the entire file
+* Plotly imported lazily inside each render function rather than at module load time; `config={"displayModeBar": False}` applied to all charts to reduce JS overhead
+
+---
+
 ## [1.2.0] - 2026-04-18
 
 ### Added

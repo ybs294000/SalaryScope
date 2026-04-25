@@ -100,6 +100,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Model Hub: upload and serve additional trained models with four schema-driven prediction modes (Manual, Batch, Resume, Scenario) and a Model Card per model
 - Per-bundle lexicons: Model Hub models can supply custom skill and job title lexicons that override global defaults for resume extraction
 - Per-bundle resume config: Model Hub models can supply a `resume_config.json` that overrides extraction scoring weights, extractor keyword lists, experience thresholds, and field-name mappings for that specific model, without changing any code
+- HR & Employer Tools: five compensation planning tools for hiring managers and HR teams (Hiring Budget Estimator, Salary Benchmarking Table, Candidate Comparison, Offer Competitiveness Checker, Team Compensation Audit) with per-tool HR overrides and CSV exports
 
 ---
 
@@ -128,10 +129,11 @@ The application runs in a web browser, making it platform-independent and easily
 | Admin Panel | ✅ | ❌ |
 | Financial Planning Tools (11 modules) | ✅ | ❌ |
 | Prediction Feedback System | ✅ | ❌ |
+| HR & Employer Tools | ✅ | ❌ |
 
 The lite app was built to stay within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, and the full financial tools chain). Both apps share the same Firebase project, so prediction history is unified across them.
 
-The repository contains the complete implementation in `app_resume.py`. The lite app entry point is `app.py`.
+The repository contains the complete implementation in `app_resume.py`. The lite app entry point is `app-lite.py`.
 
 ---
 
@@ -354,6 +356,20 @@ A suite of 11 modular, toggle-based financial planning tools that appear below p
 | **Lifestyle Budget Split** | How should I split my discretionary income? |
 
 All tools use country-specific data (tax brackets, CoL indices, expense ratios, loan rates, expected investment returns) sourced from Numbeo, OECD, World Bank, and government portals (2023/24). Results are approximate estimates intended for planning purposes, not financial advice.
+
+### HR & Employer Tools
+
+A dedicated tab providing compensation planning and benchmarking tools for HR teams and hiring managers. All tools use the currently active ML model for salary estimates and expose per-tool HR overrides so internal policy values can substitute the model output without losing the original estimate. The tab and each sub-tool are independently removable without affecting any other part of the application.
+
+| Tool | Purpose |
+|---|---|
+| **Hiring Budget Estimator** | Predict salary for a role profile and compute total annual payroll cost given headcount and adjustable employer cost assumptions (benefits %, overhead %, one-time recruiting cost); bar chart cost breakdown and CSV export |
+| **Salary Benchmarking Table** | Generate a reference grid of model predictions across all experience levels for a selected role and location; editable in-place with HR Override, Band Min, Band Max, and Internal Notes columns; exported as CSV |
+| **Candidate Comparison** | Compare expected salary for 2 to 5 candidates side by side; each candidate has independent profile inputs and an optional individual override; salary spread flagged; CSV export |
+| **Offer Competitiveness Checker** | Compare a planned offer against the model's salary estimate using a gauge chart; tiered interpretive guidance; CSV export |
+| **Team Compensation Audit** | Upload a CSV of current team salaries; vectorised batch predictions run once on upload and cached in session state; configurable underpaid/overpaid thresholds and a global percentage adjustment for systematic model offset; scatter plot, delta histogram, flagged records table; CSV export |
+
+**HR override system:** every tool exposes a collapsible override section allowing the model estimate to be replaced with an internal reference value. Override reasons are captured as free text and included in all CSV exports alongside the original model estimate.
 
 ### Admin Panel (Diagnostics & Monitoring)
 
@@ -717,7 +733,7 @@ HF_REPO_ID = "your-username/your-repo"  # dataset repo
 salaryscope/
 │
 ├── app_resume.py                        # Full app entry point (all features)
-├── app.py                               # Lite app entry point (core features only)
+├── app-lite.py                               # Lite app entry point (core features only)
 │
 ├── app/
 │   ├── core/
@@ -762,9 +778,19 @@ salaryscope/
 │   │   ├── model_analytics_tab.py       # Model Analytics
 │   │   ├── data_insights_tab.py         # Data Insights
 │   │   ├── model_hub_tab.py             # Model Hub UI (full app only)
+│   │   ├── hr_tools_tab.py              # HR Tools entry point (full app only)
 │   │   ├── user_profile.py              # User profile and prediction history
 │   │   ├── admin_panel.py               # Admin diagnostics and monitoring (full app only)
 │   │   └── about_tab.py                 # About tab (full app; lite app uses inline version)
+│   │
+│   ├── hr_tools/                        # HR & Employer Tools package
+│   │   ├── __init__.py
+│   │   ├── predict_helpers.py           # Single-row and vectorised batch inference wrappers; HR override widget
+│   │   ├── hiring_budget.py             # Hiring Budget Estimator
+│   │   ├── benchmarking_table.py        # Salary Benchmarking Table (cached grid)
+│   │   ├── candidate_comparison.py      # Candidate Comparison (2-5 candidates)
+│   │   ├── offer_checker.py             # Offer Competitiveness Checker
+│   │   └── team_audit.py               # Team Compensation Audit (vectorised batch)
 │   │
 │   ├── utils/
 │   │   ├── country_utils.py             # Centralised country/ISO-2 resolution (Babel CLDR)
@@ -1165,6 +1191,9 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Add city-level cost-of-living data to improve the granularity of COL adjustments beyond country averages.
 - Implement real-time salary market data integration for more current predictions.
 - Add Google OAuth as an alternative authentication method (infrastructure is partially scaffolded).
+- Expand HR Tools with job-market demand data integration (live posting counts via a public API) to complement model-based salary estimates with demand signals.
+- Add city-level cost-of-living support to the HR Team Audit so compensation gaps can be assessed at city granularity, not just country level.
+- Expose HR Tools benchmarking grid as a downloadable formatted PDF report consistent with the existing ReportLab report system.
 
 ---
 

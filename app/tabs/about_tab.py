@@ -68,7 +68,7 @@ def render_about_tab():
             <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
                 <span style="background:#1D4ED833;border:1px solid #3B82F6;
                              border-radius:20px;padding:4px 12px;font-size:0.78rem;
-                             color:#93C5FD;font-weight:600;">v1.2.0</span>
+                             color:#93C5FD;font-weight:600;">v1.3.0</span>
                 <span style="background:#065F4633;border:1px solid #10B981;
                              border-radius:20px;padding:4px 12px;font-size:0.78rem;
                              color:#6EE7B7;font-weight:600;">Python 3.13</span>
@@ -353,6 +353,48 @@ def render_about_tab():
 
         st.divider()
 
+        st.markdown("### HR & Employer Tools")
+        st.markdown("""
+- Dedicated tab for HR teams and hiring managers; available to all users
+- Five compensation planning tools accessible via inner sub-tabs
+- All tools use the currently active ML model for salary estimates
+- Every tool exposes a collapsible HR override section: model estimate can be replaced with an internal reference value; override reason captured as free text and included in all CSV exports alongside the original model estimate
+- Tab and each sub-tool are independently removable without affecting any other part of the application
+
+**Hiring Budget Estimator**
+- Input a role profile and headcount; model predicts salary for that profile
+- Adjustable employer cost assumptions: benefits & PF (%), overhead (%), one-time recruiting cost per hire
+- Summary metrics: model estimate, base salary used, total cost per hire, total budget for all openings
+- Bar chart showing cost breakdown per hire; CSV export
+
+**Salary Benchmarking Table**
+- Select a job title and location; model generates predictions across all experience levels
+- Results displayed in an editable `st.data_editor` table with HR Override, Band Min, Band Max, and Internal Notes columns
+- Predictions cached by input parameters — grid recomputes only when inputs change
+- Grouped bar chart comparing model estimate vs HR override vs band markers; CSV export
+
+**Candidate Comparison**
+- Compare expected salary for 2 to 5 candidates side by side
+- Each candidate has independent profile inputs and an optional individual override (e.g. known candidate expectation or counter-offer)
+- Salary spread across candidates flagged with a contextual note
+- Side-by-side metrics and grouped bar chart; CSV export
+
+**Offer Competitiveness Checker**
+- Input a role profile and planned offer salary
+- Plotly gauge chart comparing planned offer against model reference; tiered interpretive guidance (>20% below, 10–20% below, within 10%, above reference)
+- Framed as comparison against model estimate, not a market claim, to reflect dataset limitations
+- CSV export
+
+**Team Compensation Audit**
+- Upload a CSV of current team salaries using the provided sample template
+- Vectorised batch predictions run once on upload; result cached in session state so threshold changes do not re-run inference
+- Global percentage adjustment for systematic model offset (e.g. "our salaries typically run 15% above the model")
+- Configurable underpaid and overpaid thresholds
+- Scatter plot of current salary vs adjusted reference, delta histogram, flagged records table, full audit table in expander; CSV export
+        """)
+
+        st.divider()
+
         st.markdown("### Prediction Feedback")
         st.markdown("""
 - Available in the Manual Prediction tab for both models
@@ -414,7 +456,7 @@ def render_about_tab():
         st.markdown("""
 - Model switcher to toggle between both built-in prediction systems
 - Unified theme across the entire application with dynamic light/dark mode support
-- Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, Profile (logged-in only), About
+- Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, HR Tools, Profile (logged-in only), About
 - ReportLab-based multi-page PDF reports with embedded charts
 - State-managed UI to prevent re-computation on interaction
 - Google Drive public link upload for batch files
@@ -688,6 +730,15 @@ def render_about_tab():
 - In each mode, uploading a new file or PDF clears previous results automatically; a Clear button is also available.
 - Admins additionally see an Upload Bundle panel with fields for model card metadata, optional lexicons, and aliases; a Registry Manager for activating and deactivating models; and a Schema Editor for building or validating schema.json files.
 
+**HR Tools**
+- Five compensation planning tools for HR teams and hiring managers.
+- Hiring Budget: enter a role profile and headcount to estimate total annual payroll cost; adjust benefits, overhead, and recruiting assumptions.
+- Salary Benchmarking: select a role and location to generate a prediction grid across experience levels; edit the HR Override, Band Min, and Band Max columns directly in the table.
+- Candidate Comparison: enter profiles for 2 to 5 candidates to compare expected salaries side by side; use the per-candidate override checkbox to substitute a known expectation.
+- Offer Checker: enter a role profile and planned offer to see how it compares to the model estimate on a gauge chart.
+- Team Audit: download the sample template, fill in your team's current salaries, and upload the CSV; predictions run once and are cached so adjusting thresholds is instant.
+- All tools include a HR Override expander and a CSV export button.
+
 **Profile**
 - Visible only when logged in.
 - Shows your prediction history, summary statistics, and a timeline chart.
@@ -746,6 +797,15 @@ def render_about_tab():
 - In Resume mode, upload a PDF and click **Extract**. Review and edit the extracted fields, then click **Predict from Resume**. Click **Clear** to reset between resumes.
 - In Scenario mode, fill in each scenario panel directly and click **Run All Scenarios**.
 - If you are an admin, the Upload Bundle, Registry Manager, and Schema Editor sections are visible below the prediction panel.
+
+**HR Tools**
+- Open the HR Tools tab and select a tool from the inner sub-tabs.
+- **Hiring Budget**: fill in the role profile and headcount, then adjust the employer cost assumptions (benefits %, overhead %, recruiting cost). The budget summary and chart update automatically.
+- **Salary Benchmarking**: select a job title and location; the prediction grid loads automatically. Edit the HR Override, Band Min, Band Max, and Internal Notes columns directly in the table. Download the result as CSV.
+- **Candidate Comparison**: set the number of candidates, fill in each profile column, and optionally check Apply Override per candidate to enter a known expectation. The comparison chart updates as you edit.
+- **Offer Checker**: fill in the role profile. The model estimate appears below the form. Enter your planned offer in the Planned Offer field; the gauge chart and guidance update immediately.
+- **Team Audit**: download the sample CSV template first. Fill it in with your team's current salaries and upload the file. Predictions run once. Use the Global Model Adjustment and threshold sliders to calibrate the analysis — these do not re-run the model. Download the full audit CSV.
+- Use the HR Override expander in any tool to substitute the model estimate with your own internal reference value and record the reason.
 
 **Account (Optional)**
 - Register or log in from the sidebar to save predictions.
