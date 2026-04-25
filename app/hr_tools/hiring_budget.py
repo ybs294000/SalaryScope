@@ -21,6 +21,7 @@ from app.hr_tools.predict_helpers import (
     predict_app2,
     render_override_widget,
 )
+from app.theme import apply_theme, get_colorway
 
 DEFAULT_BENEFITS_PCT   = 20.0
 DEFAULT_OVERHEAD_PCT   = 10.0
@@ -251,22 +252,28 @@ def _render_budget_output(result: dict, headcount: int, job_title: str):
 
     # Lazy import — plotly is only imported when this function actually executes.
     import plotly.graph_objects as go
+    colorway = get_colorway()
 
     fig = go.Figure(go.Bar(
         x=["Base Salary", "Benefits & PF", "Overhead", "Recruiting (one-time)"],
         y=[base, benefits, overhead, float(recruiting_usd)],
-        marker_color=["#4F8EF7", "#60A5FA", "#93C5FD", "#CBD5E1"],
+        marker_color=[
+            colorway[0],
+            colorway[1] if len(colorway) > 1 else colorway[0],
+            colorway[2] if len(colorway) > 2 else colorway[0],
+            colorway[4] if len(colorway) > 4 else colorway[-1],
+        ],
         text=[f"${v:,.0f}" for v in [base, benefits, overhead, float(recruiting_usd)]],
         textposition="outside",
+        cliponaxis=False,
     ))
     fig.update_layout(
+        title_text="",
         yaxis_title="USD",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#C9D1D9",
         margin=dict(t=20, b=20),
         height=300,
     )
+    apply_theme(fig)
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     export_df = pd.DataFrame([{

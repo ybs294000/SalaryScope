@@ -19,6 +19,7 @@ from app.hr_tools.predict_helpers import (
     predict_app1,
     predict_app2,
 )
+from app.theme import apply_theme, get_colorway
 
 _EDUCATION_LABELS = {
     "High School": 0,
@@ -242,20 +243,20 @@ def _render_comparison_output(results: list[dict]):
         col.metric(r["name"], f"${r['result']['final_usd']:,.0f}", delta=delta_str, delta_color="off")
 
     import plotly.graph_objects as go
+    colorway = get_colorway()
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(name="Model Estimate", x=names, y=model_vals, marker_color="#4F8EF7"))
-    fig.add_trace(go.Bar(name="Final / Override", x=names, y=final_vals, marker_color="#60A5FA", opacity=0.75))
+    fig.add_trace(go.Bar(name="Model Estimate", x=names, y=model_vals, marker_color=colorway[0]))
+    fig.add_trace(go.Bar(name="Final / Override", x=names, y=final_vals, marker_color=colorway[1] if len(colorway) > 1 else colorway[0], opacity=0.75))
     fig.update_layout(
+        title_text="",
         barmode="group",
         yaxis_title="Annual Salary (USD)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#C9D1D9",
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
         margin=dict(t=40, b=20),
         height=320,
     )
+    apply_theme(fig)
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     if len(final_vals) > 1:

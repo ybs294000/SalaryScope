@@ -27,6 +27,7 @@ from app.hr_tools.predict_helpers import (
     batch_predict_app1,
     batch_predict_app2,
 )
+from app.theme import apply_theme, get_token
 
 APP1_AUDIT_REQUIRED = [
     "Age", "Years of Experience", "Education Level",
@@ -236,9 +237,9 @@ def _render_audit_output(result_df: pd.DataFrame, current_col: str, global_adj_p
         y=current_col,
         color="Flag",
         color_discrete_map={
-            "Within Range":          "#4F8EF7",
-            "Potentially Underpaid": "#F87171",
-            "Potentially Overpaid":  "#34D399",
+            "Within Range":          get_token("accent_primary", "#4F8EF7"),
+            "Potentially Underpaid": get_token("status_error", "#F87171"),
+            "Potentially Overpaid":  get_token("status_success", "#34D399"),
         },
         hover_data=result_df.columns.tolist(),
         labels={"Adjusted Reference (USD)": "Model Reference (USD)", current_col: "Current Salary (USD)"},
@@ -246,14 +247,13 @@ def _render_audit_output(result_df: pd.DataFrame, current_col: str, global_adj_p
 
     max_val = max(result_df["Adjusted Reference (USD)"].max(), result_df[current_col].max())
     min_val = min(result_df["Adjusted Reference (USD)"].min(), result_df[current_col].min())
-    fig.add_shape(type="line", x0=min_val, y0=min_val, x1=max_val, y1=max_val, line=dict(color="#9CA3AF", dash="dot"))
+    fig.add_shape(type="line", x0=min_val, y0=min_val, x1=max_val, y1=max_val, line=dict(color=get_token("text_secondary", "#9CA3AF"), dash="dot"))
     fig.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#C9D1D9",
+        title_text="",
         height=400,
         margin=dict(t=20, b=20),
     )
+    apply_theme(fig)
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     st.caption("Dots on the diagonal are at exact model parity. Above = paid more; below = paid less.")
 
@@ -262,19 +262,18 @@ def _render_audit_output(result_df: pd.DataFrame, current_col: str, global_adj_p
     fig2 = go.Figure(go.Histogram(
         x=result_df["Delta vs Reference (%)"],
         nbinsx=30,
-        marker_color="#4F8EF7",
+        marker_color=get_token("accent_primary", "#4F8EF7"),
         opacity=0.8,
     ))
-    fig2.add_vline(x=0, line_color="#60A5FA", line_dash="dash")
+    fig2.add_vline(x=0, line_color=get_token("accent_hover", "#60A5FA"), line_dash="dash")
     fig2.update_layout(
+        title_text="",
         xaxis_title="Delta vs Reference (%)",
         yaxis_title="Number of Employees",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#C9D1D9",
         height=280,
         margin=dict(t=20, b=20),
     )
+    apply_theme(fig2)
     st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
 
     if n_underpaid > 0 or n_overpaid > 0:

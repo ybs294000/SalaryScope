@@ -20,6 +20,7 @@ from app.hr_tools.predict_helpers import (
     predict_app2,
     render_override_widget,
 )
+from app.theme import apply_theme, get_gauge_colors
 
 
 def render_offer_checker(**kwargs):
@@ -215,6 +216,7 @@ def _render_checker_output(result: dict, key_prefix: str, job_title: str):
     gauge_max = int(reference * 1.4)
 
     import plotly.graph_objects as go
+    gauge_colors = get_gauge_colors()
 
     fig = go.Figure(go.Indicator(
         mode="gauge+number+delta",
@@ -224,22 +226,21 @@ def _render_checker_output(result: dict, key_prefix: str, job_title: str):
         title={"text": f"Planned Offer vs Reference ({job_title})"},
         gauge={
             "axis": {"range": [gauge_min, gauge_max], "tickformat": "$,.0f"},
-            "bar":  {"color": "#4F8EF7"},
+            "bar":  {"color": gauge_colors["primary"]},
             "steps": [
-                {"range": [gauge_min, reference * 0.9],  "color": "#374151"},
-                {"range": [reference * 0.9, reference * 1.1], "color": "#1F3A5F"},
-                {"range": [reference * 1.1, gauge_max],  "color": "#1E3A3A"},
+                {"range": [gauge_min, reference * 0.9],  "color": gauge_colors["step_danger"]},
+                {"range": [reference * 0.9, reference * 1.1], "color": gauge_colors["step_warn"]},
+                {"range": [reference * 1.1, gauge_max],  "color": gauge_colors["step_safe"]},
             ],
-            "threshold": {"line": {"color": "#60A5FA", "width": 3}, "thickness": 0.85, "value": reference},
+            "threshold": {"line": {"color": gauge_colors["blue"], "width": 3}, "thickness": 0.85, "value": reference},
         },
     ))
     fig.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#C9D1D9",
+        title_text="",
         height=300,
         margin=dict(t=60, b=20),
     )
+    apply_theme(fig)
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     if delta_pct < -20:

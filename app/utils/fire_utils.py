@@ -60,6 +60,8 @@ from typing import Optional
 import plotly.graph_objects as go
 import streamlit as st
 
+from app.theme import apply_theme
+
 # ---------------------------------------------------------------------------
 # FIRE configuration constants
 # ---------------------------------------------------------------------------
@@ -181,6 +183,20 @@ def _fmt_local(v: float, symbol: str, code: str) -> str:
     if code in no_decimal:
         return f"{symbol}{raw:,.0f}"
     return f"{symbol}{raw:,.0f}"
+
+
+def _hex_to_rgba(hex_color: str, alpha: float) -> str:
+    """Convert #RRGGBB to rgba(r,g,b,a), with a safe fallback."""
+    h = (hex_color or "").lstrip("#")
+    try:
+        if len(h) == 3:
+            h = "".join(ch * 2 for ch in h)
+        r = int(h[0:2], 16)
+        g = int(h[2:4], 16)
+        b = int(h[4:6], 16)
+        return f"rgba({r},{g},{b},{alpha})"
+    except Exception:
+        return f"rgba(59,130,246,{alpha})"
 
 
 def _stat_card(value: str, label: str, color: str = "#3B82F6",
@@ -792,7 +808,7 @@ def render_fire_calculator(
             mode="lines",
             line=dict(color=v_color, width=2.5),
             fill="tozeroy",
-            fillcolor=f"rgba({int(v_color[1:3],16)},{int(v_color[3:5],16)},{int(v_color[5:7],16)},0.08)",
+            fillcolor=_hex_to_rgba(v_color, 0.08),
             hovertemplate=f"Year %{{x}}<br>Portfolio: {cur_sym}%{{y:,.0f}}<extra></extra>",
         ))
 
@@ -831,32 +847,15 @@ def render_fire_calculator(
             ))
 
         fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color=_COLORS["subtext"], size=12),
-            legend=dict(
-                bgcolor="rgba(26,37,53,0.8)",
-                bordercolor=_COLORS["border"],
-                borderwidth=1,
-                font=dict(size=11),
-            ),
-            xaxis=dict(
-                title="Years from now",
-                gridcolor="#1E2D40",
-                showline=True,
-                linecolor=_COLORS["border"],
-            ),
-            yaxis=dict(
-                title=f"Portfolio Value ({currency_label})",
-                gridcolor="#1E2D40",
-                showline=True,
-                linecolor=_COLORS["border"],
-                tickformat=",",
-            ),
+            title_text="",
+            xaxis_title="Years from now",
+            yaxis_title=f"Portfolio Value ({currency_label})",
             margin=dict(l=0, r=0, t=10, b=0),
-            height=340,
+            height=380,
             hovermode="x unified",
         )
+        fig.update_yaxes(tickformat=",")
+        apply_theme(fig)
         st.plotly_chart(fig, use_container_width=True)
 
         # ------------------------------------------------------------------
@@ -951,6 +950,7 @@ def render_fire_calculator(
             ],
             text=[f"{y} yrs" for y in contrib_years],
             textposition="outside",
+            cliponaxis=False,
             hovertemplate="Contribution: %{x}<br>Years to FIRE: %{y}<extra></extra>",
         ))
         # Mark current selection
@@ -964,14 +964,14 @@ def render_fire_calculator(
             annotation_position="top",
         )
         fig2.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color=_COLORS["subtext"], size=12),
-            xaxis=dict(title="Annual Contribution", gridcolor="#1E2D40"),
-            yaxis=dict(title="Years to FIRE", gridcolor="#1E2D40"),
-            margin=dict(l=0, r=0, t=10, b=0),
-            height=280,
+            title_text="",
+            xaxis_title="Annual Contribution",
+            yaxis_title="Years to FIRE",
+            margin=dict(l=0, r=0, t=24, b=0),
+            height=330,
         )
+        fig2.update_yaxes(range=[0, max(contrib_years) * 1.15 if contrib_years else 1])
+        apply_theme(fig2)
         st.plotly_chart(fig2, use_container_width=True)
 
         # ------------------------------------------------------------------
@@ -1015,6 +1015,7 @@ def render_fire_calculator(
             ],
             text=[f"{y} yrs" for y in exp_years],
             textposition="outside",
+            cliponaxis=False,
             hovertemplate="Expenses: %{x}<br>Years to FIRE: %{y}<extra></extra>",
         ))
         current_exp_idx = 3   # 1.0x
@@ -1027,14 +1028,14 @@ def render_fire_calculator(
             annotation_position="top",
         )
         fig3.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color=_COLORS["subtext"], size=12),
-            xaxis=dict(title="Annual Expenses (% of current)", gridcolor="#1E2D40"),
-            yaxis=dict(title="Years to FIRE", gridcolor="#1E2D40"),
-            margin=dict(l=0, r=0, t=10, b=0),
-            height=280,
+            title_text="",
+            xaxis_title="Annual Expenses (% of current)",
+            yaxis_title="Years to FIRE",
+            margin=dict(l=0, r=0, t=24, b=0),
+            height=330,
         )
+        fig3.update_yaxes(range=[0, max(exp_years) * 1.15 if exp_years else 1])
+        apply_theme(fig3)
         st.plotly_chart(fig3, use_container_width=True)
 
         # ------------------------------------------------------------------
@@ -1043,7 +1044,7 @@ def render_fire_calculator(
         st.divider()
         st.markdown(
             "<div style='font-size:14px;font-weight:700;color:#C8D6E8;"
-            "margin:8px 0;'>:material/lightbulb: Actionable Insights</div>",
+            "margin:8px 0;'>Actionable Insights</div>",
             unsafe_allow_html=True,
         )
 

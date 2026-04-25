@@ -23,6 +23,7 @@ from app.hr_tools.predict_helpers import (
     predict_app1,
     predict_app2,
 )
+from app.theme import apply_theme, get_colorway
 
 _APP1_EXPERIENCE_LABELS = {
     "Entry (0-3 yrs)":   (1.5, 0),
@@ -278,22 +279,22 @@ def _render_bench_output(rows: list[dict], job_title: str, location: str, key_pr
     st.markdown("#### Visualisation")
 
     import plotly.graph_objects as go
+    colorway = get_colorway()
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(name="Model Estimate", x=edited["Experience Level"], y=edited["Model Estimate (USD)"], marker_color="#4F8EF7"))
-    fig.add_trace(go.Bar(name="HR Override",    x=edited["Experience Level"], y=edited["HR Override (USD)"],    marker_color="#60A5FA", opacity=0.7))
-    fig.add_trace(go.Scatter(name="Band Min", x=edited["Experience Level"], y=edited["Band Min (USD)"], mode="markers", marker_symbol="triangle-up",   marker_color="#93C5FD", marker_size=10))
-    fig.add_trace(go.Scatter(name="Band Max", x=edited["Experience Level"], y=edited["Band Max (USD)"], mode="markers", marker_symbol="triangle-down", marker_color="#CBD5E1", marker_size=10))
+    fig.add_trace(go.Bar(name="Model Estimate", x=edited["Experience Level"], y=edited["Model Estimate (USD)"], marker_color=colorway[0]))
+    fig.add_trace(go.Bar(name="HR Override",    x=edited["Experience Level"], y=edited["HR Override (USD)"],    marker_color=colorway[1] if len(colorway) > 1 else colorway[0], opacity=0.7))
+    fig.add_trace(go.Scatter(name="Band Min", x=edited["Experience Level"], y=edited["Band Min (USD)"], mode="markers", marker_symbol="triangle-up",   marker_color=colorway[2] if len(colorway) > 2 else colorway[0], marker_size=10))
+    fig.add_trace(go.Scatter(name="Band Max", x=edited["Experience Level"], y=edited["Band Max (USD)"], mode="markers", marker_symbol="triangle-down", marker_color=colorway[4] if len(colorway) > 4 else colorway[-1], marker_size=10))
     fig.update_layout(
+        title_text="",
         barmode="group",
         yaxis_title="Annual Salary (USD)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#C9D1D9",
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
         margin=dict(t=40, b=20),
         height=340,
     )
+    apply_theme(fig)
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     st.download_button(
