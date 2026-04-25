@@ -93,11 +93,10 @@ def render_hr_tools_tab(**kwargs):
     All kwargs are forwarded transparently to each sub-tool renderer.
     If a sub-tool module is missing it is silently omitted.
     """
-
+    st.header(":material/corporate_fare: HR & Employer Tools")
     st.markdown(
         """
         <div style="margin-bottom: 18px;">
-            <h2 style="margin-bottom: 4px;">HR & Employer Tools</h2>
             <p style="color: var(--text-muted); margin-top: 0; font-size: 14px;">
                 Compensation planning and benchmarking tools for HR teams and hiring managers.
                 All salary estimates are produced by the currently active ML model.
