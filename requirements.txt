@@ -28,3 +28,4 @@ huggingface_hub
 pyarrow
 onnxruntime
 skl2onnx
+pillow
