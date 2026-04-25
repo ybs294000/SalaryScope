@@ -101,6 +101,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Per-bundle lexicons: Model Hub models can supply custom skill and job title lexicons that override global defaults for resume extraction
 - Per-bundle resume config: Model Hub models can supply a `resume_config.json` that overrides extraction scoring weights, extractor keyword lists, experience thresholds, and field-name mappings for that specific model, without changing any code
 - HR & Employer Tools: five compensation planning tools for hiring managers and HR teams (Hiring Budget Estimator, Salary Benchmarking Table, Candidate Comparison, Offer Competitiveness Checker, Team Compensation Audit) with per-tool HR overrides and CSV exports
+- Shareable salary prediction card: download a 1200x630 PNG card showing predicted salary, role, salary band, career stage, monthly/hourly breakdown, and tagline — available after every Manual and Resume prediction
 
 ---
 
@@ -169,6 +170,7 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Negotiation tips and career recommendations
 - Confidence interval estimation based on residual standard deviation — Model 1
 - Downloadable PDF prediction report
+- Shareable salary card: download a branded 1200x630 PNG image of the prediction result for sharing
 - Prediction feedback collection after each result (accuracy rating, direction, star rating, optional actual salary) 
 - Optional currency conversion with global currency support (toggle-based)
 - Available to all users
@@ -187,6 +189,7 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Extracted features are fully editable before prediction
 - Supports both Model 1 and Model 2 pipelines, and all Model Hub models
 - Optional currency conversion for predicted salary output
+- Shareable salary card available after prediction
 
 ### Batch Prediction
 - Upload files in CSV, XLSX, JSON, or SQL format
@@ -793,6 +796,7 @@ salaryscope/
 │   │   └── team_audit.py               # Team Compensation Audit (vectorised batch)
 │   │
 │   ├── utils/
+│   │   ├── salary_card.py               # Shareable salary card generator (Pillow PNG, 1200x630)
 │   │   ├── country_utils.py             # Centralised country/ISO-2 resolution (Babel CLDR)
 │   │   ├── currency_utils.py            # Currency conversion (live rates, fallback)
 │   │   ├── tax_utils.py                 # Post-tax salary estimation (progressive brackets)
@@ -833,6 +837,7 @@ salaryscope/
 │   
 ├── samples/                             # Sample input files for batch prediction
 ├── assets/                              # Branding and visual assets
+│   └── fonts/                           # Bundled Poppins font weights for salary card (Bold, Medium, Regular, Light)
 ├── pdf_outputs/                         # Sample generated PDF reports
 │
 ├── data/
@@ -1062,6 +1067,7 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 | NLP | spaCy, Regex, PhraseMatcher |
 | Country Resolution | Babel (Unicode CLDR territory data) |
 | ONNX Runtime | onnxruntime (model inference for Model Hub), skl2onnx (sklearn-to-ONNX conversion) |
+| Image Generation | Pillow (salary card PNG generation) |
 | API Integration | ExchangeRate API (open.er-api.com) |
 
 ---

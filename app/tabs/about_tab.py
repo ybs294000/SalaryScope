@@ -403,6 +403,7 @@ def render_about_tab():
 - Multi-format export (CSV, JSON, XLSX, SQL)
 - Google Drive public link upload
 - PDF report generation (manual + resume analysis + bulk + scenario analysis + model analytics)
+- Shareable salary card: download a branded 1200x630 PNG image of the prediction after each result
 - Prediction feedback collection (accuracy rating, direction, star rating, optional actual salary)
 - Currency conversion support (100+ currencies) with live exchange rates
 - Basic post-tax salary estimation based on country-level tax systems
@@ -436,6 +437,7 @@ def render_about_tab():
 - Multi-format export (CSV, JSON, XLSX, SQL)
 - Google Drive public link upload
 - PDF report generation (manual + resume analysis + bulk + scenario analysis + model analytics)
+- Shareable salary card: download a branded 1200x630 PNG image of the prediction after each result
 - Prediction feedback collection (accuracy rating, direction, star rating, optional actual salary)
 - Currency conversion support (100+ currencies) with live exchange rates
 - Basic post-tax salary estimation based on country-level tax systems
@@ -626,6 +628,7 @@ def render_about_tab():
 - Google Drive public link upload for batch files
 - Predictions saved to Firestore for logged-in users
 - Structured prediction feedback collected from all users and stored in Firestore
+- Shareable salary prediction card (Pillow-generated 1200x630 PNG) available after every Manual and Resume prediction
         """)
 
         st.divider()
@@ -651,6 +654,7 @@ def render_about_tab():
 - Requests (cloud file retrieval)
 - bcrypt (password hashing utility)
 - Babel (Unicode CLDR territory data for country resolution)
+- Pillow (PIL) (salary prediction card image generation — PNG, 1200x630)
         """)
 
     # -----------------------------------------------------------------------
@@ -805,7 +809,8 @@ def render_about_tab():
         st.markdown("**How do I save my prediction results?**")
         st.markdown(
             "For built-in models, click Prepare PDF Report after a prediction to download a "
-            "formatted PDF summary. Batch results and scenario results can be downloaded as "
+            "formatted PDF summary. You can also click Download Salary Card (PNG) to get a shareable "
+            "image card of the result. Batch results and scenario results can be downloaded as "
             "CSV or XLSX. If you are logged in, all predictions are automatically saved to "
             "your prediction history in the Profile tab and can be exported from there."
         )
@@ -927,6 +932,7 @@ def render_about_tab():
 - Click **Predict Salary** to generate results.
 - Scroll down to view salary level, career stage, pattern insight, negotiation tips, and recommendations.
 - Click **Prepare PDF Report** to generate a downloadable summary, then click **Download** to save it.
+- Click **Download Salary Card (PNG)** to download a shareable image of your prediction result.
 - To share feedback, expand the **Share Feedback on This Prediction** section, fill in the fields, and click **Submit Feedback**. Login is not required.
 - Optionally enable currency conversion, tax adjustment, and cost-of-living comparison for real-world context.
 
@@ -937,6 +943,7 @@ def render_about_tab():
 - Click **Predict Salary from Resume** to get results.
 - Upload a new PDF at any time to restart -- previous results clear automatically.
 - After prediction, you can apply currency conversion, tax estimation, and cost-of-living adjustment.
+- A salary card download button is available below the prediction result.
 
 **Batch Prediction**
 - Download the sample file from the left column to understand the required format.
