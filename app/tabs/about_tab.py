@@ -44,87 +44,260 @@ def _info_card(title: str, body: str, accent: str = "#4F8EF7") -> str:
     )
 
 
+def _inject_about_styles():
+    """Inject styling for a more polished About tab layout."""
+    st.markdown(
+        """
+        <style>
+        .about-preview-shell {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border, #334155);
+            border-radius: 12px;
+            background: var(--bg-card, #1E293B);
+            padding: 28px 32px 22px 32px;
+            margin-bottom: 8px;
+        }
+
+        .about-preview-eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border, #334155);
+            background: rgba(79, 142, 247, 0.10);
+            color: var(--text-muted, #94A3B8);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .about-preview-title {
+            font-size: clamp(2rem, 3vw, 3rem);
+            line-height: 1.05;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.03em;
+            margin: 0 0 10px 0;
+        }
+
+        .about-preview-title .accent {
+            color: var(--primary, #4F8EF7);
+        }
+
+        .about-preview-subtitle {
+            max-width: 760px;
+            color: var(--text-main, #E2E8F0);
+            font-size: 0.92rem;
+            line-height: 1.72;
+            margin-bottom: 18px;
+        }
+
+        .about-preview-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0 22px 0;
+        }
+
+        .about-preview-pill {
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .about-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin: 8px 0 20px 0;
+        }
+
+        .about-preview-stat {
+            border: 1px solid var(--border, #334155);
+            border-radius: 16px;
+            background: var(--bg-input, #1B2230);
+            padding: 14px 16px;
+        }
+
+        .about-preview-stat-kicker {
+            color: var(--text-muted, #94A3B8);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .about-preview-stat-value {
+            color: #ffffff;
+            font-size: 1.3rem;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 4px;
+        }
+
+        .about-preview-stat-note {
+            color: var(--text-muted, #94A3B8);
+            font-size: 0.83rem;
+            line-height: 1.45;
+        }
+
+        .about-preview-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border, #334155);
+        }
+
+        .about-preview-meta-label {
+            color: var(--text-muted, #94A3B8);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+
+        .about-preview-meta-value {
+            color: #f8fafc;
+            font-size: 0.92rem;
+            line-height: 1.55;
+        }
+
+        .about-preview-links a {
+            color: #7dd3fc;
+            font-weight: 600;
+            text-decoration: none;
+            margin-right: 18px;
+        }
+
+        .about-preview-links a:hover {
+            color: #bae6fd;
+        }
+
+        .about-preview-step {
+            border: 1px solid var(--border, #334155);
+            border-radius: 8px;
+            padding: 18px 18px 16px 18px;
+            background: var(--bg-card, #1E293B);
+            min-height: 200px;
+        }
+
+        .about-preview-step-no {
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: 800;
+            margin-bottom: 14px;
+            color: #fff;
+        }
+
+        .about-preview-step-title {
+            color: #f8fafc;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .about-preview-step-copy {
+            color: #cbd5e1;
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+
+        @media (max-width: 980px) {
+            .about-preview-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .about-preview-shell {
+                padding: 22px 18px 18px 18px;
+                border-radius: 12px;
+            }
+
+            .about-preview-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_about_tab():
+    _inject_about_styles()
 
     # -----------------------------------------------------------------------
     # Hero section
     # -----------------------------------------------------------------------
     st.markdown(
         """
-        <div style="
-            background: var(--bg-card, #1E293B);
-            border: 1px solid var(--border, #334155);
-            border-radius: 12px;
-            padding: 28px 32px 22px 32px;
-            margin-bottom: 8px;
-        ">
-            <div style="font-size:1.6rem;font-weight:700;color:#FFFFFF;margin-bottom:6px;">
-                SalaryScope
+        <div class="about-preview-shell">
+            <div class="about-preview-eyebrow">SalaryScope · Machine Learning + Decision Support</div>
+            <div class="about-preview-title">
+                Salary intelligence for <span class="accent">job seekers, analysts, and hiring teams</span>
             </div>
-            <div style="font-size:0.95rem;color:var(--text-muted,#94A3B8);margin-bottom:18px;">
-                Salary Prediction System using Machine Learning &nbsp;&middot;&nbsp;
-                Final Year B.Tech Project
+            <div class="about-preview-subtitle">
+                SalaryScope turns profile inputs, resumes, uploaded datasets, and scenario changes
+                into salary predictions with surrounding context. Instead of showing only a number,
+                it layers in analytics, resume extraction, financial interpretation, Model Hub
+                extensibility, and HR planning workflows so the app feels like a decision-support
+                tool rather than a single-use estimator.
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
-                <span style="background:#1D4ED833;border:1px solid #3B82F6;
-                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
-                             color:#93C5FD;font-weight:600;">v1.3.0</span>
-                <span style="background:#065F4633;border:1px solid #10B981;
-                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
-                             color:#6EE7B7;font-weight:600;">Python 3.13</span>
-                <span style="background:#4C1D9533;border:1px solid #8B5CF6;
-                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
-                             color:#C4B5FD;font-weight:600;">MIT License</span>
-                <span style="background:#92400E33;border:1px solid #F59E0B;
-                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
-                             color:#FCD34D;font-weight:600;">2 Models + Model Hub</span>
-                <span style="background:#7F1D1D33;border:1px solid #EF4444;
-                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
-                             color:#FCA5A5;font-weight:600;">Streamlit Cloud</span>
-                <span style="background:#164E6333;border:1px solid #06B6D4;
-                             border-radius:20px;padding:4px 12px;font-size:0.78rem;
-                             color:#67E8F9;font-weight:600;">4 Prediction Modes</span>
+            <div class="about-preview-pill-row">
+                <span class="about-preview-pill" style="background:#1D4ED833;border:1px solid #3B82F6;color:#93C5FD;">v1.3.0</span>
+                <span class="about-preview-pill" style="background:#065F4633;border:1px solid #10B981;color:#6EE7B7;">Python 3.13</span>
+                <span class="about-preview-pill" style="background:#7F1D1D33;border:1px solid #EF4444;color:#FCA5A5;">Streamlit Cloud</span>
+                <span class="about-preview-pill" style="background:#92400E33;border:1px solid #F59E0B;color:#FCD34D;">2 built-in models</span>
+                <span class="about-preview-pill" style="background:#164E6333;border:1px solid #06B6D4;color:#67E8F9;">4 prediction modes</span>
+                <span class="about-preview-pill" style="background:#4C1D9533;border:1px solid #8B5CF6;color:#C4B5FD;">Model Hub + HR Tools</span>
             </div>
-            <div style="font-size:0.875rem;color:var(--text-main,#E2E8F0);
-                        line-height:1.7;margin-bottom:20px;">
-                SalaryScope is a web application that predicts salary based on factors like
-                education, experience, job title, and location.
-                It uses machine learning models to give an estimated salary along with
-                supporting insights. The application supports manual input, resume-based
-                prediction, batch prediction, and scenario analysis, and is designed to help
-                students and job seekers get a general idea of salary expectations.
-                It includes post-tax estimation, cost-of-living adjustments, a full suite
-                of financial planning tools, and a secure user account system.
-                A Model Hub tab allows admins to upload additional trained models and make
-                them available to logged-in users through a dynamically generated prediction
-                interface, with four prediction modes per model: Manual, Batch, Resume, and
-                Scenario.
+            <div class="about-preview-grid">
+                <div class="about-preview-stat">
+                    <div class="about-preview-stat-kicker">Prediction Surface</div>
+                    <div class="about-preview-stat-value">Manual, Resume, Batch, Scenario</div>
+                    <div class="about-preview-stat-note">Multiple entry points for individual, bulk, and what-if exploration.</div>
+                </div>
+                <div class="about-preview-stat">
+                    <div class="about-preview-stat-kicker">Built-In Engines</div>
+                    <div class="about-preview-stat-value">General + Data Science</div>
+                    <div class="about-preview-stat-note">Separate models support broad roles and DS/ML-specific compensation patterns.</div>
+                </div>
+                <div class="about-preview-stat">
+                    <div class="about-preview-stat-kicker">Decision Support</div>
+                    <div class="about-preview-stat-value">Analytics + Financial Context</div>
+                    <div class="about-preview-stat-note">Currency, tax, CoL, planning utilities, diagnostics, and explainability in one flow.</div>
+                </div>
+                <div class="about-preview-stat">
+                    <div class="about-preview-stat-kicker">Extensibility</div>
+                    <div class="about-preview-stat-value">Model Hub + HR Tools</div>
+                    <div class="about-preview-stat-note">Admins can add new bundles; hiring teams can benchmark, audit, and plan offers.</div>
+                </div>
             </div>
-            <div style="border-top:1px solid var(--border,#334155);
-                        padding-top:14px;
-                        display:flex;flex-wrap:wrap;gap:20px;align-items:center;">
+            <div class="about-preview-meta">
                 <div>
-                    <div style="font-size:0.7rem;font-weight:600;
-                                color:var(--text-muted,#94A3B8);
-                                text-transform:uppercase;letter-spacing:0.05em;
-                                margin-bottom:2px;">Author</div>
-                    <div style="font-size:0.85rem;color:var(--text-main,#E2E8F0);font-weight:500;">
+                    <div class="about-preview-meta-label">Author</div>
+                    <div class="about-preview-meta-value">
                         Yash Shah &nbsp;&middot;&nbsp;
                         B.Tech Final Year, Computer Engineering &nbsp;&middot;&nbsp;
                         Gandhinagar Institute of Technology
                     </div>
                 </div>
-                <div style="display:flex;gap:14px;margin-left:auto;">
-                    <a href="https://github.com/ybs294000/salaryscope" target="_blank"
-                       style="font-size:0.82rem;color:var(--primary,#4F8EF7);
-                              text-decoration:none;font-weight:500;">
-                        GitHub
-                    </a>
-                    <a href="mailto:yashbshah2004@gmail.com"
-                       style="font-size:0.82rem;color:var(--primary,#4F8EF7);
-                              text-decoration:none;font-weight:500;">
-                        Contact
-                    </a>
+                <div class="about-preview-links">
+                    <a href="https://github.com/ybs294000/salaryscope" target="_blank">GitHub</a>
+                    <a href="mailto:yashbshah2004@gmail.com">Contact</a>
                 </div>
             </div>
         </div>
@@ -132,60 +305,51 @@ def render_about_tab():
         unsafe_allow_html=True,
     )
 
-    st.divider()
-
     # -----------------------------------------------------------------------
     # Quick-start guide
     # -----------------------------------------------------------------------
-    st.markdown("### Getting Started in 3 Steps")
+    st.markdown("### Start Here")
     qs1, qs2, qs3 = st.columns(3)
 
     with qs1:
         st.markdown(
-            '<div style="background:var(--bg-card,#1E293B);border:1px solid var(--border,#334155);'
-            'border-top:3px solid #3B82F6;border-radius:8px;padding:16px 18px;height:100%;">'
-            '<div style="font-size:1.5rem;font-weight:700;color:#3B82F6;margin-bottom:6px;">1</div>'
-            '<div style="font-weight:600;color:var(--text-main,#E2E8F0);margin-bottom:6px;">Pick a model</div>'
-            '<div style="font-size:0.85rem;color:var(--text-muted,#94A3B8);line-height:1.6;">'
-            'Use the dropdown at the top of the page. '
-            'Model 1 (Random Forest) covers general roles. '
-            'Model 2 (XGBoost) is tuned for data science salaries.'
+            '<div class="about-preview-step">'
+            '<div class="about-preview-step-no" style="background:linear-gradient(135deg,#2563EB,#38BDF8);">1</div>'
+            '<div class="about-preview-step-title">Choose the right engine first</div>'
+            '<div class="about-preview-step-copy">'
+            'Start with Model 1 for broader role coverage across general professions. '
+            'Use Model 2 when the profile is clearly in data science, analytics, ML, or adjacent DS/AI roles.'
             '</div></div>',
             unsafe_allow_html=True,
         )
 
     with qs2:
         st.markdown(
-            '<div style="background:var(--bg-card,#1E293B);border:1px solid var(--border,#334155);'
-            'border-top:3px solid #10B981;border-radius:8px;padding:16px 18px;height:100%;">'
-            '<div style="font-size:1.5rem;font-weight:700;color:#10B981;margin-bottom:6px;">2</div>'
-            '<div style="font-weight:600;color:var(--text-main,#E2E8F0);margin-bottom:6px;">Choose a prediction mode</div>'
-            '<div style="font-size:0.85rem;color:var(--text-muted,#94A3B8);line-height:1.6;">'
-            'Manual - type your details directly. '
-            'Resume - upload your PDF. '
-            'Batch - upload a file for multiple records. '
-            'Scenario - compare up to 5 what-if situations.'
+            '<div class="about-preview-step">'
+            '<div class="about-preview-step-no" style="background:linear-gradient(135deg,#059669,#2DD4BF);">2</div>'
+            '<div class="about-preview-step-title">Use the input mode that matches your task</div>'
+            '<div class="about-preview-step-copy">'
+            'Manual is fastest for one profile, Resume is best when a CV already exists, '
+            'Batch is for dataset-scale runs, and Scenario is ideal when you want to compare changes side by side.'
             '</div></div>',
             unsafe_allow_html=True,
         )
 
     with qs3:
         st.markdown(
-            '<div style="background:var(--bg-card,#1E293B);border:1px solid var(--border,#334155);'
-            'border-top:3px solid #F59E0B;border-radius:8px;padding:16px 18px;height:100%;">'
-            '<div style="font-size:1.5rem;font-weight:700;color:#F59E0B;margin-bottom:6px;">3</div>'
-            '<div style="font-weight:600;color:var(--text-main,#E2E8F0);margin-bottom:6px;">Interpret the result</div>'
-            '<div style="font-size:0.85rem;color:var(--text-muted,#94A3B8);line-height:1.6;">'
-            'Use the currency converter, tax estimator, and cost-of-living tools below the result '
-            'to see what the salary means in your location and context.'
+            '<div class="about-preview-step">'
+            '<div class="about-preview-step-no" style="background:linear-gradient(135deg,#D97706,#F59E0B);">3</div>'
+            '<div class="about-preview-step-title">Read the number in context, not alone</div>'
+            '<div class="about-preview-step-copy">'
+            'The strongest experience comes from pairing the salary estimate with analytics, '
+            'currency and tax interpretation, cost-of-living comparison, feedback, and where relevant, HR tools.'
             '</div></div>',
             unsafe_allow_html=True,
         )
 
     st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
     st.caption(
-        "Login is optional for predictions. Create an account to save your prediction history "
-        "and access the Model Hub tab."
+        "Login is optional for predictions. Accounts mainly unlock saved history and Model Hub access."
     )
 
     st.divider()

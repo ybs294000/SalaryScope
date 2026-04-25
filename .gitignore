@@ -6,5 +6,7 @@ app/utils/__pycache__/
 venv
 old-imp
 a_tmp/
+app/tabs/about_tab.old.py
+app/tabs/data_insights_tab.old.py
 .streamlit/secrets.toml
 col_indices_custom.json
