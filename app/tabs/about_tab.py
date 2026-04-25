@@ -250,11 +250,11 @@ def render_about_tab():
                 Salary intelligence for <span class="accent">job seekers, analysts, and hiring teams</span>
             </div>
             <div class="about-preview-subtitle">
-                SalaryScope turns profile inputs, resumes, uploaded datasets, and scenario changes
-                into salary predictions with surrounding context. Instead of showing only a number,
-                it layers in analytics, resume extraction, financial interpretation, Model Hub
-                extensibility, and HR planning workflows so the app feels like a decision-support
-                tool rather than a single-use estimator.
+                SalaryScope is a machine learning-based salary prediction platform that helps users
+                estimate compensation from structured inputs, resume data, uploaded datasets, and
+                scenario comparisons. Alongside the prediction itself, the system provides supporting
+                analytics, financial context, extensibility through the Model Hub, and HR-oriented
+                planning tools to make the output more useful for interpretation and decision-making.
             </div>
             <div class="about-preview-pill-row">
                 <span class="about-preview-pill" style="background:#1D4ED833;border:1px solid #3B82F6;color:#93C5FD;">v1.3.0</span>
