@@ -32,6 +32,7 @@ from app.utils.tax_utils import render_tax_adjuster
 from app.utils.col_utils import render_col_adjuster
 from app.core.database import save_prediction
 
+from app.utils.salary_card import render_salary_card_download
 
 def render_resume_tab(
     IS_APP1,
@@ -984,6 +985,16 @@ association_insight_card_html(assoc_text_a1_improved),
                     disabled=True,
                     key="resume_pdf_disabled"
                 )
+            # ------------- SALARY CARD DOWNLOAD (App 1 Resume) -------------
+            render_salary_card_download(
+                predicted_usd = data["prediction"],
+                job_title     = data["input_details"]["Job Title"],
+                location      = data["input_details"]["Country"],
+                model_name    = "Model 1 — General Salary",
+                band_label    = data["salary_band_label"],
+                career_stage  = data["career_stage_label"],
+                key           = "card_dl_resume_a1",
+            )
         # ==============================
         # FILE UPLOADER + RESET LOGIC
         # ==============================
