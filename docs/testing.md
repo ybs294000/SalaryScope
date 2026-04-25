@@ -1,5 +1,5 @@
 # SalaryScope — Testing Guide
-**Version:** 1.1.0  
+**Version:** 1.3.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Testing Guide and Test Plan
@@ -41,7 +41,7 @@
 
 ### 1.1 Purpose
 
-This document defines a structured test plan for SalaryScope v1.1.0. It covers manual functional tests for every feature of the application, unit tests for all pure-Python modules (which have no Streamlit dependency and can be run programmatically), integration tests for cross-module workflows, security tests for the authentication and rate limiting systems, and performance benchmarks.
+This document defines a structured test plan for SalaryScope v1.3.0. It covers manual functional tests for every feature of the application, unit tests for all pure-Python modules (which have no Streamlit dependency and can be run programmatically), integration tests for cross-module workflows, security tests for the authentication and rate limiting systems, and performance benchmarks.
 
 ### 1.2 Test Strategy
 
@@ -140,6 +140,7 @@ If a `tests/` directory does not yet exist, the unit test cases in Sections 17�
 | Batch Prediction | BTCH | Manual (browser) |
 | Scenario Analysis | SCEN | Manual (browser) |
 | Financial Tools | FINT | Manual (browser) |
+| HR Tools | HRT | Manual (browser) |
 | Model Analytics | MANA | Manual (browser) |
 | Data Insights | DATA | Manual (browser) |
 | Model Hub | MHUB | Manual (browser) |
@@ -2632,7 +2633,7 @@ Copy this table for each test session to record results.
 
 **Test Session Date:** ___________  
 **Tester:** ___________  
-**Application Version:** 1.1.0  
+**Application Version:** 1.3.0  
 **Environment:** Local / Streamlit Cloud  
 **Model(s) Tested:** Model 1 / Model 2 / Both  
 

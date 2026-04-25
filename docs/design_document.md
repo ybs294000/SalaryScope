@@ -1,5 +1,5 @@
 # SalaryScope — Design Document
-**Version:** 1.1.0  
+**Version:** 1.3.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Software Design Document (SDD)
@@ -32,7 +32,7 @@
 
 ### 1.1 Purpose
 
-This document describes the software architecture, module design, data flows, and design decisions for SalaryScope v1.1.0 — a machine learning-powered salary prediction web application built with Python and Streamlit.
+This document describes the software architecture, module design, data flows, and design decisions for SalaryScope v1.3.0 — a machine learning-powered salary prediction web application built with Python and Streamlit.
 
 ### 1.2 Scope
 
@@ -55,7 +55,7 @@ SalaryScope provides salary prediction through three modes of interaction — ma
 - **Model 1 (App 1):** Random Forest Regressor trained on a general salary dataset. Covers a broad range of job roles and countries.
 - **Model 2 (App 2):** XGBoost Regressor trained on a data science salaries dataset. Specialises in data science and ML roles globally.
 
-In addition to prediction, the system provides dataset exploration, model performance analytics, financial planning tools, a user account system backed by Firebase, and a Model Hub that allows admins to deploy additional independently trained models without modifying application code.
+In addition to prediction, the system provides dataset exploration, model performance analytics, financial planning tools, a dedicated HR & Employer Tools tab for compensation planning workflows, a user account system backed by Firebase, and a Model Hub that allows admins to deploy additional independently trained models without modifying application code.
 
 ---
 
@@ -70,8 +70,8 @@ In addition to prediction, the system provides dataset exploration, model perfor
 │  ┌─────────────┐   ┌──────────────────────────────────────────┐ │
 │  │  Sidebar     │   │           Tab Area                        │ │
 │  │  - Model     │   │  Manual | Resume | Batch | Scenario |    │ │
-│  │    Selector  │   │  Analytics | Insights | Hub | Profile |  │ │
-│  │  - Auth      │   │  Admin | About                           │ │
+│  │    Selector  │   │  Analytics | Insights | Hub | HR Tools │ │
+│  │  - Auth      │   │  | Profile | Admin | About             │ │
 │  └─────────────┘   └──────────────────────────────────────────┘ │
 └────────────────────────────┬────────────────────────────────────┘
                              │
@@ -100,6 +100,7 @@ Layer 1: Tabs (app/tabs/)
     model_analytics_tab    — Performance metrics + SHAP + association rules
     data_insights_tab      — EDA dashboards
     model_hub_tab          — Model Hub UI
+    hr_tools_tab           — HR compensation planning tools
     user_profile           — Prediction history + account management
     admin_panel            — System diagnostics + feedback analytics
     about_tab              — Static informational content
@@ -140,6 +141,14 @@ Layer 4: Model Hub (app/model_hub/)
     uploader.py            — Bundle validation + HuggingFace upload
     validator.py           — Schema + column consistency validation
     _hf_client.py          — HuggingFace SDK wrapper
+
+Layer 5: HR Tools (app/hr_tools/)
+    predict_helpers.py      — Shared single-row and batch inference helpers
+    hiring_budget.py        — Payroll budget estimator
+    benchmarking_table.py   — Salary benchmarking grid
+    candidate_comparison.py — Side-by-side candidate comparison
+    offer_checker.py        — Offer competitiveness checker
+    team_audit.py           — Team-wide compensation audit from CSV
 ```
 
 ### 3.3 Dependency Rules
@@ -162,7 +171,7 @@ Layer 4: Model Hub (app/model_hub/)
 2. Sets page configuration and applies the global dark professional CSS theme.
 3. Loads all ML models, metadata, datasets, and lookup tables using `@st.cache_resource` and `@st.cache_data` decorators to prevent reloading on every Streamlit rerun.
 4. Renders the sidebar with the model selector and authentication widgets.
-5. Constructs the tab list dynamically (Profile and Admin tabs are added conditionally based on login status and admin flag).
+5. Constructs the tab list dynamically (Profile and Admin tabs are added conditionally based on login status and admin flag; HR Tools is mounted as a dedicated full-app tab).
 6. Mounts each tab renderer, passing all required resources as arguments.
 
 **Design principle:** No business logic lives in `app_resume.py`. It is purely an orchestrator — loading, assembling, and passing resources to tab modules.
@@ -752,11 +761,11 @@ The application is deployed on Streamlit Cloud (free tier) as two separate apps:
 | App | URL | Entry Point | Description |
 |---|---|---|---|
 | Full App | `salaryscope-app.streamlit.app` | `app_resume.py` | Complete feature set including resume analysis, scenario analysis, Model Hub, Admin Panel, and all 11 financial tools |
-| Lite App | `salaryscope-lite-app.streamlit.app` | `app.py` | Lightweight version with Manual Prediction, Batch Prediction, Model Analytics, Data Insights, and Profile only |
+| Lite App | `salaryscope-lite-app.streamlit.app` | `app-lite.py` | Lightweight version with Manual Prediction, Batch Prediction, Model Analytics, Data Insights, and Profile only |
 
 The split is driven by Streamlit Cloud free-tier memory limits. The lite app removes not only spaCy and pdfplumber but also the HuggingFace Hub dependency, the entire Model Hub subsystem, all 11 financial utility modules, the feedback system, and the Scenario Analysis and Admin Panel tabs — resulting in a significantly smaller memory footprint and faster startup.
 
-The lite app's About tab is also simplified and rendered inline in `app.py` rather than importing `about_tab.py`, reflecting its reduced feature set.
+The lite app's About tab is also simplified and rendered inline in `app-lite.py` rather than importing `about_tab.py`, reflecting its reduced feature set.
 
 ### 15.2 Secrets Configuration
 
@@ -798,7 +807,7 @@ Streamlit Cloud runs each user session in an isolated Python process. There is n
 
 ## 17. Known Limitations and Constraints
 
-- The lite app (`app.py`) is a substantially reduced deployment — it excludes Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, all 11 financial tools, and the feedback system. This is by design to fit within Streamlit Cloud free-tier memory limits, not a missing feature.
+- The lite app (`app-lite.py`) is a substantially reduced deployment — it excludes Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, HR Tools, all 11 financial tools, and the feedback system. This is by design to fit within Streamlit Cloud free-tier memory limits, not a missing feature.
 - Streamlit Cloud free tier has memory limits; large batch files (>10,000 rows) may be slower or cause timeouts.
 - spaCy resume parsing is sensitive to PDF formatting; heavily formatted or image-heavy PDFs may produce poor extraction.
 - Tax and CoL data is static (updated periodically in code), not real-time.

@@ -1,5 +1,5 @@
 # SalaryScope — Software Requirements Specification (SRS)
-**Version:** 1.1.0  
+**Version:** 1.3.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Software Requirements Specification  
@@ -25,11 +25,11 @@
 
 ### 1.1 Purpose
 
-This Software Requirements Specification defines the functional and non-functional requirements for SalaryScope v1.1.0 — a machine learning-powered salary prediction web application. It serves as the authoritative reference for the features implemented, the constraints applied, and the behaviour expected from each system component.
+This Software Requirements Specification defines the functional and non-functional requirements for SalaryScope v1.3.0 — a machine learning-powered salary prediction web application. It serves as the authoritative reference for the features implemented, the constraints applied, and the behaviour expected from each system component.
 
 ### 1.2 Scope
 
-SalaryScope is a browser-based application that predicts annual salaries using two independently trained machine learning models. It accepts user input via three modes (manual form, PDF resume upload, bulk file upload), provides supporting financial context tools, allows dataset and model performance exploration, supports a user account system backed by Firebase, and exposes an extensible Model Hub for deploying additional trained models without modifying application code.
+SalaryScope is a browser-based application that predicts annual salaries using two independently trained machine learning models. It accepts user input via three modes (manual form, PDF resume upload, bulk file upload), provides supporting financial context tools, includes a dedicated HR & Employer Tools tab for compensation planning workflows, allows dataset and model performance exploration, supports a user account system backed by Firebase, and exposes an extensible Model Hub for deploying additional trained models without modifying application code.
 
 The system is deployed on Streamlit Cloud as two separate applications — a full version including NLP-based resume analysis and a lite version without it — due to platform resource constraints.
 
@@ -77,6 +77,7 @@ At the highest level, SalaryScope provides:
 
 - Salary prediction from manual inputs, resume PDFs, and bulk files.
 - Post-prediction financial context (tax, CoL, CTC, take-home, savings, loans, investments).
+- HR compensation planning workflows (hiring budget, benchmarking, candidate comparison, offer checking, team audit).
 - Model performance transparency through analytics dashboards.
 - Dataset exploration through interactive EDA dashboards.
 - An extensible Model Hub for admin-deployed additional models.
@@ -101,7 +102,7 @@ At the highest level, SalaryScope provides:
 ### 2.5 Design and Implementation Constraints
 
 - The application must run within Streamlit Cloud free-tier memory and compute limits.
-- The full app (`app_resume.py`) and the lite app (`app.py`) must be maintained as separate deployments. The lite app is a substantially reduced version — it excludes Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, all 11 financial tools, and the feedback system. It does not depend on spaCy, pdfplumber, or HuggingFace Hub. Only `FIREBASE_API_KEY` and `FIREBASE_SERVICE_ACCOUNT` are required secrets for the lite app.
+- The full app (`app_resume.py`) and the lite app (`app-lite.py`) must be maintained as separate deployments. The lite app is a substantially reduced version — it excludes Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, HR Tools, all 11 financial tools, and the feedback system. It does not depend on spaCy, pdfplumber, or HuggingFace Hub. Only `FIREBASE_API_KEY` and `FIREBASE_SERVICE_ACCOUNT` are required secrets for the lite app.
 - All persistent data must be stored in Firebase Firestore; SQLite is not persistent across Streamlit Cloud restarts.
 - All secrets (API keys, Firebase credentials, HuggingFace token) must be managed through Streamlit Cloud secrets and never hardcoded.
 - Model artefacts must be stored in a private HuggingFace dataset repository.
@@ -152,7 +153,7 @@ The system shall compute and display a resume score (out of 100) with component 
 After reviewing the extracted features, the user shall be able to run a salary prediction using the same pipeline as manual prediction.
 
 #### FR-R07 — Lite App Scope
-The lite app deployment (`app.py`) shall include only the following tabs: Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. The Resume Analysis, Scenario Analysis, Model Hub, and Admin Panel tabs shall not be present. The 11 financial planning tools, the prediction feedback system, and the HuggingFace Hub dependency shall be excluded from the lite app. The lite app's About tab shall be rendered inline with simplified content reflecting its reduced feature set.
+The lite app deployment (`app-lite.py`) shall include only the following tabs: Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. The Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, and HR Tools tabs shall not be present. The 11 financial planning tools, the prediction feedback system, and the HuggingFace Hub dependency shall be excluded from the lite app. The lite app's About tab shall be rendered inline with simplified content reflecting its reduced feature set.
 
 ### 3.3 Batch Prediction
 
@@ -291,6 +292,15 @@ The system shall compute a PPP-equivalent salary for a user-selected comparison 
 
 #### FR-F04 — CTC Breakdown
 The system shall break down gross annual salary into estimated CTC components (base, HRA, bonus, PF, gratuity, allowances) using country-specific component rate tables.
+
+#### FR-F12 — HR Tools Tab Availability
+The full application shall expose a dedicated HR & Employer Tools tab. The tab shall use the currently selected built-in model as its salary reference engine and shall be available without requiring login.
+
+#### FR-F13 — HR Compensation Planning Tools
+The HR Tools tab shall provide the following tools: Hiring Budget Estimator, Salary Benchmarking Table, Candidate Comparison, Offer Competitiveness Checker, and Team Compensation Audit.
+
+#### FR-F14 — HR Override and Export
+Each HR tool shall support a manual HR override workflow where applicable, and every tool shall provide CSV export of the resulting table or analysis output.
 
 #### FR-F05 — Take-Home Estimator
 The system shall compute estimated monthly and annual net take-home salary after income tax, PF/pension, and statutory deductions using country-specific rates.

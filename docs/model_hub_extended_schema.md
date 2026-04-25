@@ -29,8 +29,10 @@ docs/model_hub_extended_schema.md             -- this file
 
 ### Modified files
 
-Only `app/tabs/model_hub_tab.py` was changed.  Every addition is enclosed
-between comment markers so the change can be reverted precisely:
+The original extended-modes rollout centered on `app/tabs/model_hub_tab.py`.
+Later iterations also updated surrounding Model Hub files so per-bundle
+lexicons and `resume_config.json` could participate in Resume mode cleanly.
+The minimal integration point in the main UI remains `app/tabs/model_hub_tab.py`:
 
 ```
 # EXTENDED MODES - BEGIN  (imports block, near the top)
@@ -40,7 +42,8 @@ between comment markers so the change can be reverted precisely:
 # EXTENDED MODES - END
 ```
 
-No other file was modified.  All existing functionality is preserved unchanged.
+Subsequent versions expanded the supporting implementation, but the user-facing
+contract described in this document remains the same.
 
 ---
 

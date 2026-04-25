@@ -1688,7 +1688,7 @@ st.markdown(
     """
     <div class="salaryscope-footer" style="text-align:center;">
         <div>
-            <strong>SalaryScope</strong> · Salary Prediction System (ML) · v1.2.0
+            <strong>SalaryScope</strong> · Salary Prediction System (ML) · v1.3.0
         </div>
         <div style="font-size:0.9em; opacity:0.8;">
             Developed by Yash Shah ·

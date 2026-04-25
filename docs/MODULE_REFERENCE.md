@@ -1,5 +1,5 @@
 # SalaryScope — Module Reference
-**Version:** 1.1.0  
+**Version:** 1.3.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Module Reference / API Documentation
@@ -38,7 +38,7 @@
 3. Dark professional CSS theme injected via `st.markdown()`.
 4. All ML models, datasets, and lookup tables loaded with `@st.cache_resource` / `@st.cache_data`.
 5. Sidebar rendered: model selector dropdown, auth widgets (`login_ui`, `register_ui`, `forgot_password_ui`).
-6. Tab list constructed dynamically; Profile and Admin tabs appended conditionally.
+6. Tab list constructed dynamically; Profile and Admin tabs appended conditionally, and HR Tools is mounted as a dedicated full-app tab.
 7. Each tab renderer called with full dependency injection.
 
 **Key globals available to tabs (passed as arguments):**
@@ -225,6 +225,28 @@ Renders the Model Hub tab.
 **Prediction result persistence:** After a successful prediction, the result is stored in `st.session_state[f"mh_pred_result_{model_id}"]` as a plain dict. This allows the result card and currency toggle to remain visible when the `@st.fragment` reruns due to widget interactions (e.g. the currency toggle being clicked) without re-submitting the form.
 
 **Currency conversion:** `render_currency_converter()` from `app.utils.currency_utils` is shown below the result card if the module is importable. The import is guarded in a `try/except` so the tab works even if `currency_utils` is absent (e.g. lite app). Location hint for default currency is derived from the raw input dict by checking common field names: `country`, `location`, `employee_residence`, `company_location`, `country_code`.
+
+---
+
+### `hr_tools_tab.py`
+
+#### `render_hr_tools_tab(**kwargs)`
+
+Renders the HR & Employer Tools tab and forwards shared model resources into the five sub-tools under `app/hr_tools/`.
+
+**Key parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `is_app1` | bool | Controls whether App 1 or App 2 input sets are rendered by the HR tools |
+| `app1_model` / `app2_model` | estimator | Active salary prediction model |
+| `app1_job_titles` / `app2_job_titles` | list | Supported title lists for the active model |
+| `app1_countries` / `app2_country_display_options` | list | Location dropdown values |
+| `SALARY_BAND_LABELS` | dict | App 1 salary-band labels used in benchmarking and audit output |
+| `EXPERIENCE_MAP`, `EMPLOYMENT_MAP`, `COMPANY_SIZE_MAP`, `REMOTE_MAP` | dict | Shared code-to-label mappings for App 2 |
+| `title_features` | callable | App 2 title feature extractor used by shared prediction helpers |
+
+**Side effects:** Renders five inner sub-tabs: Hiring Budget, Salary Benchmarking, Candidate Comparison, Offer Checker, and Team Audit. Each tool may run single-row or vectorised predictions and exposes CSV export.
 
 ---
 

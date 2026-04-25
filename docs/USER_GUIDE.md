@@ -1,5 +1,5 @@
 # SalaryScope — User Guide
-**Version:** 1.1.0  
+**Version:** 1.3.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning
 
 ---
@@ -35,7 +35,7 @@ SalaryScope is a web-based salary prediction tool that uses machine learning to 
 - **Resume Analysis** — upload your PDF resume and let the system extract your details automatically
 - **Batch Prediction** — upload a file with multiple records and get predictions for all of them at once
 
-Beyond salary prediction, SalaryScope includes financial planning tools (tax estimation, cost-of-living comparison, savings potential, loan affordability, and more), dataset exploration dashboards, model performance analytics, and a Model Hub where additional trained models can be accessed.
+Beyond salary prediction, SalaryScope includes financial planning tools (tax estimation, cost-of-living comparison, savings potential, loan affordability, and more), a dedicated HR & Employer Tools tab for compensation planning, dataset exploration dashboards, model performance analytics, and a Model Hub where additional trained models can be accessed.
 
 **Live applications:**
 - Full App (all features including resume analysis, scenario analysis, Model Hub, and financial tools): https://salaryscope-app.streamlit.app/
@@ -483,6 +483,34 @@ Takes your discretionary income (net minus essentials) and splits it across life
 
 ---
 
+## 11A. HR & Employer Tools
+
+The Full App includes a dedicated **HR & Employer Tools** tab for compensation planning. These tools use the currently selected built-in model as their salary reference engine and are intended for hiring managers, recruiters, and compensation teams.
+
+### 11A.1 Hiring Budget
+
+Estimate total annual payroll cost for an open role by combining the model salary estimate with headcount, benefits percentage, overhead percentage, and one-time recruiting cost assumptions.
+
+### 11A.2 Salary Benchmarking
+
+Generate a benchmarking grid across experience levels for a selected role and location. The resulting table supports editable HR Override, Band Min, Band Max, and Internal Notes columns before export.
+
+### 11A.3 Candidate Comparison
+
+Compare expected salaries for 2 to 5 candidates side by side using the same model and location assumptions. Each candidate can optionally use an internal override instead of the model estimate.
+
+### 11A.4 Offer Checker
+
+Compare a planned offer against the model estimate and view whether the offer falls below, near, or above the predicted range.
+
+### 11A.5 Team Audit
+
+Upload a CSV of current team salaries to compare them with model-derived reference salaries in batch. The audit highlights potentially underpaid and overpaid records using configurable thresholds and supports a global model adjustment percentage.
+
+All HR tools support CSV export, and the tools that show a single-row estimate also support a manual HR override workflow.
+
+---
+
 ## 12. User Account and Profile
 
 ### 12.1 Profile Tab
@@ -651,10 +679,10 @@ No. Manual prediction, batch prediction, scenario analysis, model analytics, and
 Predictions are estimates based on patterns in publicly available historical datasets. They may not reflect current market conditions, company-specific salaries, or regional cost variations. Use predictions as a general reference, not as exact figures. See Section 18 for full disclaimers.
 
 **What is the difference between the Full App and the Lite App?**
-The Lite App is a substantially reduced version of the Full App. It includes Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. It does not include Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, or any of the 11 financial planning tools (currency converter, tax estimator, CoL adjuster, etc.). The split exists to keep the Lite App within Streamlit Cloud free-tier memory limits. Both apps share the same Firebase project so prediction history is shared across them.
+The Lite App is a substantially reduced version of the Full App. It includes Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. It does not include Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, HR Tools, or any of the 11 financial planning tools (currency converter, tax estimator, CoL adjuster, etc.). The split exists to keep the Lite App within Streamlit Cloud free-tier memory limits. Both apps share the same Firebase project so prediction history is shared across them.
 
 **Can I use the Model Hub to deploy my own models?**
-Yes, if you are the admin. You need to train an sklearn-compatible model, save it with joblib, create a columns list, and define a schema.json file. Upload all three as a bundle through the Model Hub admin interface.
+Yes, if you are the admin. You need to train an sklearn-compatible or ONNX-compatible model, prepare the matching columns list, define a `schema.json` file, and optionally attach `aliases.json`, `skills.json`, `job_titles.json`, or `resume_config.json`. Upload the bundle through the Model Hub admin interface.
 
 **Why is the confidence interval only shown for Model 1?**
 Model 1 uses a Random Forest Regressor, and the confidence interval is estimated from the standard deviation of training residuals. Model 2 uses XGBoost with a log-transformed target; the back-transformation makes residual-based interval estimation less straightforward, so it is not shown.

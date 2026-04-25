@@ -1,5 +1,5 @@
 # SalaryScope — Deployment Guide
-**Version:** 1.1.0  
+**Version:** 1.3.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Deployment and Operations Guide
@@ -40,7 +40,7 @@ The application is split into two deployments:
 | App | File | Description |
 |---|---|---|
 | Full App | `app_resume.py` | Includes NLP resume analysis (spaCy + pdfplumber) |
-| Lite App | `app.py` | No resume analysis; lower memory footprint |
+| Lite App | `app-lite.py` | No resume analysis; lower memory footprint |
 
 Both apps share the same Firebase project, Firestore database, and HuggingFace repository.
 
@@ -257,7 +257,7 @@ Model artefacts are downloaded from HuggingFace at startup. For local developmen
 streamlit run app_resume.py
 
 # Lite app (without resume analysis)
-streamlit run app.py
+streamlit run app-lite.py
 ```
 
 The application will be available at `http://localhost:8501`.
@@ -290,7 +290,7 @@ __pycache__/
 1. Go to [share.streamlit.io](https://share.streamlit.io).
 2. Click **New app**.
 3. Connect your GitHub account if not already connected.
-4. Select the repository, branch (`main`), and main file (`app_resume.py` for the full app, `app.py` for the lite app).
+4. Select the repository, branch (`main`), and main file (`app_resume.py` for the full app, `app-lite.py` for the lite app).
 5. Click **Deploy**.
 
 ### 6.3 Configure Secrets in Streamlit Cloud
@@ -526,13 +526,13 @@ The application is deployed as two separate Streamlit Cloud apps from the same G
 
 ### 9.1 Why Two Apps
 
-The lite app (`app.py`) is a substantially stripped-down version of the full app, not just a version without resume analysis. It was built to run comfortably within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, the 11 financial utility modules, and several entire tabs).
+The lite app (`app-lite.py`) is a substantially stripped-down version of the full app, not just a version without resume analysis. It was built to run comfortably within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, the 11 financial utility modules, HR Tools, and several entire tabs).
 
 The full app (`app_resume.py`) requires more RAM due to spaCy's `en_core_web_sm` model, pdfplumber, and the full financial tools chain, and is more appropriate for users who need all features.
 
 ### 9.2 Deploying Both Apps
 
-Repeat the steps in Section 6 twice — once pointing to `app_resume.py` (full app) and once pointing to `app.py` (lite app).
+Repeat the steps in Section 6 twice — once pointing to `app_resume.py` (full app) and once pointing to `app-lite.py` (lite app).
 
 **Secrets for the Lite App:** The lite app does not use HuggingFace at all. `HF_TOKEN` and `HF_REPO_ID` can be omitted from the lite app's Streamlit Cloud secrets. `ADMIN_EMAIL` can also be omitted since there is no Admin Panel. Only `FIREBASE_API_KEY` and `FIREBASE_SERVICE_ACCOUNT` are strictly required for the lite app.
 
@@ -540,12 +540,12 @@ Repeat the steps in Section 6 twice — once pointing to `app_resume.py` (full a
 
 Both apps share:
 - The same Firebase project (Authentication + Firestore)
-- The same model artefacts (downloaded from HuggingFace on the full app; the lite app loads them the same way)
+- The same underlying project data model and prediction-history storage in Firestore
 - The same Firestore collections (`users`, `predictions`) — prediction history made on either app appears in the same Profile tab
 
 ### 9.4 Feature Differences (Full App vs Lite App)
 
-| Feature / Tab | Full App (`app_resume.py`) | Lite App (`app.py`) |
+| Feature / Tab | Full App (`app_resume.py`) | Lite App (`app-lite.py`) |
 |---|---|---|
 | Manual Prediction | ✅ | ✅ |
 | Batch Prediction | ✅ | ✅ |
@@ -556,6 +556,7 @@ Both apps share:
 | Resume Analysis tab | ✅ | ❌ |
 | Scenario Analysis tab | ✅ | ❌ |
 | Model Hub tab | ✅ | ❌ |
+| HR Tools tab | ✅ | ❌ |
 | Admin Panel tab | ✅ | ❌ |
 | Financial tools (11 modules) | ✅ | ❌ |
 | Prediction feedback system | ✅ | ❌ |
@@ -568,7 +569,7 @@ Both apps share:
 | Memory usage | Higher | Significantly lower |
 | Startup time | Slower | Faster |
 
-> **Note on the Lite App About tab:** The lite app renders its About content inline in `app.py` rather than importing `about_tab.py`. The content is a simplified version — it omits resume analysis, scenario analysis, Model Hub, and financial tools from the feature list.
+> **Note on the Lite App About tab:** The lite app renders its About content inline in `app-lite.py` rather than importing `about_tab.py`. The content is a simplified version — it omits resume analysis, scenario analysis, Model Hub, HR Tools, and financial tools from the feature list.
 
 > **Note on text input styling:** The lite app applies CSS styling to `.stTextInput` elements (which is commented out in the full app). This is a minor cosmetic difference with no functional impact.
 

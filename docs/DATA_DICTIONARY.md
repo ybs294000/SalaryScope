@@ -1,5 +1,5 @@
 # SalaryScope — Data Dictionary
-**Version:** 1.1.0  
+**Version:** 1.3.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Data Dictionary
@@ -308,7 +308,7 @@ All artefacts are stored in a private HuggingFace dataset repository (`HF_REPO_I
 
 ## 6. Model Hub Bundle Schema
 
-Each Model Hub bundle is a 3-file package stored in a versioned folder in the HuggingFace repo: `models/{folder_name}/`.
+Each Model Hub bundle is a versioned package stored in the HuggingFace repo at `models/{folder_name}/`.
 
 ### 6.1 Bundle Files
 
@@ -322,6 +322,9 @@ Two bundle formats are supported. The loader detects the format at load time by 
 | `columns.json` | JSON | 10 MB | Yes | JSON array of feature column name strings. No pickle risk. |
 | `schema.json` | JSON | 512 KB | Yes | UI schema defining input fields. |
 | `aliases.json` | JSON | 512 KB | No | Display labels for selectbox model values. |
+| `skills.json` | JSON | 512 KB | No | Optional per-bundle skills lexicon for resume extraction; overrides the global shared lexicon for this bundle only. |
+| `job_titles.json` | JSON | 512 KB | No | Optional per-bundle job title alias map for resume extraction; overrides the global shared lexicon for this bundle only. |
+| `resume_config.json` | JSON | 256 KB | No | Optional per-bundle resume extraction config overriding scoring weights, extractor settings, thresholds, field-name mapping, and preprocessing. |
 
 **Pickle format (legacy):**
 
@@ -331,6 +334,9 @@ Two bundle formats are supported. The loader detects the format at load time by 
 | `columns.pkl` | joblib/pickle | 10 MB | Yes | Ordered list of feature column names (strings). |
 | `schema.json` | JSON | 512 KB | Yes | UI schema defining input fields. |
 | `aliases.json` | JSON | 512 KB | No | Display labels for selectbox model values. |
+| `skills.json` | JSON | 512 KB | No | Optional per-bundle skills lexicon for resume extraction; overrides the global shared lexicon for this bundle only. |
+| `job_titles.json` | JSON | 512 KB | No | Optional per-bundle job title alias map for resume extraction; overrides the global shared lexicon for this bundle only. |
+| `resume_config.json` | JSON | 256 KB | No | Optional per-bundle resume extraction config overriding scoring weights, extractor settings, thresholds, field-name mapping, and preprocessing. |
 
 ### 6.2 Registry Entry (`models_registry.json`)
 
@@ -345,11 +351,14 @@ Two bundle formats are supported. The loader detects the format at load time by 
 | `version` | Integer | Yes | Version number (starts at 1) |
 | `uploaded_at` | String | Yes | ISO-8601 UTC timestamp of upload |
 | `uploaded_by` | String | Yes | Username of the admin who uploaded |
-| `size_bytes` | Integer | Yes | Total size of all 3 files in bytes |
+| `size_bytes` | Integer | Yes | Total size of all uploaded bundle files in bytes |
 | `schema_version` | String | Yes | Schema version, e.g. `"1.0"` |
 | `num_features` | Integer | Yes | Number of columns in `columns.pkl` |
 | `num_inputs` | Integer | Yes | Number of fields in `schema.json["fields"]` |
 | `has_aliases` | Boolean | Yes | True if `aliases.json` was uploaded with the bundle |
+| `has_skills_lexicon` | Boolean | No | True if `skills.json` was uploaded with the bundle |
+| `has_titles_lexicon` | Boolean | No | True if `job_titles.json` was uploaded with the bundle |
+| `has_resume_config` | Boolean | No | True if `resume_config.json` was uploaded with the bundle |
 | `bundle_format` | String | Yes | `"onnx"` or `"pickle"` — recorded at upload time so the loader can detect format without probing HuggingFace |
 | `family_id` | String | No | Optional group ID for rollback/versioning |
 
@@ -365,6 +374,8 @@ Top-level schema keys (all optional):
 |---|---|---|
 | `layout` | Object | Grid layout: `{"columns": N}` where N is 1, 2, or 3. Omitting = single-column (backward compatible with all existing schemas). |
 | `result_label` | String | Label shown on the prediction result card. Overrides the registry target variable name. Omitting = registry target name used. |
+| `plots` | Array | Optional chart declarations rendered automatically in the appropriate Model Hub mode (manual, batch, resume, or scenario). |
+| `scenario_sweep` | Object | Optional sensitivity-sweep configuration used by the Scenario mode. |
 
 Each field object:
 
