@@ -42,15 +42,15 @@ def _resolve_cloud_generation_settings(mode: str, profile: str) -> tuple[float, 
     """
     if profile == "Fast":
         if mode in FAST_CHAT_MODES:
-            return 0.15, 96
-        return 0.2, 140
+            return 0.15, 128
+        return 0.2, 180
     if profile == "Balanced":
         if mode in FAST_CHAT_MODES:
-            return 0.2, 120
-        return 0.25, 180
+            return 0.2, 160
+        return 0.25, 240
     if mode in FAST_CHAT_MODES:
-        return 0.2, 140
-    return 0.3, 220
+        return 0.2, 180
+    return 0.3, 300
 
 
 def _looks_truncated(text: str) -> bool:
@@ -108,7 +108,7 @@ def _continue_cloud_response(
             "model_name": cloud_model,
             "messages": continuation_messages,
             "temperature": min(temperature, 0.2),
-            "num_predict": max(96, min(num_predict, 180)),
+            "num_predict": max(128, min(num_predict, 240)),
             "deployment": deployment_label(),
         }
     )
@@ -199,7 +199,7 @@ def generate_resume_summary(
                 "system_prompt": system_prompt,
                 "user_prompt": user_prompt,
                 "temperature": 0.25,
-                "num_predict": 140,
+                "num_predict": 180,
                 "deployment": deployment_label(),
             }
         )
@@ -214,7 +214,7 @@ def generate_resume_summary(
             ],
             content=content,
             temperature=0.25,
-            num_predict=180,
+            num_predict=220,
         )
         model_used = str(result.get("model", cloud_model))
     return {
@@ -257,7 +257,7 @@ def generate_negotiation_script(
                 "system_prompt": system_prompt,
                 "user_prompt": user_prompt,
                 "temperature": 0.35,
-                "num_predict": 220,
+                "num_predict": 280,
                 "deployment": deployment_label(),
             }
         )
@@ -272,7 +272,7 @@ def generate_negotiation_script(
             ],
             content=content,
             temperature=0.35,
-            num_predict=220,
+            num_predict=280,
         )
         model_used = str(result.get("model", cloud_model))
     return {

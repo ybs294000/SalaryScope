@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 DEFAULT_MODEL_NAME = os.getenv("SPACE_MODEL_NAME", "qwen2.5:0.5b").strip() or "qwen2.5:0.5b"
 MAX_INPUT_CHARS = int(os.getenv("SPACE_MAX_INPUT_CHARS", "5000"))
-MAX_NEW_TOKENS_CAP = int(os.getenv("SPACE_MAX_NEW_TOKENS", "260"))
+MAX_NEW_TOKENS_CAP = int(os.getenv("SPACE_MAX_NEW_TOKENS", "360"))
 
 MODEL_MAP = {
     "qwen2.5:0.5b": "Qwen/Qwen2.5-0.5B-Instruct",
@@ -103,7 +103,7 @@ def _generate_response(payload: dict[str, Any]) -> dict[str, Any]:
 
     prompt_text = _build_prompt(tokenizer, messages)
     inputs = tokenizer(prompt_text, return_tensors="pt", truncation=True)
-    requested_num_predict = int(payload.get("num_predict", 140) or 140)
+    requested_num_predict = int(payload.get("num_predict", 180) or 180)
     max_new_tokens = max(48, min(requested_num_predict, MAX_NEW_TOKENS_CAP))
     temperature = float(payload.get("temperature", 0.2) or 0.2)
 

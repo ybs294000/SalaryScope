@@ -48,6 +48,10 @@ In the Space settings, add a variable:
 
 - `SPACE_MODEL_NAME = qwen2.5:0.5b`
 
+Optional if you want more room for longer drafts:
+
+- `SPACE_MAX_NEW_TOKENS = 360`
+
 Recommended first choice:
 
 - `qwen2.5:0.5b`
@@ -58,6 +62,7 @@ Why:
 - strong instruction-following
 - much better chance of fitting comfortably on a free CPU Space
 - still good for drafting/explaining tasks
+- can handle longer replies a bit more comfortably when `SPACE_MAX_NEW_TOKENS` is raised
 
 Even lighter fallback:
 

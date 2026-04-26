@@ -368,8 +368,8 @@ def render_llm_assistant_tab():
         "Grounded app assistance with persistent chat history, configurable model backends, and PDF export. "
         "The assistant supports SalaryScope outputs and workflows without replacing the ML models."
     )
-    st.warning(
-        "SalaryScope Assistant is AI-generated and can make mistakes. Check important details before relying on them."
+    st.caption(
+        "SalaryScope Assistant is AI and can make mistakes. Check important details before relying on them."
     )
 
     top_a, top_b, top_c = st.columns([2, 1, 1])
