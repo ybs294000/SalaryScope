@@ -359,9 +359,9 @@ def render_llm_assistant_tab():
     if "llm_quick_prompt" not in st.session_state:
         st.session_state.llm_quick_prompt = ""
 
-    st.header(":material/smart_toy: Local AI Assistant")
+    st.header(":material/smart_toy: AI Assistant")
     st.caption(
-        "SQLite-backed chat history, local Ollama inference, grounded app assistance, and PDF export. "
+        "Grounded app assistance with persistent chat history, configurable model backends, and PDF export. "
         "The assistant supports SalaryScope outputs and workflows without replacing the ML models."
     )
 
@@ -424,7 +424,7 @@ def render_llm_assistant_tab():
             index=ASSISTANT_MODES.index(default_mode) if default_mode in ASSISTANT_MODES else 0,
         )
         selected_model = st.selectbox(
-            "Local Model",
+            "Model",
             model_options,
             index=model_options.index(default_model) if default_model in model_options else 0,
         )
@@ -499,7 +499,7 @@ def render_llm_assistant_tab():
 
         if prompt_input:
             if not available:
-                st.error("Local Ollama service is not available. Start Ollama first.")
+                st.error(f"The configured assistant backend is not available right now. Status: {status}")
             else:
                 conversation_id = selected_conv_id
                 if conversation_id is None:
@@ -561,14 +561,14 @@ def render_llm_assistant_tab():
                     st.rerun()
                 except LocalLLMTimeoutError:
                     friendly = (
-                        "The local model took too long to respond. "
+                        "The assistant took too long to respond. "
                         "Try again with `Performance = Fast`, use a shorter prompt, "
-                        "or switch to a smaller local model such as `llama3.2:1b`."
+                        "or switch to a smaller model such as `llama3.2:1b` or `qwen2.5:1.5b`."
                     )
                     st.warning(friendly)
                 except LocalLLMError as exc:
                     st.error(
-                        "The local assistant could not complete this request. "
+                        "The assistant could not complete this request. "
                         f"Details: {exc}"
                     )
 

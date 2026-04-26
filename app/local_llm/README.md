@@ -1,16 +1,16 @@
-# SalaryScope Local LLM Prototype
+# SalaryScope AI Assistant Stack
 
-This folder contains a **local LLM assistant stack** for optional SalaryScope AI
-features such as:
+This folder contains the SalaryScope **AI assistant stack** for optional
+assistant features such as:
 
 - resume summary generation
 - negotiation email / call script generation
 - constrained app chatbot support
-- local SQLite chat history
+- persistent chat history
 - PDF export of replies and conversations
 
-It is intentionally isolated from the original app flow so AI features can be
-developed in the LLM-enabled launcher without affecting `app_resume.py`.
+It is intentionally modular so the assistant can be enabled in selected app
+entrypoints without tightly coupling it to the core prediction logic.
 
 ## Model choice
 

@@ -7,8 +7,8 @@ keeping local Ollama as the local-runtime path.
 
 - Local run: SalaryScope -> Ollama
 - Streamlit Cloud run: SalaryScope -> Hugging Face Space
-- Local chat history: SQLite
-- Cloud logged-in chat history: Hugging Face dataset repo
+- Logged-in user chat history: Hugging Face dataset repo when configured
+- Fallback chat history: SQLite for non-logged-in or non-HF-configured cases
 
 ## Existing Hugging Face setup in this repo
 
