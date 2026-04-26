@@ -13,6 +13,7 @@ DEFAULT_BASE_URL = "http://127.0.0.1:11434"
 SUPPORTED_MODELS = [
     "llama3.2:1b",
     "llama3.2:3b",
+    "qwen2.5:1.5b",
     "qwen2.5:3b",
     "gemma2:2b",
 ]

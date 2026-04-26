@@ -13,6 +13,7 @@ DEFAULT_MODEL_NAME = os.getenv("SPACE_MODEL_NAME", "qwen2.5:3b").strip() or "qwe
 MAX_INPUT_CHARS = int(os.getenv("SPACE_MAX_INPUT_CHARS", "12000"))
 
 MODEL_MAP = {
+    "qwen2.5:1.5b": "Qwen/Qwen2.5-1.5B-Instruct",
     "qwen2.5:3b": "Qwen/Qwen2.5-3B-Instruct",
     "gemma2:2b": "google/gemma-2-2b-it",
     "llama3.2:1b": "meta-llama/Llama-3.2-1B-Instruct",
@@ -33,7 +34,7 @@ def _load_model_bundle() -> tuple[str, Any, Any]:
     tokenizer = AutoTokenizer.from_pretrained(repo_id)
     model = AutoModelForCausalLM.from_pretrained(
         repo_id,
-        torch_dtype=torch.float32,
+        torch_dtype="auto",
         low_cpu_mem_usage=True,
     )
     model.eval()
@@ -129,7 +130,19 @@ def _generate(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def predict(payload: dict[str, Any]) -> dict[str, Any]:
-    return _generate(payload)
+    try:
+        return _generate(payload)
+    except Exception as exc:
+        return {
+            "content": (
+                "The Hugging Face assistant backend could not complete this request. "
+                "Try a smaller model or restart the Space."
+            ),
+            "error": str(exc),
+            "model": _normalize_model_name(DEFAULT_MODEL_NAME),
+            "active_repo": MODEL_MAP[_normalize_model_name(DEFAULT_MODEL_NAME)],
+            "task": str(payload.get("task", "assistant_chat")) if isinstance(payload, dict) else "assistant_chat",
+        }
 
 
 with gr.Blocks(title="SalaryScope HF Space Assistant") as demo:

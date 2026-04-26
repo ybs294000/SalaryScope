@@ -132,6 +132,10 @@ class HFSpaceClient:
             result = last_data
 
         if isinstance(result, dict):
+            if result.get("error"):
+                raise LocalLLMError(
+                    f"HF Space backend error: {result.get('error')}"
+                )
             return result
         if isinstance(result, str):
             return {"content": result}
