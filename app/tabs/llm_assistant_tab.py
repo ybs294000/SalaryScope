@@ -56,6 +56,8 @@ QUICK_PROMPTS = {
     "Prediction Companion": [
         "Explain the latest prediction in simple terms without changing the estimate.",
         "What does the salary range or context shown by the app mean?",
+        "Give me cautious negotiation tips based on the latest prediction.",
+        "What kind of job titles are close to this role, and how should I describe them carefully?",
     ],
     "Negotiation Assistant": [
         "Draft a polite salary negotiation email based on the latest SalaryScope estimate.",
@@ -366,6 +368,9 @@ def render_llm_assistant_tab():
         "Grounded app assistance with persistent chat history, configurable model backends, and PDF export. "
         "The assistant supports SalaryScope outputs and workflows without replacing the ML models."
     )
+    st.warning(
+        "SalaryScope Assistant is AI-generated and can make mistakes. Check important details before relying on them."
+    )
 
     top_a, top_b, top_c = st.columns([2, 1, 1])
     with top_a:
@@ -379,7 +384,7 @@ def render_llm_assistant_tab():
         st.metric("Chat Owner", username)
 
     st.info(
-        "Use the assistant for app help, explanation, drafting, and report-ready writing based on the current SalaryScope workflow."
+        "Use the assistant for app help, explanation, drafting, negotiation tips, job-title clarification, and careful recommendations based on the current SalaryScope workflow."
     )
 
     contexts = _build_available_contexts()
@@ -507,6 +512,22 @@ def render_llm_assistant_tab():
         _render_chat_history(active_messages)
 
         prompt_input = st.chat_input("Ask SalaryScope AI Assistant")
+        with st.expander("Need a longer prompt?", expanded=False):
+            st.caption(
+                "Use this for multi-part questions, longer drafting requests, or when you want the assistant to respond in more detail."
+            )
+            composed_prompt = st.text_area(
+                "Long prompt composer",
+                key="llm_long_prompt",
+                height=140,
+                placeholder=(
+                    "Example: Give me a negotiation email, three talking points, and two cautious career options "
+                    "based on the latest prediction and current role context."
+                ),
+            )
+            send_long_prompt = st.button("Send Long Prompt", key="llm_send_long_prompt", width="stretch")
+        if send_long_prompt and composed_prompt.strip():
+            prompt_input = composed_prompt.strip()
         if st.session_state.llm_quick_prompt:
             prompt_input = st.session_state.llm_quick_prompt
             st.session_state.llm_quick_prompt = ""

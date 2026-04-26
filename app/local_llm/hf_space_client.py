@@ -29,7 +29,7 @@ def _get_secret(name: str, default: str = "") -> str:
 HF_SPACE_URL = _get_secret("HF_SPACE_URL", "").rstrip("/")
 HF_SPACE_API_NAME = _get_secret("HF_SPACE_API_NAME", "/predict")
 HF_SPACE_TOKEN = _get_secret("HF_SPACE_TOKEN", "") or _get_secret("HF_TOKEN", "")
-HF_SPACE_TIMEOUT = int(_get_secret("HF_SPACE_TIMEOUT", "120") or "120")
+HF_SPACE_TIMEOUT = int(_get_secret("HF_SPACE_TIMEOUT", "180") or "180")
 HF_SPACE_POLL_INTERVAL = float(_get_secret("HF_SPACE_POLL_INTERVAL", "1.5") or "1.5")
 
 

@@ -39,6 +39,7 @@ The local assistant is best used for:
 - negotiation drafts grounded in the displayed estimate
 - resume summary drafting from extracted resume content
 - short report-ready narrative based on structured app results
+- general negotiation tips, job-title clarification, and cautious career suggestions when clearly labeled as guidance rather than prediction
 """.strip()
 
 
@@ -48,7 +49,8 @@ MODE_HELP = {
         "Do not invent features that are not present."
     ),
     "Prediction Companion": (
-        "Explain the current prediction in plain English without contradicting the estimate."
+        "Explain the current prediction in plain English without contradicting the estimate. "
+        "You can also answer adjacent questions such as negotiation tips, role framing, or careful next-step suggestions."
     ),
     "Negotiation Assistant": (
         "Draft negotiation messages that reference the displayed prediction as a discussion aid."

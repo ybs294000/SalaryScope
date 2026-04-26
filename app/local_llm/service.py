@@ -64,6 +64,58 @@ def _looks_truncated(text: str) -> bool:
     return cleaned[-1] not in {".", "!", "?", "\""}
 
 
+def _merge_continuation_text(initial: str, continuation: str) -> str:
+    left = str(initial or "").rstrip()
+    right = str(continuation or "").lstrip()
+    if not left:
+        return right
+    if not right:
+        return left
+    if right[:40] and right[:40] in left:
+        return left
+    joiner = "" if left.endswith(("-", "/")) else " "
+    return f"{left}{joiner}{right}".strip()
+
+
+def _continue_cloud_response(
+    *,
+    mode: str,
+    cloud_model: str,
+    system_prompt: str,
+    messages: list[dict],
+    content: str,
+    temperature: float,
+    num_predict: int,
+) -> str:
+    if not _looks_truncated(content):
+        return content
+
+    continuation_messages = list(messages)
+    continuation_messages.append({"role": "assistant", "content": content})
+    continuation_messages.append(
+        {
+            "role": "user",
+            "content": (
+                "Continue exactly from where you stopped. Return only the remaining text, "
+                "avoid repeating earlier lines, and finish with a complete final sentence."
+            ),
+        }
+    )
+    continuation_result = _space_client().predict(
+        {
+            "task": "assistant_chat",
+            "mode": mode,
+            "model_name": cloud_model,
+            "messages": continuation_messages,
+            "temperature": min(temperature, 0.2),
+            "num_predict": max(96, min(num_predict, 180)),
+            "deployment": deployment_label(),
+        }
+    )
+    continuation = str(continuation_result.get("content", "")).strip()
+    return _merge_continuation_text(content, continuation) if continuation else content
+
+
 def _client_for(model_name: str | None = None) -> OllamaLocalClient:
     config = LocalLLMConfig.from_env()
     if model_name:
@@ -152,38 +204,18 @@ def generate_resume_summary(
             }
         )
         content = str(result.get("content", "")).strip()
-        if mode in DRAFT_HEAVIER_MODES and _looks_truncated(content):
-            retry_messages = [{"role": "system", "content": system_prompt}]
-            retry_messages.append(
-                {
-                    "role": "user",
-                    "content": (
-                        build_chat_user_prompt(
-                            user_message=user_message,
-                            context_note=context_note,
-                        )
-                        + "\n\nExtra instruction: rewrite the answer more compactly so it finishes cleanly. "
-                          "If drafting an email, keep it under 120 words and include a short closing."
-                    ),
-                }
-            )
-            retry_result = _space_client().predict(
-                {
-                    "task": "assistant_chat",
-                    "mode": mode,
-                    "model_name": cloud_model,
-                    "tone": tone,
-                    "performance_profile": "Fast",
-                    "context_note": context_note,
-                    "messages": retry_messages,
-                    "temperature": min(temperature, 0.2),
-                    "num_predict": min(max(num_predict, 160), 200),
-                    "deployment": deployment_label(),
-                }
-            )
-            retry_content = str(retry_result.get("content", "")).strip()
-            if retry_content:
-                content = retry_content
+        content = _continue_cloud_response(
+            mode="Resume Assistant",
+            cloud_model=cloud_model,
+            system_prompt=system_prompt,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            content=content,
+            temperature=0.25,
+            num_predict=180,
+        )
         model_used = str(result.get("model", cloud_model))
     return {
         "mode": "Resume Assistant",
@@ -225,11 +257,23 @@ def generate_negotiation_script(
                 "system_prompt": system_prompt,
                 "user_prompt": user_prompt,
                 "temperature": 0.35,
-                "num_predict": 160,
+                "num_predict": 220,
                 "deployment": deployment_label(),
             }
         )
         content = str(result.get("content", "")).strip()
+        content = _continue_cloud_response(
+            mode="Negotiation Assistant",
+            cloud_model=cloud_model,
+            system_prompt=system_prompt,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            content=content,
+            temperature=0.35,
+            num_predict=220,
+        )
         model_used = str(result.get("model", cloud_model))
     return {
         "mode": "Negotiation Assistant",
@@ -333,6 +377,15 @@ def generate_assistant_reply(
             }
         )
         content = str(result.get("content", "")).strip()
+        content = _continue_cloud_response(
+            mode=mode,
+            cloud_model=cloud_model,
+            system_prompt=system_prompt,
+            messages=messages,
+            content=content,
+            temperature=temperature,
+            num_predict=num_predict,
+        )
         model_used = str(result.get("model", cloud_model))
     return {
         "mode": mode,
