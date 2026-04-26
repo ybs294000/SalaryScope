@@ -105,6 +105,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Per-bundle resume config: Model Hub models can supply a `resume_config.json` that overrides extraction scoring weights, extractor keyword lists, experience thresholds, and field-name mappings for that specific model, without changing any code
 - HR & Employer Tools: five compensation planning tools for hiring managers and HR teams (Hiring Budget Estimator, Salary Benchmarking Table, Candidate Comparison, Offer Competitiveness Checker, Team Compensation Audit) with per-tool HR overrides and CSV exports
 - Shareable salary prediction card: download a 1200x630 PNG card showing predicted salary, role, salary band, career stage, monthly/hourly breakdown, and tagline — available after every Manual and Resume prediction
+- Multilingual resume support: automatic language detection (English, German, French, Spanish, Portuguese) with calibrated extraction warnings; multilingual experience year and education level patterns extend the extraction engine without code changes
 - AI Assistant tab (full app): chat-style assistant for app help, prediction explanation, negotiation drafting, report-ready writing, and cautious career or role guidance; uses local Ollama when running locally and a Hugging Face Space on Streamlit Cloud
 
 ---
@@ -195,6 +196,12 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Supports both Model 1 and Model 2 pipelines, and all Model Hub models
 - Optional currency conversion for predicted salary output
 - Shareable salary card available after prediction
+- Automatic resume language detection using `langdetect`; supported languages: English, German, French, Spanish, Portuguese
+- A language badge is shown in the extraction quality panel: green for English, amber with a calibrated note for supported non-English languages, red for unsupported languages
+- Multilingual experience year patterns cover German (`Jahre Berufserfahrung`), French (`ans d'expérience`), Spanish (`años de experiencia`), and Portuguese (`anos de experiência`)
+- Multilingual education level patterns cover German (Abitur, Masterarbeit, Doktorat), French (Baccalauréat, Licence, Doctorat), Spanish (Bachillerato, Licenciatura, Doctorado), and Portuguese (Ensino Médio, Graduação, Doutorado)
+- Skill and job title extraction remains English-based and works correctly for tech resumes in all supported languages since technical terms appear in English universally
+- Language detection and multilingual patterns apply to both built-in models and all Model Hub resume extraction modes
 
 ### Batch Prediction
 - Upload files in CSV, XLSX, JSON, or SQL format
@@ -752,7 +759,8 @@ salaryscope/
 │   │   ├── rate_limiter.py              # Two-layer brute-force protection (session + Firestore)
 │   │   ├── account_management.py        # Account actions (change password, delete account)
 │   │   ├── insights_engine.py           # Domain detection, market comparison, recommendations
-│   │   └── resume_analysis.py           # Resume parsing (spaCy, regex, feature extraction)
+│   │   ├── resume_analysis.py           # Resume parsing (spaCy, regex, multilingual patterns, feature extraction)
+│   │   └── resume_lang.py               # Resume language detection and extraction warning badge (langdetect)
 │   │
 │   ├── model_hub/                       # Model Hub package
 │   │   ├── __init__.py
@@ -775,7 +783,7 @@ salaryscope/
 │   │       └── lexicons/                # Shared global extraction lexicons (JSON, extensible)
 │   │           ├── skills.json          # 450+ skills across 20+ categories
 │   │           ├── job_titles.json      # 50+ canonical titles with alias lists
-│   │           ├── education.json       # Education level regex patterns
+│   │           ├── education.json       # Education level regex patterns (English + German, French, Spanish, Portuguese)
 │   │           └── countries.json       # Country aliases -> display names and ISO-2 codes
 │   │
 │   ├── local_llm/                       # AI Assistant backend helpers
@@ -1113,6 +1121,7 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 | NLP | spaCy, Regex, PhraseMatcher |
 | Country Resolution | Babel (Unicode CLDR territory data) |
 | ONNX Runtime | onnxruntime (model inference for Model Hub), skl2onnx (sklearn-to-ONNX conversion) |
+| Language Detection | langdetect (statistical resume language identification) |
 | Image Generation | Pillow (salary card PNG generation) |
 | API Integration | ExchangeRate API (open.er-api.com) |
 
@@ -1225,6 +1234,8 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Loan affordability calculations use standard EMI formulas and typical lender norms, but actual loan eligibility depends on credit profile and bank policies.
 - Model Hub pickle bundles (model.pkl) are deserialized using joblib. Only upload pickle files from sources you control entirely. ONNX bundles (model.onnx) do not carry this risk.
 - Model Hub predictions are only as reliable as the model and data used during training — the system does not validate model quality.
+- Multilingual resume support covers experience year and education level extraction in German, French, Spanish, and Portuguese. Skill and job title extraction remains English-based. Resumes in unsupported languages will trigger a warning and extraction accuracy will be significantly reduced.
+- Language detection uses statistical frequency analysis and may misidentify very short or mixed-language resume texts. A minimum confidence threshold is applied; texts below the threshold are treated as unknown rather than producing a false label.
 - The AI Assistant is a supporting layer for explanation and drafting, not the source of salary prediction. It can make mistakes or produce incomplete wording and should be reviewed before use.
 - On Streamlit Cloud, the AI Assistant depends on a free Hugging Face Space backend, so response speed and availability may vary more than the rest of the application.
 - Rich Markdown-to-PDF export for AI Assistant outputs is optional. If `md2pdf` and its WeasyPrint requirements are unavailable, the app automatically falls back to the built-in ReportLab export path.
@@ -1241,7 +1252,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Integrate detailed tax systems with deductions, exemptions, and region-specific regulations for improved take-home accuracy.
 - Extend ONNX support in the Model Hub to additional model architectures beyond sklearn-compatible estimators (e.g. PyTorch, TensorFlow via tf2onnx).
 - Add education and country pattern lexicons as optional per-bundle sidecars (currently skills, job titles, and extraction config are per-bundle overridable; education patterns and country aliases still use only global lexicons).
-- Expose the spaCy model version as a configurable parameter in the extraction engine to support multilingual resume parsing.
+- Extend multilingual resume support beyond the current five languages (English, German, French, Spanish, Portuguese) by adding experience and education patterns for additional languages; consider loading language-specific spaCy models for NER-based field extraction in non-English resumes.
 - Allow `resume_config.json` to declare custom extractor functions by reference (plugin pattern) so model owners can add entirely new field extractors without forking the engine.
 - Add city-level cost-of-living data to improve the granularity of COL adjustments beyond country averages.
 - Implement real-time salary market data integration for more current predictions.
@@ -1291,6 +1302,7 @@ Detailed project documentation is available in the `docs/` directory:
 - Pandas Documentation — https://pandas.pydata.org/docs/
 - NumPy Documentation — https://numpy.org/doc/
 - Plotly Documentation — https://plotly.com/python/
+- langdetect — https://pypi.org/project/langdetect/
 - ExchangeRate API — https://www.exchangerate-api.com/docs/overview
 - Kaggle — Salary by Job Title and Country — https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country
 - Kaggle — Data Science Salaries 2023 — https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023
