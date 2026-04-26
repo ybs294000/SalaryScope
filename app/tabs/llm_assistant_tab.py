@@ -633,5 +633,6 @@ def render_llm_assistant_tab():
 
         st.caption(
             "The assistant uses recent chat turns plus the selected app context. "
-            "Storage location depends on runtime: local SQLite for local runs, and Hugging Face-backed history for logged-in cloud use when configured."
+            "When Hugging Face chat storage is configured, logged-in users get separate persistent history there. "
+            "Otherwise the assistant falls back to local SQLite."
         )

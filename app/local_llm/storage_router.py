@@ -1,16 +1,17 @@
 """
-Storage router: local SQLite when local, HF dataset repo for logged-in cloud users.
+Storage router:
+- logged-in users -> HF dataset-backed history when configured
+- everyone else   -> local SQLite fallback
 """
 
 from __future__ import annotations
 
-from .deployment import is_local_runtime
 from . import storage as sqlite_store
 from . import hf_chat_store as hf_store
 
 
 def _use_hf(username: str) -> bool:
-    return (not is_local_runtime()) and username != "local_anonymous" and hf_store.is_configured()
+    return username != "local_anonymous" and hf_store.is_configured()
 
 
 def init_chat_storage() -> None:
