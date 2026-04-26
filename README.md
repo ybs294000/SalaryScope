@@ -778,9 +778,22 @@ salaryscope/
 │   │           ├── education.json       # Education level regex patterns
 │   │           └── countries.json       # Country aliases -> display names and ISO-2 codes
 │   │
+│   ├── local_llm/                       # AI Assistant backend helpers
+│   │   ├── client.py                    # Local Ollama client
+│   │   ├── service.py                   # Assistant generation and backend routing
+│   │   ├── hf_space_client.py           # Hugging Face Space API client
+│   │   ├── hf_chat_store.py             # Hugging Face dataset-backed chat history
+│   │   ├── storage.py                   # Local SQLite chat storage
+│   │   ├── storage_router.py            # Logged-in vs local storage routing
+│   │   ├── prompts.py                   # Assistant prompt builders and guardrails
+│   │   ├── knowledge.py                 # App grounding text for assistant replies
+│   │   ├── exporters.py                 # AI reply and conversation PDF export
+│   │   └── README.md                    # Local assistant notes
+│   │
 │   ├── tabs/
 │   │   ├── manual_prediction_tab.py     # Manual Prediction
 │   │   ├── resume_analysis_tab.py       # Resume Prediction (full app only)
+│   │   ├── llm_assistant_tab.py         # AI Assistant (full app only)
 │   │   ├── batch_prediction_tab.py      # Batch Prediction
 │   │   ├── scenario_analysis_tab.py     # Scenario Analysis (full app only)
 │   │   ├── model_analytics_tab.py       # Model Analytics
@@ -864,6 +877,10 @@ salaryscope/
 ├── requirements.txt
 ├── CHANGELOG.md
 ├── LICENSE
+├── hf_space_app/                        # Hugging Face Space app for cloud AI Assistant inference
+│   ├── app.py                           # Space entrypoint
+│   ├── requirements.txt                 # Space-specific dependencies
+│   └── README.md                        # Space metadata and usage notes
 └── README.md
 ```
 
@@ -877,6 +894,7 @@ salaryscope/
 * The project may work on lower Python versions, but it has been developed and tested using Python 3.13.
 * A Firebase project with Firestore enabled
 * A HuggingFace dataset repo (required only if using the Model Hub)
+* Ollama (optional, only if using the AI Assistant locally)
 
 
 ### Steps
@@ -1035,6 +1053,14 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 - Go to the **Upload Bundle** tab, fill in model card metadata, select ONNX or Pickle format, optionally attach aliases.json, custom lexicons (skills.json, job_titles.json), and a resume_config.json, and upload
 - Use the **Registry Manager** to activate, deactivate, or roll back models
 - Use the **Schema Editor** to build or validate a schema.json visually, including plots and scenario_sweep configuration; use the **Upload / Validate** sub-tab to push a replacement schema.json, aliases.json, or resume_config.json to an existing bundle
+
+### AI Assistant
+1. Open the **AI Assistant** tab in the full app
+2. On Streamlit Cloud, sign in first before using it; local development can use it without login
+3. Choose an assistant mode such as **App Help**, **Prediction Companion**, **Negotiation Assistant**, **Resume Assistant**, or **Report Writer**
+4. Select the most relevant context, or keep the general app context if you want broader help
+5. Type your question in the chat box or use the long prompt composer for multi-part requests
+6. Use the PDF buttons to export the conversation or the latest assistant reply if needed
 
 ### Model Analytics
 - Navigate to the **Model Analytics** tab to view full model diagnostics, comparison charts, and download the analytics PDF report
