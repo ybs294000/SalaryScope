@@ -20,7 +20,7 @@
     <img src="https://img.shields.io/badge/Model%20Storage-HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=white&labelColor=2D3748" alt="Model Storage: HuggingFace" />
   </a>
   <a>
-    <img src="https://img.shields.io/badge/AI%20Assistant-Ollama%20%7C%20HF%20Space-10B981?style=for-the-badge&labelColor=2D3748" alt="AI Assistant: Ollama and Hugging Face Space" />
+    <img src="https://img.shields.io/badge/AI%20Assistant-Ollama%20%7C%20HF%20Space-10B981?style=for-the-badge&logo=ollama&logoColor=white&labelColor=2D3748" alt="AI Assistant: Ollama and Hugging Face Space" />
   </a>
   <a>
     <img src="https://img.shields.io/badge/version-1.4.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.4.0" />
@@ -1197,6 +1197,8 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Loan affordability calculations use standard EMI formulas and typical lender norms, but actual loan eligibility depends on credit profile and bank policies.
 - Model Hub pickle bundles (model.pkl) are deserialized using joblib. Only upload pickle files from sources you control entirely. ONNX bundles (model.onnx) do not carry this risk.
 - Model Hub predictions are only as reliable as the model and data used during training — the system does not validate model quality.
+- The AI Assistant is a supporting layer for explanation and drafting, not the source of salary prediction. It can make mistakes or produce incomplete wording and should be reviewed before use.
+- On Streamlit Cloud, the AI Assistant depends on a free Hugging Face Space backend, so response speed and availability may vary more than the rest of the application.
 
 ---
 
@@ -1218,6 +1220,8 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Expand HR Tools with job-market demand data integration (live posting counts via a public API) to complement model-based salary estimates with demand signals.
 - Add city-level cost-of-living support to the HR Team Audit so compensation gaps can be assessed at city granularity, not just country level.
 - Expose HR Tools benchmarking grid as a downloadable formatted PDF report consistent with the existing ReportLab report system.
+- Improve the AI Assistant with stronger grounding, richer report export workflows, and more polished contextual actions inside prediction and resume tabs.
+- Explore more efficient cloud-friendly open models or alternative hosting strategies to improve AI Assistant latency and stability on free-tier deployments.
 
 ---
 
