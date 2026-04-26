@@ -4,6 +4,7 @@ from datetime import datetime
 
 import streamlit as st
 
+from app.core.auth import get_logged_in_user
 from app.local_llm.client import LocalLLMError, LocalLLMTimeoutError
 from app.local_llm.config import LocalLLMConfig
 from app.local_llm.exporters import export_conversation_pdf, export_message_pdf
@@ -82,8 +83,10 @@ def _format_salary(amount) -> str:
 
 
 def _current_username() -> str:
-    username = st.session_state.get("username")
-    return username if username else "local_anonymous"
+    username = get_logged_in_user()
+    if username:
+        return username
+    return "local_anonymous"
 
 
 def _conversation_label(item: dict) -> str:
@@ -349,19 +352,10 @@ def _render_chat_history(messages: list[dict]) -> None:
 
 
 def render_llm_assistant_tab():
-    init_chat_storage()
-
-    username = _current_username()
-    config = LocalLLMConfig.from_env()
     local_runtime = is_local_runtime()
-    available, status = _cached_llm_status()
-    model_options = _cached_model_options() if available else [config.model]
-    backend_label = get_backend_label()
-
-    if "llm_active_conversation_id" not in st.session_state:
-        st.session_state.llm_active_conversation_id = None
-    if "llm_quick_prompt" not in st.session_state:
-        st.session_state.llm_quick_prompt = ""
+    username = _current_username()
+    is_authenticated = username != "local_anonymous"
+    config = LocalLLMConfig.from_env()
 
     st.header(":material/smart_toy: AI Assistant")
     st.caption(
@@ -371,6 +365,26 @@ def render_llm_assistant_tab():
     st.caption(
         "SalaryScope Assistant is AI and can make mistakes. Check important details before relying on them."
     )
+
+    if not local_runtime and not is_authenticated:
+        st.info(
+            "Sign in to use the AI Assistant on Streamlit Cloud. Anonymous AI chat is disabled there so conversations can be tied to a real user account."
+        )
+        st.caption(
+            "Local runs can still use the assistant without login for testing, but cloud usage requires authentication."
+        )
+        return
+
+    init_chat_storage()
+
+    available, status = _cached_llm_status()
+    model_options = _cached_model_options() if available else [config.model]
+    backend_label = get_backend_label()
+
+    if "llm_active_conversation_id" not in st.session_state:
+        st.session_state.llm_active_conversation_id = None
+    if "llm_quick_prompt" not in st.session_state:
+        st.session_state.llm_quick_prompt = ""
 
     top_a, top_b, top_c = st.columns([2, 1, 1])
     with top_a:
