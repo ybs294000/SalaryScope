@@ -1060,7 +1060,9 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 3. Choose an assistant mode such as **App Help**, **Prediction Companion**, **Negotiation Assistant**, **Resume Assistant**, or **Report Writer**
 4. Select the most relevant context, or keep the general app context if you want broader help
 5. Type your question in the chat box or use the long prompt composer for multi-part requests
-6. Use the PDF buttons to export the conversation or the latest assistant reply if needed
+6. Use the PDF or Markdown export buttons to save the conversation or the latest assistant reply if needed
+
+> Note: AI Assistant PDF export uses a fallback-safe approach. By default it works with the built-in ReportLab path. If the optional `md2pdf` + WeasyPrint stack is installed and available, the app prefers direct Markdown-to-PDF conversion for richer formatting.
 
 ### Model Analytics
 - Navigate to the **Model Analytics** tab to view full model diagnostics, comparison charts, and download the analytics PDF report
@@ -1100,7 +1102,7 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 | Explainability | SHAP |
 | Association Mining | MLxtend (Apriori) |
 | Visualisation | Plotly, Matplotlib |
-| PDF Generation | ReportLab |
+| PDF Generation | ReportLab, optional md2pdf/WeasyPrint path for AI Assistant exports |
 | Authentication | Firebase Authentication |
 | Database | Firebase Firestore, Firebase Admin SDK |
 | Model Storage | HuggingFace Dataset Repo (via huggingface_hub SDK) |
@@ -1225,6 +1227,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Model Hub predictions are only as reliable as the model and data used during training — the system does not validate model quality.
 - The AI Assistant is a supporting layer for explanation and drafting, not the source of salary prediction. It can make mistakes or produce incomplete wording and should be reviewed before use.
 - On Streamlit Cloud, the AI Assistant depends on a free Hugging Face Space backend, so response speed and availability may vary more than the rest of the application.
+- Rich Markdown-to-PDF export for AI Assistant outputs is optional. If `md2pdf` and its WeasyPrint requirements are unavailable, the app automatically falls back to the built-in ReportLab export path.
 
 ---
 
@@ -1247,6 +1250,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Add city-level cost-of-living support to the HR Team Audit so compensation gaps can be assessed at city granularity, not just country level.
 - Expose HR Tools benchmarking grid as a downloadable formatted PDF report consistent with the existing ReportLab report system.
 - Improve the AI Assistant with stronger grounding, richer report export workflows, and more polished contextual actions inside prediction and resume tabs.
+- Improve AI Assistant export styling further, including richer Markdown-to-PDF theming when optional document-rendering dependencies are available.
 - Explore more efficient cloud-friendly open models or alternative hosting strategies to improve AI Assistant latency and stability on free-tier deployments.
 
 ---
@@ -1280,6 +1284,8 @@ Detailed project documentation is available in the `docs/` directory:
 - HuggingFace Hub Documentation — https://huggingface.co/docs/huggingface_hub
 - Hugging Face Spaces Documentation — https://huggingface.co/docs/hub/en/spaces-overview
 - Ollama Documentation — https://ollama.com/
+- md2pdf — https://pypi.org/project/md2pdf/
+- WeasyPrint Documentation — https://doc.courtbouillon.org/weasyprint/
 - Firebase Documentation — https://firebase.google.com/docs
 - spaCy Documentation — https://spacy.io/usage
 - Pandas Documentation — https://pandas.pydata.org/docs/

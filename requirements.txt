@@ -30,6 +30,10 @@ onnxruntime
 skl2onnx
 pillow
 langdetect
+markdown-it-py
+# Optional richer Markdown -> PDF export path for the AI Assistant:
+# md2pdf
+# WeasyPrint may require additional system libraries depending on the environment.
 
 # Note:
 # The Streamlit app uses the local/cloud AI assistant through existing app deps.

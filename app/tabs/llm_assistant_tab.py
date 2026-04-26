@@ -7,7 +7,12 @@ import streamlit as st
 from app.core.auth import get_logged_in_user
 from app.local_llm.client import LocalLLMError, LocalLLMTimeoutError
 from app.local_llm.config import LocalLLMConfig
-from app.local_llm.exporters import export_conversation_pdf, export_message_pdf
+from app.local_llm.exporters import (
+    export_conversation_markdown,
+    export_conversation_pdf,
+    export_message_markdown,
+    export_message_pdf,
+)
 from app.local_llm.knowledge import APP_HELP_TEXT
 from app.local_llm.service import (
     get_backend_label,
@@ -143,6 +148,20 @@ def _cached_conversation_pdf(title: str, subtitle: str, messages: tuple[tuple, .
 @st.cache_data(show_spinner=False)
 def _cached_reply_pdf(title: str, subtitle: str, content: str) -> bytes:
     return export_message_pdf(title=title, subtitle=subtitle, content=content)
+
+
+@st.cache_data(show_spinner=False)
+def _cached_conversation_markdown(title: str, subtitle: str, full_messages: tuple[tuple[str, str, str], ...]) -> bytes:
+    materialized = [
+        {"role": role, "created_at": created_at, "content": content}
+        for role, created_at, content in full_messages
+    ]
+    return export_conversation_markdown(title=title, subtitle=subtitle, messages=materialized)
+
+
+@st.cache_data(show_spinner=False)
+def _cached_reply_markdown(title: str, subtitle: str, content: str) -> bytes:
+    return export_message_markdown(title=title, subtitle=subtitle, content=content)
 
 
 def _get_manual_prediction_context() -> dict | None:
@@ -420,7 +439,7 @@ def render_llm_assistant_tab():
 
     st.subheader("Assistant Controls")
 
-    control_row = st.columns([1.3, 1, 1, 1], gap="medium")
+    control_row = st.columns(4, gap="medium")
     with control_row[0]:
         selected_label = st.selectbox(
             "Conversation",
@@ -458,7 +477,6 @@ def render_llm_assistant_tab():
                 [deployed_model],
                 index=0,
                 disabled=True,
-                help="The free Hugging Face Space runs one deployed model at a time.",
             )
     with control_row[3]:
         tone = st.selectbox(
@@ -467,7 +485,7 @@ def render_llm_assistant_tab():
             index=ASSISTANT_TONES.index(default_tone) if default_tone in ASSISTANT_TONES else 0,
         )
 
-    control_row_b = st.columns([1.4, 1, 0.8, 0.8], gap="medium")
+    control_row_b = st.columns(4, gap="medium")
     with control_row_b[0]:
         context_keys = list(contexts.keys())
         preferred_context = "General App Context"
@@ -491,7 +509,6 @@ def render_llm_assistant_tab():
             "Performance",
             PERFORMANCE_PROFILES,
             index=PERFORMANCE_PROFILES.index(default_profile) if default_profile in PERFORMANCE_PROFILES else 1,
-            help="Fast keeps replies shorter and usually responds quicker on local hardware.",
         )
     with control_row_b[2]:
         if st.button("New Chat", width="stretch", key="llm_new_chat"):
@@ -505,6 +522,10 @@ def render_llm_assistant_tab():
             st.rerun()
 
     st.session_state.llm_performance_profile = performance_profile
+    st.caption(
+        "Use Fast for quicker replies, Balanced for normal use, and Detailed for longer drafting. "
+        "On Streamlit Cloud, the assistant uses one deployed Hugging Face Space model at a time."
+    )
 
     context_payload, context_note = _derive_context_for_mode(mode, contexts[context_label])
 
@@ -642,27 +663,50 @@ def render_llm_assistant_tab():
                 f"{refreshed_convo['mode']} · {refreshed_convo.get('model_name', config.model)} · "
                 f"{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
             )
+            message_tuples = tuple(
+                (str(m.get("role", "")), str(m.get("created_at", "")), str(m.get("content", "")))
+                for m in refreshed_messages
+            )
             convo_pdf = _cached_conversation_pdf(
                 title=refreshed_convo["title"],
                 subtitle=subtitle,
                 messages=_messages_signature(refreshed_messages),
-                full_messages=tuple(
-                    (str(m.get("role", "")), str(m.get("created_at", "")), str(m.get("content", "")))
-                    for m in refreshed_messages
-                ),
+                full_messages=message_tuples,
+            )
+            convo_markdown = _cached_conversation_markdown(
+                title=refreshed_convo["title"],
+                subtitle=subtitle,
+                full_messages=message_tuples,
             )
             file_name = f"salaryscope_ai_chat_{refreshed_convo['id']}.pdf"
-            clicked = st.download_button(
-                "Download Conversation PDF",
-                data=convo_pdf,
-                file_name=file_name,
-                mime="application/pdf",
-                width="stretch",
-            )
-            if clicked:
-                record_export(username, refreshed_convo["id"], export_type="conversation_pdf", file_name=file_name)
+            md_file_name = f"salaryscope_ai_chat_{refreshed_convo['id']}.md"
+            convo_dl_col1, convo_dl_col2 = st.columns(2)
+            with convo_dl_col1:
+                clicked = st.download_button(
+                    "Download Conversation PDF",
+                    data=convo_pdf,
+                    file_name=file_name,
+                    mime="application/pdf",
+                    width="stretch",
+                )
+                if clicked:
+                    record_export(username, refreshed_convo["id"], export_type="conversation_pdf", file_name=file_name)
+            with convo_dl_col2:
+                clicked_md = st.download_button(
+                    "Download Conversation Markdown",
+                    data=convo_markdown,
+                    file_name=md_file_name,
+                    mime="text/markdown",
+                    width="stretch",
+                )
+                if clicked_md:
+                    record_export(username, refreshed_convo["id"], export_type="conversation_markdown", file_name=md_file_name)
         else:
-            st.button("Download Conversation PDF", width="stretch", disabled=True)
+            convo_dl_col1, convo_dl_col2 = st.columns(2)
+            with convo_dl_col1:
+                st.button("Download Conversation PDF", width="stretch", disabled=True)
+            with convo_dl_col2:
+                st.button("Download Conversation Markdown", width="stretch", disabled=True)
 
     with export_col2:
         last_assistant = None
@@ -676,18 +720,40 @@ def render_llm_assistant_tab():
                 subtitle=f"{refreshed_convo['mode']} · Last assistant reply",
                 content=last_assistant["content"],
             )
-            message_file = f"salaryscope_ai_reply_{refreshed_convo['id']}.pdf"
-            clicked = st.download_button(
-                "Download Last Reply PDF",
-                data=single_pdf,
-                file_name=message_file,
-                mime="application/pdf",
-                width="stretch",
+            single_markdown = _cached_reply_markdown(
+                title=refreshed_convo["title"],
+                subtitle=f"{refreshed_convo['mode']} · Last assistant reply",
+                content=last_assistant["content"],
             )
-            if clicked:
-                record_export(username, refreshed_convo["id"], export_type="reply_pdf", file_name=message_file)
+            message_file = f"salaryscope_ai_reply_{refreshed_convo['id']}.pdf"
+            message_md_file = f"salaryscope_ai_reply_{refreshed_convo['id']}.md"
+            reply_dl_col1, reply_dl_col2 = st.columns(2)
+            with reply_dl_col1:
+                clicked = st.download_button(
+                    "Download Last Reply PDF",
+                    data=single_pdf,
+                    file_name=message_file,
+                    mime="application/pdf",
+                    width="stretch",
+                )
+                if clicked:
+                    record_export(username, refreshed_convo["id"], export_type="reply_pdf", file_name=message_file)
+            with reply_dl_col2:
+                clicked_md = st.download_button(
+                    "Download Last Reply Markdown",
+                    data=single_markdown,
+                    file_name=message_md_file,
+                    mime="text/markdown",
+                    width="stretch",
+                )
+                if clicked_md:
+                    record_export(username, refreshed_convo["id"], export_type="reply_markdown", file_name=message_md_file)
         else:
-            st.button("Download Last Reply PDF", width="stretch", disabled=True)
+            reply_dl_col1, reply_dl_col2 = st.columns(2)
+            with reply_dl_col1:
+                st.button("Download Last Reply PDF", width="stretch", disabled=True)
+            with reply_dl_col2:
+                st.button("Download Last Reply Markdown", width="stretch", disabled=True)
 
     st.caption(
         "The assistant uses recent chat turns plus the selected app context. "
