@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 
 import streamlit as st
 
@@ -186,18 +187,19 @@ def _get_manual_prediction_context() -> dict | None:
         or input_details.get("Employee Residence")
         or "Not provided"
     )
-    years_experience = (
-        input_details.get("Years of Experience")
-        or input_details.get("Experience Level")
-        or "Not provided"
-    )
+    years_value = input_details.get("Years of Experience")
+    experience_level = input_details.get("Experience Level")
+    if years_value and experience_level and str(years_value).strip() != str(experience_level).strip():
+        experience_summary = f"{years_value} ({experience_level})"
+    else:
+        experience_summary = years_value or experience_level or "Not provided"
 
     return {
         "source": "manual_prediction",
         "label": "Latest Manual Prediction",
         "job_title": input_details.get("Job Title", "Not provided"),
         "location": location,
-        "years_experience": str(years_experience),
+        "years_experience": str(experience_summary),
         "predicted_salary_text": f"{_format_salary(prediction)} annual salary estimate from SalaryScope",
         "prediction_range_text": (
             f"{_format_salary(lower_bound)} to {_format_salary(upper_bound)}"
@@ -364,10 +366,20 @@ def _render_chat_history(messages: list[dict]) -> None:
     for message in messages:
         role = "assistant" if message.get("role") == "assistant" else "user"
         with st.chat_message(role):
-            st.markdown(message.get("content", ""))
+            st.markdown(_prepare_chat_markdown(str(message.get("content", ""))))
             created = str(message.get("created_at", ""))
             if created:
                 st.caption(created.replace("T", " "))
+
+
+def _prepare_chat_markdown(content: str) -> str:
+    text = str(content or "")
+    # Display-only cleanup:
+    # flatten suspicious long inline-code spans that make normal prose render as code.
+    text = re.sub(r"`([^`\n]{24,})`", r"\1", text)
+    # Escape dollar signs so salary values render as plain text instead of markdown/math.
+    text = re.sub(r"(?<!\\)\$", r"\\$", text)
+    return text
 
 
 def render_llm_assistant_tab():
@@ -402,6 +414,10 @@ def render_llm_assistant_tab():
 
     if "llm_active_conversation_id" not in st.session_state:
         st.session_state.llm_active_conversation_id = None
+    if "llm_force_new_conversation" not in st.session_state:
+        st.session_state.llm_force_new_conversation = False
+    if "llm_reset_conversation_select" not in st.session_state:
+        st.session_state.llm_reset_conversation_select = False
     if "llm_quick_prompt" not in st.session_state:
         st.session_state.llm_quick_prompt = ""
 
@@ -423,7 +439,11 @@ def render_llm_assistant_tab():
     contexts = _build_available_contexts()
     conversations = list_conversations(username)
 
-    if conversations and st.session_state.llm_active_conversation_id is None:
+    if (
+        conversations
+        and st.session_state.llm_active_conversation_id is None
+        and not st.session_state.llm_force_new_conversation
+    ):
         st.session_state.llm_active_conversation_id = conversations[0]["id"]
 
     convo_options = {"Start a new conversation": None}
@@ -437,6 +457,10 @@ def render_llm_assistant_tab():
             default_label = label
             break
 
+    if st.session_state.llm_reset_conversation_select:
+        st.session_state.llm_conversation_select = "Start a new conversation"
+        st.session_state.llm_reset_conversation_select = False
+
     st.subheader("Assistant Controls")
 
     control_row = st.columns(4, gap="medium")
@@ -449,6 +473,7 @@ def render_llm_assistant_tab():
         )
     selected_conv_id = convo_options[selected_label]
     st.session_state.llm_active_conversation_id = selected_conv_id
+    st.session_state.llm_force_new_conversation = selected_conv_id is None
     active_convo = get_conversation(username, selected_conv_id) if selected_conv_id else None
 
     default_mode = active_convo["mode"] if active_convo else "Prediction Companion"
@@ -513,12 +538,16 @@ def render_llm_assistant_tab():
     with control_row_b[2]:
         if st.button("New Chat", width="stretch", key="llm_new_chat"):
             st.session_state.llm_active_conversation_id = None
+            st.session_state.llm_force_new_conversation = True
+            st.session_state.llm_reset_conversation_select = True
             st.rerun()
     with control_row_b[3]:
         can_delete = selected_conv_id is not None
         if st.button("Delete Chat", width="stretch", key="llm_delete_chat", disabled=not can_delete):
             delete_conversation(username, selected_conv_id)
             st.session_state.llm_active_conversation_id = None
+            st.session_state.llm_force_new_conversation = True
+            st.session_state.llm_reset_conversation_select = True
             st.rerun()
 
     st.session_state.llm_performance_profile = performance_profile
@@ -589,6 +618,7 @@ def render_llm_assistant_tab():
                     tone=tone,
                 )
                 st.session_state.llm_active_conversation_id = conversation_id
+                st.session_state.llm_force_new_conversation = False
             else:
                 update_conversation_meta(
                     username,
@@ -635,6 +665,7 @@ def render_llm_assistant_tab():
                         "mode": mode,
                         "model": result["model"],
                         "performance_profile": result.get("performance_profile", performance_profile),
+                        "selected_context_label": context_payload.get("selected_context_label"),
                     },
                 )
                 st.rerun()
