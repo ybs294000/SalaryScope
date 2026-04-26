@@ -25,15 +25,15 @@ def _resolve_generation_settings(mode: str, profile: str) -> tuple[float, int]:
     """
     if profile == "Fast":
         if mode in FAST_CHAT_MODES:
-            return 0.15, 180
-        return 0.2, 160
+            return 0.15, 360
+        return 0.2, 420
     if profile == "Balanced":
         if mode in FAST_CHAT_MODES:
-            return 0.2, 220
-        return 0.25, 260
+            return 0.2, 520
+        return 0.25, 720
     if mode in FAST_CHAT_MODES:
-        return 0.2, 220
-    return 0.3, 360
+        return 0.2, 720
+    return 0.3, 960
 
 
 def _resolve_cloud_generation_settings(mode: str, profile: str) -> tuple[float, int]:
@@ -127,6 +127,38 @@ def _client_for(model_name: str | None = None) -> OllamaLocalClient:
     return OllamaLocalClient(config)
 
 
+def _continue_local_response(
+    *,
+    client: OllamaLocalClient,
+    messages: list[dict[str, str]],
+    content: str,
+    temperature: float,
+    num_predict: int,
+    timeout_seconds: int | None = None,
+) -> str:
+    if not _looks_truncated(content):
+        return content
+
+    continuation_messages = list(messages)
+    continuation_messages.append({"role": "assistant", "content": content})
+    continuation_messages.append(
+        {
+            "role": "user",
+            "content": (
+                "Continue exactly from where you stopped. Return only the remaining text, "
+                "avoid repeating earlier lines, and finish with a complete final sentence."
+            ),
+        }
+    )
+    continuation = client.chat_messages(
+        messages=continuation_messages,
+        temperature=min(temperature, 0.2),
+        num_predict=max(240, min(num_predict, 640)),
+        timeout_seconds=timeout_seconds,
+    )
+    return _merge_continuation_text(content, continuation) if continuation else content
+
+
 def _space_client() -> HFSpaceClient:
     return HFSpaceClient()
 
@@ -188,7 +220,18 @@ def generate_resume_summary(
     )
     if is_local_runtime():
         client = _client_for(model_name)
-        content = client.chat(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.3, num_predict=260)
+        content = client.chat(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.3, num_predict=720)
+        content = _continue_local_response(
+            client=client,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            content=content,
+            temperature=0.3,
+            num_predict=720,
+            timeout_seconds=max(client.config.timeout_seconds, 180),
+        )
         model_used = client.config.model
     else:
         cloud_model = get_cloud_active_model()
@@ -246,7 +289,18 @@ def generate_negotiation_script(
     )
     if is_local_runtime():
         client = _client_for(model_name)
-        content = client.chat(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.45, num_predict=320)
+        content = client.chat(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.45, num_predict=900)
+        content = _continue_local_response(
+            client=client,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            content=content,
+            temperature=0.45,
+            num_predict=900,
+            timeout_seconds=max(client.config.timeout_seconds, 300),
+        )
         model_used = client.config.model
     else:
         cloud_model = get_cloud_active_model()
@@ -332,6 +386,14 @@ def generate_assistant_reply(
                 temperature=temperature,
                 num_predict=num_predict,
             )
+            content = _continue_local_response(
+                client=client,
+                messages=messages,
+                content=content,
+                temperature=temperature,
+                num_predict=num_predict,
+                timeout_seconds=max(client.config.timeout_seconds, 180),
+            )
         except LocalLLMTimeoutError:
             retry_messages = [{"role": "system", "content": system_prompt}]
             for item in (recent_messages or [])[-2:]:
@@ -352,9 +414,17 @@ def generate_assistant_reply(
                 }
             )
             retry_temperature = min(temperature, 0.15)
-            retry_predict = min(num_predict, 120)
+            retry_predict = min(num_predict, 420)
             content = client.chat_messages(
                 messages=retry_messages,
+                temperature=retry_temperature,
+                num_predict=retry_predict,
+                timeout_seconds=max(client.config.timeout_seconds, 180),
+            )
+            content = _continue_local_response(
+                client=client,
+                messages=retry_messages,
+                content=content,
                 temperature=retry_temperature,
                 num_predict=retry_predict,
                 timeout_seconds=max(client.config.timeout_seconds, 180),
