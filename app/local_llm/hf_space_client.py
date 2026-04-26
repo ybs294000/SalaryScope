@@ -50,16 +50,26 @@ class HFSpaceClient:
     def is_available(self) -> tuple[bool, str]:
         if not self.base_url:
             return False, "HF Space URL is not configured."
-        try:
-            response = requests.get(
-                f"{self.base_url}/gradio_api/openapi.json",
-                timeout=min(10, self.timeout_seconds),
-                headers=self._headers(),
-            )
-            response.raise_for_status()
-            return True, "Hugging Face Space is reachable."
-        except requests.RequestException as exc:
-            return False, f"HF Space not reachable: {exc}"
+        timeout = min(10, self.timeout_seconds)
+        probe_urls = [
+            f"{self.base_url}/",
+            f"{self.base_url}/config",
+            f"{self.base_url}/gradio_api/openapi.json",
+        ]
+        last_error = None
+        for probe_url in probe_urls:
+            try:
+                response = requests.get(
+                    probe_url,
+                    timeout=timeout,
+                    headers=self._headers(),
+                )
+                response.raise_for_status()
+                return True, "Hugging Face Space is reachable."
+            except requests.RequestException as exc:
+                last_error = exc
+                continue
+        return False, f"HF Space not reachable: {last_error}"
 
     def predict(self, payload: dict[str, Any]) -> dict[str, Any]:
         if not self.base_url:
