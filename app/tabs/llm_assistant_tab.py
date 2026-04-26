@@ -407,43 +407,43 @@ def render_llm_assistant_tab():
     if conversations and st.session_state.llm_active_conversation_id is None:
         st.session_state.llm_active_conversation_id = conversations[0]["id"]
 
-    left_col, right_col = st.columns([1, 2.2], gap="large")
+    convo_options = {"Start a new conversation": None}
+    for convo in conversations:
+        convo_options[_conversation_label(convo)] = convo["id"]
 
-    with left_col:
-        st.subheader("Assistant Controls")
+    current_conv_id = st.session_state.llm_active_conversation_id
+    default_label = "Start a new conversation"
+    for label, cid in convo_options.items():
+        if cid == current_conv_id:
+            default_label = label
+            break
 
-        convo_options = {"Start a new conversation": None}
-        for convo in conversations:
-            convo_options[_conversation_label(convo)] = convo["id"]
+    st.subheader("Assistant Controls")
 
-        current_conv_id = st.session_state.llm_active_conversation_id
-        default_label = "Start a new conversation"
-        for label, cid in convo_options.items():
-            if cid == current_conv_id:
-                default_label = label
-                break
-
+    control_row = st.columns([1.3, 1, 1, 1], gap="medium")
+    with control_row[0]:
         selected_label = st.selectbox(
             "Conversation",
             list(convo_options.keys()),
             index=list(convo_options.keys()).index(default_label),
             key="llm_conversation_select",
         )
-        selected_conv_id = convo_options[selected_label]
-        st.session_state.llm_active_conversation_id = selected_conv_id
+    selected_conv_id = convo_options[selected_label]
+    st.session_state.llm_active_conversation_id = selected_conv_id
+    active_convo = get_conversation(username, selected_conv_id) if selected_conv_id else None
 
-        active_convo = get_conversation(username, selected_conv_id) if selected_conv_id else None
+    default_mode = active_convo["mode"] if active_convo else "Prediction Companion"
+    default_model = active_convo["model_name"] if active_convo and active_convo.get("model_name") else config.model
+    default_tone = active_convo["tone"] if active_convo and active_convo.get("tone") else ASSISTANT_TONES[0]
+    default_profile = st.session_state.get("llm_performance_profile", "Balanced")
 
-        default_mode = active_convo["mode"] if active_convo else "Prediction Companion"
-        default_model = active_convo["model_name"] if active_convo and active_convo.get("model_name") else config.model
-        default_tone = active_convo["tone"] if active_convo and active_convo.get("tone") else ASSISTANT_TONES[0]
-        default_profile = st.session_state.get("llm_performance_profile", "Balanced")
-
+    with control_row[1]:
         mode = st.selectbox(
             "Assistant Mode",
             ASSISTANT_MODES,
             index=ASSISTANT_MODES.index(default_mode) if default_mode in ASSISTANT_MODES else 0,
         )
+    with control_row[2]:
         if local_runtime:
             selected_model = st.selectbox(
                 "Model",
@@ -460,19 +460,15 @@ def render_llm_assistant_tab():
                 disabled=True,
                 help="The free Hugging Face Space runs one deployed model at a time.",
             )
+    with control_row[3]:
         tone = st.selectbox(
             "Tone",
             ASSISTANT_TONES,
             index=ASSISTANT_TONES.index(default_tone) if default_tone in ASSISTANT_TONES else 0,
         )
-        performance_profile = st.selectbox(
-            "Performance",
-            PERFORMANCE_PROFILES,
-            index=PERFORMANCE_PROFILES.index(default_profile) if default_profile in PERFORMANCE_PROFILES else 1,
-            help="Fast keeps replies shorter and usually responds quicker on local hardware.",
-        )
-        st.session_state.llm_performance_profile = performance_profile
 
+    control_row_b = st.columns([1.4, 1, 0.8, 0.8], gap="medium")
+    with control_row_b[0]:
         context_keys = list(contexts.keys())
         preferred_context = "General App Context"
         if mode != "App Help":
@@ -484,51 +480,44 @@ def render_llm_assistant_tab():
                 if candidate in contexts:
                     preferred_context = candidate
                     break
+
         context_label = st.selectbox(
             "Context",
             context_keys,
             index=context_keys.index(preferred_context) if preferred_context in context_keys else 0,
         )
-        context_payload, context_note = _derive_context_for_mode(mode, contexts[context_label])
+    with control_row_b[1]:
+        performance_profile = st.selectbox(
+            "Performance",
+            PERFORMANCE_PROFILES,
+            index=PERFORMANCE_PROFILES.index(default_profile) if default_profile in PERFORMANCE_PROFILES else 1,
+            help="Fast keeps replies shorter and usually responds quicker on local hardware.",
+        )
+    with control_row_b[2]:
+        if st.button("New Chat", width="stretch", key="llm_new_chat"):
+            st.session_state.llm_active_conversation_id = None
+            st.rerun()
+    with control_row_b[3]:
+        can_delete = selected_conv_id is not None
+        if st.button("Delete Chat", width="stretch", key="llm_delete_chat", disabled=not can_delete):
+            delete_conversation(username, selected_conv_id)
+            st.session_state.llm_active_conversation_id = None
+            st.rerun()
 
-        st.markdown("**Quick Prompts**")
-        for idx, prompt in enumerate(QUICK_PROMPTS.get(mode, [])):
-            if st.button(prompt, width="stretch", key=f"llm_quick_{mode}_{idx}"):
-                st.session_state.llm_quick_prompt = prompt
+    st.session_state.llm_performance_profile = performance_profile
 
-        st.divider()
-        control_a, control_b = st.columns(2)
-        with control_a:
-            if st.button("New Chat", width="stretch", key="llm_new_chat"):
-                st.session_state.llm_active_conversation_id = None
-                st.rerun()
-        with control_b:
-            can_delete = selected_conv_id is not None
-            if st.button("Delete Chat", width="stretch", key="llm_delete_chat", disabled=not can_delete):
-                delete_conversation(username, selected_conv_id)
-                st.session_state.llm_active_conversation_id = None
-                st.rerun()
+    context_payload, context_note = _derive_context_for_mode(mode, contexts[context_label])
 
-        st.divider()
-        with st.expander("Current Context", expanded=False):
-            st.json(_compact_context_payload(context_payload))
-
-        with st.expander("Response Focus", expanded=False):
-            st.write(context_note)
+    tools_col1, tools_col2 = st.columns(2, gap="large")
+    with tools_col1:
+        with st.expander("Quick Prompts", expanded=False):
+            for idx, prompt in enumerate(QUICK_PROMPTS.get(mode, [])):
+                if st.button(prompt, width="stretch", key=f"llm_quick_{mode}_{idx}"):
+                    st.session_state.llm_quick_prompt = prompt
+    with tools_col2:
+        with st.expander("Prompt Composer", expanded=False):
             st.caption(
-                "Fast is best for app help and prediction explanation. "
-                "Balanced is a good default. Detailed is best reserved for drafting tasks. "
-                "On Streamlit Cloud, the assistant uses a smaller Space-friendly model and shorter outputs."
-            )
-
-    with right_col:
-        active_messages = get_messages(username, selected_conv_id) if selected_conv_id else []
-        _render_chat_history(active_messages)
-
-        prompt_input = st.chat_input("Ask SalaryScope AI Assistant")
-        with st.expander("Need a longer prompt?", expanded=False):
-            st.caption(
-                "Use this for multi-part questions, longer drafting requests, or when you want the assistant to respond in more detail."
+                "Use the long prompt composer for multi-part questions, longer drafting requests, or when you want a more detailed response."
             )
             composed_prompt = st.text_area(
                 "Long prompt composer",
@@ -540,153 +529,172 @@ def render_llm_assistant_tab():
                 ),
             )
             send_long_prompt = st.button("Send Long Prompt", key="llm_send_long_prompt", width="stretch")
-        if send_long_prompt and composed_prompt.strip():
-            prompt_input = composed_prompt.strip()
-        if st.session_state.llm_quick_prompt:
-            prompt_input = st.session_state.llm_quick_prompt
-            st.session_state.llm_quick_prompt = ""
 
-        if prompt_input:
-            if not available:
-                st.error(f"The configured assistant backend is not available right now. Status: {status}")
+    detail_col1, detail_col2 = st.columns(2, gap="large")
+    with detail_col1:
+        with st.expander("Current Context", expanded=False):
+            st.json(_compact_context_payload(context_payload))
+    with detail_col2:
+        with st.expander("Response Focus", expanded=False):
+            st.write(context_note)
+            st.caption(
+                "Fast is best for app help and prediction explanation. "
+                "Balanced is a good default. Detailed is best reserved for drafting tasks. "
+                "On Streamlit Cloud, the assistant uses a smaller Space-friendly model and shorter outputs."
+            )
+
+    active_messages = get_messages(username, selected_conv_id) if selected_conv_id else []
+    st.subheader("Conversation")
+    _render_chat_history(active_messages)
+
+    prompt_input = st.chat_input("Ask SalaryScope AI Assistant")
+    if send_long_prompt and composed_prompt.strip():
+        prompt_input = composed_prompt.strip()
+    if st.session_state.llm_quick_prompt:
+        prompt_input = st.session_state.llm_quick_prompt
+        st.session_state.llm_quick_prompt = ""
+
+    if prompt_input:
+        if not available:
+            st.error(f"The configured assistant backend is not available right now. Status: {status}")
+        else:
+            conversation_id = selected_conv_id
+            if conversation_id is None:
+                conversation_id = create_conversation(
+                    username=username,
+                    title=_suggested_title(mode, prompt_input),
+                    mode=mode,
+                    model_name=selected_model,
+                    tone=tone,
+                )
+                st.session_state.llm_active_conversation_id = conversation_id
             else:
-                conversation_id = selected_conv_id
-                if conversation_id is None:
-                    conversation_id = create_conversation(
-                        username=username,
-                        title=_suggested_title(mode, prompt_input),
-                        mode=mode,
-                        model_name=selected_model,
-                        tone=tone,
-                    )
-                    st.session_state.llm_active_conversation_id = conversation_id
-                else:
+                update_conversation_meta(
+                    username,
+                    conversation_id,
+                    mode=mode,
+                    model_name=selected_model,
+                    tone=tone,
+                )
+                if len(active_messages) == 0:
                     update_conversation_meta(
                         username,
                         conversation_id,
-                        mode=mode,
-                        model_name=selected_model,
-                        tone=tone,
+                        title=_suggested_title(mode, prompt_input),
                     )
-                    if len(active_messages) == 0:
-                        update_conversation_meta(
-                            username,
-                            conversation_id,
-                            title=_suggested_title(mode, prompt_input),
-                        )
 
-                history_before = get_messages(username, conversation_id)
+            history_before = get_messages(username, conversation_id)
+            add_message(
+                username,
+                conversation_id,
+                role="user",
+                content=prompt_input,
+                context={"mode": mode, "context_payload": _compact_context_payload(context_payload)},
+            )
+
+            try:
+                spinner_text = "Generating assistant response..." if local_runtime else "Contacting Hugging Face assistant..."
+                with st.spinner(spinner_text):
+                    result = generate_assistant_reply(
+                        mode=mode,
+                        user_message=prompt_input,
+                        context_payload=context_payload,
+                        recent_messages=history_before,
+                        tone=tone,
+                        model_name=selected_model,
+                        context_note=context_note,
+                        performance_profile=performance_profile,
+                    )
                 add_message(
                     username,
                     conversation_id,
-                    role="user",
-                    content=prompt_input,
-                    context={"mode": mode, "context_payload": _compact_context_payload(context_payload)},
+                    role="assistant",
+                    content=result["content"],
+                    context={
+                        "mode": mode,
+                        "model": result["model"],
+                        "performance_profile": result.get("performance_profile", performance_profile),
+                    },
+                )
+                st.rerun()
+            except LocalLLMTimeoutError:
+                friendly = (
+                    "The assistant took too long to respond. "
+                    "Try again with `Performance = Fast`, use a shorter prompt, "
+                    "or switch to a smaller model such as `llama3.2:1b`, `qwen2.5:0.5b`, or `smollm2:360m`."
+                )
+                st.warning(friendly)
+            except LocalLLMError as exc:
+                st.error(
+                    "The assistant could not complete this request. "
+                    f"Details: {exc}"
                 )
 
-                try:
-                    spinner_text = "Generating assistant response..." if local_runtime else "Contacting Hugging Face assistant..."
-                    with st.spinner(spinner_text):
-                        result = generate_assistant_reply(
-                            mode=mode,
-                            user_message=prompt_input,
-                            context_payload=context_payload,
-                            recent_messages=history_before,
-                            tone=tone,
-                            model_name=selected_model,
-                            context_note=context_note,
-                            performance_profile=performance_profile,
-                        )
-                    add_message(
-                        username,
-                        conversation_id,
-                        role="assistant",
-                        content=result["content"],
-                        context={
-                            "mode": mode,
-                            "model": result["model"],
-                            "performance_profile": result.get("performance_profile", performance_profile),
-                        },
-                    )
-                    st.rerun()
-                except LocalLLMTimeoutError:
-                    friendly = (
-                        "The assistant took too long to respond. "
-                        "Try again with `Performance = Fast`, use a shorter prompt, "
-                        "or switch to a smaller model such as `llama3.2:1b`, `qwen2.5:0.5b`, or `smollm2:360m`."
-                    )
-                    st.warning(friendly)
-                except LocalLLMError as exc:
-                    st.error(
-                        "The assistant could not complete this request. "
-                        f"Details: {exc}"
-                    )
+    refreshed_conv_id = st.session_state.llm_active_conversation_id
+    refreshed_messages = get_messages(username, refreshed_conv_id) if refreshed_conv_id else []
+    refreshed_convo = get_conversation(username, refreshed_conv_id) if refreshed_conv_id else None
 
-        refreshed_conv_id = st.session_state.llm_active_conversation_id
-        refreshed_messages = get_messages(username, refreshed_conv_id) if refreshed_conv_id else []
-        refreshed_convo = get_conversation(username, refreshed_conv_id) if refreshed_conv_id else None
-
-        st.divider()
-        export_col1, export_col2 = st.columns(2)
-        with export_col1:
-            if refreshed_convo and refreshed_messages:
-                subtitle = (
-                    f"{refreshed_convo['mode']} · {refreshed_convo.get('model_name', config.model)} · "
-                    f"{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
-                )
-                convo_pdf = _cached_conversation_pdf(
-                    title=refreshed_convo["title"],
-                    subtitle=subtitle,
-                    messages=_messages_signature(refreshed_messages),
-                    full_messages=tuple(
-                        (str(m.get("role", "")), str(m.get("created_at", "")), str(m.get("content", "")))
-                        for m in refreshed_messages
-                    ),
-                )
-                file_name = f"salaryscope_ai_chat_{refreshed_convo['id']}.pdf"
-                clicked = st.download_button(
-                    "Download Conversation PDF",
-                    data=convo_pdf,
-                    file_name=file_name,
-                    mime="application/pdf",
-                    width="stretch",
-                )
-                if clicked:
-                    record_export(username, refreshed_convo["id"], export_type="conversation_pdf", file_name=file_name)
-            else:
-                st.button("Download Conversation PDF", width="stretch", disabled=True)
-
-        with export_col2:
-            last_assistant = None
-            for item in reversed(refreshed_messages):
-                if item.get("role") == "assistant":
-                    last_assistant = item
-                    break
-            if refreshed_convo and last_assistant:
-                single_pdf = _cached_reply_pdf(
-                    title=refreshed_convo["title"],
-                    subtitle=f"{refreshed_convo['mode']} · Last assistant reply",
-                    content=last_assistant["content"],
-                )
-                message_file = f"salaryscope_ai_reply_{refreshed_convo['id']}.pdf"
-                clicked = st.download_button(
-                    "Download Last Reply PDF",
-                    data=single_pdf,
-                    file_name=message_file,
-                    mime="application/pdf",
-                    width="stretch",
-                )
-                if clicked:
-                    record_export(username, refreshed_convo["id"], export_type="reply_pdf", file_name=message_file)
-            else:
-                st.button("Download Last Reply PDF", width="stretch", disabled=True)
-
-        st.caption(
-            "The assistant uses recent chat turns plus the selected app context. "
-            "When Hugging Face chat storage is configured, logged-in users get separate persistent history there. "
-            "Otherwise the assistant falls back to local SQLite."
-        )
-        if not local_runtime:
-            st.caption(
-                "Cloud mode is tuned for the free Hugging Face Space path, so responses stay shorter and the deployed model is fixed by Space settings."
+    st.divider()
+    export_col1, export_col2 = st.columns(2)
+    with export_col1:
+        if refreshed_convo and refreshed_messages:
+            subtitle = (
+                f"{refreshed_convo['mode']} · {refreshed_convo.get('model_name', config.model)} · "
+                f"{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
             )
+            convo_pdf = _cached_conversation_pdf(
+                title=refreshed_convo["title"],
+                subtitle=subtitle,
+                messages=_messages_signature(refreshed_messages),
+                full_messages=tuple(
+                    (str(m.get("role", "")), str(m.get("created_at", "")), str(m.get("content", "")))
+                    for m in refreshed_messages
+                ),
+            )
+            file_name = f"salaryscope_ai_chat_{refreshed_convo['id']}.pdf"
+            clicked = st.download_button(
+                "Download Conversation PDF",
+                data=convo_pdf,
+                file_name=file_name,
+                mime="application/pdf",
+                width="stretch",
+            )
+            if clicked:
+                record_export(username, refreshed_convo["id"], export_type="conversation_pdf", file_name=file_name)
+        else:
+            st.button("Download Conversation PDF", width="stretch", disabled=True)
+
+    with export_col2:
+        last_assistant = None
+        for item in reversed(refreshed_messages):
+            if item.get("role") == "assistant":
+                last_assistant = item
+                break
+        if refreshed_convo and last_assistant:
+            single_pdf = _cached_reply_pdf(
+                title=refreshed_convo["title"],
+                subtitle=f"{refreshed_convo['mode']} · Last assistant reply",
+                content=last_assistant["content"],
+            )
+            message_file = f"salaryscope_ai_reply_{refreshed_convo['id']}.pdf"
+            clicked = st.download_button(
+                "Download Last Reply PDF",
+                data=single_pdf,
+                file_name=message_file,
+                mime="application/pdf",
+                width="stretch",
+            )
+            if clicked:
+                record_export(username, refreshed_convo["id"], export_type="reply_pdf", file_name=message_file)
+        else:
+            st.button("Download Last Reply PDF", width="stretch", disabled=True)
+
+    st.caption(
+        "The assistant uses recent chat turns plus the selected app context. "
+        "When Hugging Face chat storage is configured, logged-in users get separate persistent history there. "
+        "Otherwise the assistant falls back to local SQLite."
+    )
+    if not local_runtime:
+        st.caption(
+            "Cloud mode is tuned for the free Hugging Face Space path, so responses stay shorter and the deployed model is fixed by Space settings."
+        )
