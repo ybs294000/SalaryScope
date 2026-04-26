@@ -20,6 +20,9 @@
     <img src="https://img.shields.io/badge/Model%20Storage-HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=white&labelColor=2D3748" alt="Model Storage: HuggingFace" />
   </a>
   <a>
+    <img src="https://img.shields.io/badge/AI%20Assistant-Ollama%20%7C%20HF%20Space-10B981?style=for-the-badge&labelColor=2D3748" alt="AI Assistant: Ollama and Hugging Face Space" />
+  </a>
+  <a>
     <img src="https://img.shields.io/badge/version-1.4.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.4.0" />
   </a>
 </p>
@@ -1075,6 +1078,7 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 | Authentication | Firebase Authentication |
 | Database | Firebase Firestore, Firebase Admin SDK |
 | Model Storage | HuggingFace Dataset Repo (via huggingface_hub SDK) |
+| AI Assistant Inference | Ollama (local), Hugging Face Space (cloud) |
 | Security | bcrypt |
 | Deployment | Streamlit Cloud |
 | Language | Python 3.13+ |
@@ -1244,6 +1248,8 @@ Detailed project documentation is available in the `docs/` directory:
 - XGBoost Documentation — https://xgboost.readthedocs.io  
 - SHAP Documentation — https://shap.readthedocs.io
 - HuggingFace Hub Documentation — https://huggingface.co/docs/huggingface_hub
+- Hugging Face Spaces Documentation — https://huggingface.co/docs/hub/en/spaces-overview
+- Ollama Documentation — https://ollama.com/
 - Firebase Documentation — https://firebase.google.com/docs
 - spaCy Documentation — https://spacy.io/usage
 - Pandas Documentation — https://pandas.pydata.org/docs/
