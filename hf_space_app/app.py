@@ -160,4 +160,4 @@ with gr.Blocks(title="SalaryScope HF Space Assistant") as demo:
 
 
 if __name__ == "__main__":
-    demo.queue(default_concurrency_limit=1).launch()
+    demo.queue(default_concurrency_limit=1).launch(ssr_mode=False, show_api=True)
