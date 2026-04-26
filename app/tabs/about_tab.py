@@ -253,11 +253,12 @@ def render_about_tab():
                 SalaryScope is a machine learning-based salary prediction platform that helps users
                 estimate compensation from structured inputs, resume data, uploaded datasets, and
                 scenario comparisons. Alongside the prediction itself, the system provides supporting
-                analytics, financial context, extensibility through the Model Hub, and HR-oriented
+                analytics, financial context, an AI assistant for guided explanation and drafting,
+                extensibility through the Model Hub, and HR-oriented
                 planning tools to make the output more useful for interpretation and decision-making.
             </div>
             <div class="about-preview-pill-row">
-                <span class="about-preview-pill" style="background:#1D4ED833;border:1px solid #3B82F6;color:#93C5FD;">v1.3.0</span>
+                <span class="about-preview-pill" style="background:#1D4ED833;border:1px solid #3B82F6;color:#93C5FD;">v1.4.0</span>
                 <span class="about-preview-pill" style="background:#065F4633;border:1px solid #10B981;color:#6EE7B7;">Python 3.13</span>
                 <span class="about-preview-pill" style="background:#7F1D1D33;border:1px solid #EF4444;color:#FCA5A5;">Streamlit Cloud</span>
                 <span class="about-preview-pill" style="background:#92400E33;border:1px solid #F59E0B;color:#FCD34D;">2 built-in models</span>
@@ -349,7 +350,7 @@ def render_about_tab():
 
     st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
     st.caption(
-        "Login is optional for predictions. Accounts mainly unlock saved history and Model Hub access."
+        "Login is optional for predictions. Accounts mainly unlock saved history, Model Hub access, and AI Assistant access on Streamlit Cloud."
     )
 
     st.divider()
@@ -519,6 +520,19 @@ def render_about_tab():
 
         st.divider()
 
+        st.markdown("### AI Assistant")
+        st.markdown("""
+- Chat-style assistant available in the full app
+- Best suited for app help, prediction explanation, negotiation drafts, report-ready writing, and cautious role or career guidance
+- Uses local Ollama when the app runs locally and a Hugging Face Space when the app runs on Streamlit Cloud
+- On Streamlit Cloud, login is required before using the assistant so chat history can be tied to a real account
+- Logged-in chat history can be stored separately per user; local development also supports anonymous testing
+- The assistant is grounded in displayed SalaryScope context and should support the app's model outputs rather than replace them
+- The assistant is AI and can make mistakes; important details should always be checked by the user
+        """)
+
+        st.divider()
+
         st.markdown("### HR & Employer Tools")
         st.markdown("""
 - Dedicated tab for HR teams and hiring managers; available to all users
@@ -622,7 +636,7 @@ def render_about_tab():
         st.markdown("""
 - Model switcher to toggle between both built-in prediction systems
 - Unified theme across the entire application with dynamic light/dark mode support
-- Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, HR Tools, Profile (logged-in only), About
+- Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, AI Assistant, HR Tools, Profile (logged-in only), About
 - ReportLab-based multi-page PDF reports with embedded charts
 - State-managed UI to prevent re-computation on interaction
 - Google Drive public link upload for batch files
@@ -731,7 +745,8 @@ def render_about_tab():
             "No. Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, "
             "Model Analytics, and Data Insights are all available without an account. "
             "Logging in lets you save your prediction history in the Profile tab and access "
-            "the Model Hub. Prediction feedback can be submitted without logging in."
+            "the Model Hub. The AI Assistant can be used without login locally for testing, "
+            "but on Streamlit Cloud it requires login. Prediction feedback can be submitted without logging in."
         )
 
         st.divider()
@@ -899,6 +914,13 @@ def render_about_tab():
 - In each mode, uploading a new file or PDF clears previous results automatically; a Clear button is also available.
 - Admins additionally see an Upload Bundle panel with fields for model card metadata, optional lexicons, and aliases; a Registry Manager for activating and deactivating models; and a Schema Editor for building or validating schema.json files.
 
+**AI Assistant**
+- Available in the full app.
+- Best used for app help, prediction explanation, negotiation wording, report-ready writing, and cautious role or career suggestions grounded in the current app context.
+- On local runs, it can be used without login for testing.
+- On Streamlit Cloud, login is required before using it.
+- The assistant can make mistakes, so important details should be checked before relying on them.
+
 **HR Tools**
 - Five compensation planning tools for HR teams and hiring managers.
 - Hiring Budget: enter a role profile and headcount to estimate total annual payroll cost; adjust benefits, overhead, and recruiting assumptions.
@@ -969,6 +991,12 @@ def render_about_tab():
 - In Scenario mode, fill in each scenario panel directly and click **Run All Scenarios**.
 - If you are an admin, the Upload Bundle, Registry Manager, and Schema Editor sections are visible below the prediction panel.
 
+**AI Assistant**
+- Open the AI Assistant tab in the full app to ask app-related questions or get grounded drafting help.
+- Use it for app help, plain-English explanation of displayed predictions, negotiation wording, report-ready summaries, and careful role or career suggestions.
+- On Streamlit Cloud, sign in first before using it. Local testing can use the assistant without login.
+- Treat the output as AI assistance rather than final authority, and check important details before relying on them.
+
 **HR Tools**
 - Open the HR Tools tab and select a tool from the inner sub-tabs.
 - **Hiring Budget**: fill in the role profile and headcount, then adjust the employer cost assumptions (benefits %, overhead %, recruiting cost). The budget summary and chart update automatically.
@@ -981,6 +1009,7 @@ def render_about_tab():
 **Account (Optional)**
 - Register or log in from the sidebar to save predictions.
 - Logged-in users can view their full prediction history in the Profile tab.
+- Logged-in users can also use the AI Assistant on Streamlit Cloud.
 - Sessions expire after 24 hours and require re-login.
 
 **Google Drive Upload**

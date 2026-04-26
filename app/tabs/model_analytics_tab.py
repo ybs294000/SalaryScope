@@ -10,7 +10,7 @@ and prevent double-loading of cached resources.
 Usage in app_resume.py:
     from model_analytics_tab import render_model_analytics_tab
 
-    with tab_objects[4]:
+    with tab_objects[5]:
         render_model_analytics_tab(
             is_app1=IS_APP1,
             # --- App 1 resources ---

@@ -6,6 +6,27 @@ The format is based on Keep a Changelog, and this project loosely follows Semant
 
 ---
 
+## [1.4.0] - 2026-04-26
+
+### Added
+
+* AI Assistant tab integrated into the main full app (`app_resume.py`) with chat-style interaction, quick prompts, long-prompt composer, PDF export, and context-aware grounding against SalaryScope outputs
+* Hybrid assistant backend:
+  * local runs -> local Ollama
+  * Streamlit Cloud runs -> Hugging Face Space
+* Hugging Face Space deployment scaffold (`hf_space_app/`) and setup guide (`docs/hf_space_setup.md`) for free-tier cloud assistant hosting
+* Per-user AI chat persistence:
+  * logged-in users -> Hugging Face dataset-backed history when configured
+  * local fallback -> SQLite
+
+### Changed
+
+* Cloud AI assistant usage is now login-gated: anonymous chat is disabled on Streamlit Cloud, while local anonymous testing remains allowed
+* AI assistant wording and guardrails updated so responses stay aligned with displayed SalaryScope predictions while still allowing app help, drafting, negotiation tips, job-title clarification, and cautious recommendations
+* Cloud assistant path tuned for free Hugging Face Spaces with smaller deployed models, shorter default outputs, continuation handling for truncated drafts, and larger configurable response caps
+
+---
+
 ## [1.3.0] - 2026-04-25
 
 ### Added

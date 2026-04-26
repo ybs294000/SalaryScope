@@ -118,6 +118,16 @@ The assistant now routes automatically:
 
 - if local runtime -> local Ollama
 - if Streamlit Cloud runtime -> Hugging Face Space
+- if Streamlit Cloud runtime and the user is not logged in -> AI Assistant access is blocked
+
+### Authentication behavior
+
+- Local development:
+  - anonymous AI chat is allowed for testing
+- Streamlit Cloud:
+  - users must be logged in to use the AI Assistant
+  - anonymous cloud chat is disabled
+  - logged-in user chat history can be written to the configured Hugging Face dataset repo
 
 This is based on the same local/cloud detection style used elsewhere in the app.
 

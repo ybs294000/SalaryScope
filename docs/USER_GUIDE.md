@@ -1,5 +1,5 @@
 # SalaryScope — User Guide
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning
 
 ---
@@ -37,6 +37,8 @@ SalaryScope is a web-based salary prediction tool that uses machine learning to 
 
 Beyond salary prediction, SalaryScope includes financial planning tools (tax estimation, cost-of-living comparison, savings potential, loan affordability, and more), a dedicated HR & Employer Tools tab for compensation planning, dataset exploration dashboards, model performance analytics, and a Model Hub where additional trained models can be accessed.
 
+In the full app, an AI Assistant tab is also available for app help, prediction explanation, drafting tasks, negotiation wording, and cautious role or career guidance.
+
 **Live applications:**
 - Full App (all features including resume analysis, scenario analysis, Model Hub, and financial tools): https://salaryscope-app.streamlit.app/
 - Lite App (Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile): https://salaryscope-lite-app.streamlit.app/
@@ -69,6 +71,7 @@ An account is not required to use most features. You can make predictions, use f
 - View your prediction timeline in the Profile tab
 - Export your full prediction history
 - Access the Model Hub
+- Access the AI Assistant on Streamlit Cloud
 - Change your password or manage your account
 
 **To register:**
@@ -88,6 +91,19 @@ An account is not required to use most features. You can make predictions, use f
 If you forget your password, click **Forgot Password**, enter your email, and follow the instructions in the reset email. The reset link expires after 1 hour.
 
 Sessions expire after 24 hours and require re-login.
+
+### 2.5 AI Assistant Access
+
+- **Local development:** the AI Assistant can be used without login for testing.
+- **Streamlit Cloud:** you must be logged in to use the AI Assistant.
+- The assistant is grounded in SalaryScope context and is best used for:
+  - app help
+  - explanation of displayed results
+  - negotiation drafts and talking points
+  - recruiter-friendly resume or report wording
+  - cautious job-title clarification or career suggestions
+
+The AI Assistant can make mistakes. Always review important details before relying on them.
 
 ---
 
@@ -665,6 +681,9 @@ Files above 10,000 rows will be noticeably slower. Ensure your file format is co
 **The Model Hub says "Could not load model registry".**
 This indicates a configuration issue with the HuggingFace repository secrets. Contact the admin.
 
+**The AI Assistant is not available on Streamlit Cloud.**
+If you are not logged in, sign in first. Cloud AI chat is disabled for anonymous users. If you are already logged in, the Hugging Face Space backend may be asleep or temporarily unavailable.
+
 ---
 
 ## 17. Frequently Asked Questions
@@ -673,7 +692,7 @@ This indicates a configuration issue with the HuggingFace repository secrets. Co
 Prediction inputs and results are stored in Firestore if you are logged in. Feedback is stored in Firestore regardless of login status, but anonymous feedback contains no personal identifiers. Resume text is processed in memory and not stored anywhere.
 
 **Do I need an account to use the application?**
-No. Manual prediction, batch prediction, scenario analysis, model analytics, and data insights are all available without an account. An account is required for the Model Hub and to access prediction history in the Profile tab.
+No. Manual prediction, batch prediction, scenario analysis, model analytics, and data insights are all available without an account. An account is required for the Model Hub, for prediction history in the Profile tab, and for the AI Assistant on Streamlit Cloud.
 
 **How accurate are the salary predictions?**
 Predictions are estimates based on patterns in publicly available historical datasets. They may not reflect current market conditions, company-specific salaries, or regional cost variations. Use predictions as a general reference, not as exact figures. See Section 18 for full disclaimers.

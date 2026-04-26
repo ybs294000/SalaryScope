@@ -20,7 +20,7 @@
     <img src="https://img.shields.io/badge/Model%20Storage-HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=white&labelColor=2D3748" alt="Model Storage: HuggingFace" />
   </a>
   <a>
-    <img src="https://img.shields.io/badge/version-1.3.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.3.0" />
+    <img src="https://img.shields.io/badge/version-1.4.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.4.0" />
   </a>
 </p>
 
@@ -102,6 +102,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Per-bundle resume config: Model Hub models can supply a `resume_config.json` that overrides extraction scoring weights, extractor keyword lists, experience thresholds, and field-name mappings for that specific model, without changing any code
 - HR & Employer Tools: five compensation planning tools for hiring managers and HR teams (Hiring Budget Estimator, Salary Benchmarking Table, Candidate Comparison, Offer Competitiveness Checker, Team Compensation Audit) with per-tool HR overrides and CSV exports
 - Shareable salary prediction card: download a 1200x630 PNG card showing predicted salary, role, salary band, career stage, monthly/hourly breakdown, and tagline — available after every Manual and Resume prediction
+- AI Assistant tab (full app): chat-style assistant for app help, prediction explanation, negotiation drafting, report-ready writing, and cautious career or role guidance; uses local Ollama when running locally and a Hugging Face Space on Streamlit Cloud
 
 ---
 
@@ -131,6 +132,7 @@ The application runs in a web browser, making it platform-independent and easily
 | Financial Planning Tools (11 modules) | ✅ | ❌ |
 | Prediction Feedback System | ✅ | ❌ |
 | HR & Employer Tools | ✅ | ❌ |
+| AI Assistant | ✅ | ❌ |
 
 The lite app was built to stay within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, and the full financial tools chain). Both apps share the same Firebase project, so prediction history is unified across them.
 
@@ -954,6 +956,17 @@ IS_LOCAL = true   # Enables local-only features (e.g. CoL index save/reset to di
 
 The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all other tabs remain unaffected. `ADMIN_EMAIL` is required for the Admin Panel tab; without it, no user has admin access.
 
+To enable the cloud AI Assistant backend (full app on Streamlit Cloud), also add:
+
+```toml
+HF_SPACE_URL          = "https://your-space-name.hf.space"
+HF_SPACE_API_NAME     = "/predict"
+HF_SPACE_ACTIVE_MODEL = "qwen2.5:0.5b"
+HF_CHAT_REPO_ID       = "your-username/salaryscope-ai-chat"
+HF_CHAT_TOKEN         = "hf_xxxxxxxxxxxxxxxxxxxx"   # optional if HF_TOKEN already has access
+HF_SPACE_TIMEOUT      = "180"                       # optional
+```
+
 > **Note:** Never commit `secrets.toml` to version control. Add it to `.gitignore`.
 
 ## Important Notes
@@ -963,6 +976,7 @@ The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all o
 * Feedback submission is available to all users including those not logged in.
 * Resume parsing requires spaCy language model installation.
 * The Model Hub tab requires login to access and requires `HF_TOKEN` and `HF_REPO_ID` to be configured in secrets.
+* The AI Assistant tab supports anonymous use in local development, but on Streamlit Cloud it requires the user to be logged in so chat history can be tied to a real account.
 
 ---
 
@@ -1217,6 +1231,7 @@ Detailed project documentation is available in the `docs/` directory:
 | [`deployment.md`](docs/deployment.md) | Firebase setup, HuggingFace setup, Streamlit Cloud deployment, secrets reference |
 | [`testing.md`](docs/testing.md) | Test plan, unit test code, manual test cases, and test results log template |
 | [`model_hub_extended_schema.md`](docs/model_hub_extended_schema.md) | Extended schema reference: plots, scenario_sweep, per-bundle lexicons (skills.json, job_titles.json), extractor hints, and resume_config.json full format |
+| [`hf_space_setup.md`](docs/hf_space_setup.md) | Hugging Face Space and dataset setup for the AI Assistant cloud backend |
 
 
 ---

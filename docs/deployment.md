@@ -1,5 +1,5 @@
 # SalaryScope — Deployment Guide
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Deployment and Operations Guide
@@ -34,6 +34,7 @@ SalaryScope is deployed as a Streamlit Cloud application. It depends on three ex
 | Firebase Authentication | User login, registration, email verification | Spark (free) plan |
 | Firebase Firestore | Persistent data storage | Spark (free) plan |
 | HuggingFace | Model artefact and Model Hub registry storage | Free (private dataset repo) |
+| HuggingFace Space | AI Assistant cloud inference backend | Free CPU Space |
 
 The application is split into two deployments:
 
@@ -43,6 +44,8 @@ The application is split into two deployments:
 | Lite App | `app-lite.py` | No resume analysis; lower memory footprint |
 
 Both apps share the same Firebase project, Firestore database, and HuggingFace repository.
+
+The full app can also expose an AI Assistant tab. In local development, the assistant can use a local Ollama server. On Streamlit Cloud, it is designed to call a Hugging Face Space and store logged-in user chat history in a Hugging Face dataset repo when configured.
 
 ---
 
@@ -319,7 +322,24 @@ The following table lists all secrets used by the application.
 | `ADMIN_EMAIL` | String | Yes | No | Email address that receives admin privileges. Only needed for the Admin Panel tab (full app only) |
 | `HF_TOKEN` | String | Yes | No | HuggingFace access token with write scope. Only needed for model artefact loading and Model Hub (full app only) |
 | `HF_REPO_ID` | String | Yes | No | HuggingFace dataset repository in the form `"owner/repo-name"`. Only needed for full app |
+| `HF_SPACE_URL` | String | No | No | Hugging Face Space base URL for the AI Assistant cloud backend |
+| `HF_SPACE_API_NAME` | String | No | No | API route exposed by the Hugging Face Space. Default is `"/predict"` |
+| `HF_SPACE_ACTIVE_MODEL` | String | No | No | Informational model name shown by the app for the currently deployed Space model |
+| `HF_CHAT_REPO_ID` | String | No | No | Hugging Face dataset repository used for logged-in AI chat history |
+| `HF_CHAT_TOKEN` | String | No | No | Optional dedicated token for AI chat history repo access. `HF_TOKEN` can be reused instead |
+| `HF_SPACE_TIMEOUT` | String / Integer | No | No | Optional timeout (seconds) for AI Assistant cloud requests. Recommended value: `180` |
 | `IS_LOCAL` | Boolean | No | No | Set to `true` in local development to enable disk-based CoL index override save/reset. Omit or set `false` on Streamlit Cloud |
+
+### 7.2 AI Assistant Deployment Notes
+
+- Local runtime:
+  - anonymous AI chat is allowed for testing
+  - local Ollama is used when available
+- Streamlit Cloud runtime:
+  - AI Assistant access requires the user to be logged in
+  - anonymous cloud chat is disabled
+  - inference is routed to the configured Hugging Face Space
+  - logged-in chat history can be written to `HF_CHAT_REPO_ID` when configured
 
 ### 7.1 FIREBASE\_SERVICE\_ACCOUNT Format
 
