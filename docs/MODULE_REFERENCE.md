@@ -1,5 +1,5 @@
 # SalaryScope — Module Reference
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Module Reference / API Documentation
@@ -38,7 +38,7 @@
 3. Dark professional CSS theme injected via `st.markdown()`.
 4. All ML models, datasets, and lookup tables loaded with `@st.cache_resource` / `@st.cache_data`.
 5. Sidebar rendered: model selector dropdown, auth widgets (`login_ui`, `register_ui`, `forgot_password_ui`).
-6. Tab list constructed dynamically; Profile and Admin tabs appended conditionally, and HR Tools is mounted as a dedicated full-app tab.
+6. Tab list constructed dynamically; the full app includes AI Assistant and HR Tools in the base tab set, while Profile and Admin are appended conditionally.
 7. Each tab renderer called with full dependency injection.
 
 **Key globals available to tabs (passed as arguments):**
@@ -89,6 +89,10 @@ Renders the Manual Prediction tab for both App 1 and App 2 based on `IS_APP1`.
 
 Renders the Resume Analysis tab for both App 1 and App 2.
 
+The tab now contains a document-mode selector:
+- `Resume PDF` — salary prediction workflow with NLP extraction
+- `Offer Letter` — compensation extraction workflow rendered by `offer_letter_tab.py`
+
 **Key parameters:**
 
 | Parameter | Type | Description |
@@ -108,6 +112,27 @@ Renders the Resume Analysis tab for both App 1 and App 2.
 - `render_resume_results()` — results display with tools
 
 **Session state keys managed:** `resume_features`, `resume_text`, `resume_score_data`, `resume_prediction_result`, `resume_pdf_ready`, `resume_pdf_buffer`, `last_resume_name`.
+
+---
+
+### `llm_assistant_tab.py`
+
+#### `render_llm_assistant_tab()`
+
+Renders the AI Assistant tab in the full app.
+
+**Purpose:** Provides a grounded assistant for app help, prediction explanation, negotiation drafting, resume wording, and report-writing support without replacing the ML salary models.
+
+**Key dependencies used internally:**
+
+| Dependency | Description |
+|---|---|
+| `app.local_llm.service` | Backend routing, model availability checks, and response generation |
+| `app.local_llm.storage_router` | Conversation storage abstraction (local SQLite vs Hugging Face dataset-backed storage) |
+| `app.local_llm.exporters` | PDF and Markdown export helpers |
+| `app.local_llm.deployment` | Local vs Streamlit Cloud runtime detection |
+
+**Side effects:** Renders the chat UI, stores conversations/messages, and exposes export actions for individual replies and full conversations.
 
 ---
 

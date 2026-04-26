@@ -1,5 +1,5 @@
 # SalaryScope — Data Dictionary
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Data Dictionary

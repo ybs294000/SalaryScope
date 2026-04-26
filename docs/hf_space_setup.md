@@ -120,6 +120,9 @@ The assistant now routes automatically:
 - if Streamlit Cloud runtime -> Hugging Face Space
 - if Streamlit Cloud runtime and the user is not logged in -> AI Assistant access is blocked
 
+The main full app entry point is `app_resume.py`. The older `app_resume_llm.py`
+variant is no longer needed.
+
 ### Authentication behavior
 
 - Local development:
@@ -136,13 +139,13 @@ This is based on the same local/cloud detection style used elsewhere in the app.
 1. Verify the Space opens in browser
 2. In the Space footer, click `Use via API`
 3. Confirm endpoint name is `/predict`
-4. Run the LLM app locally:
+4. Run the main app locally:
 
 ```powershell
-python -m streamlit run app_resume_llm.py
+python -m streamlit run app_resume.py
 ```
 
-5. For cloud testing, deploy the LLM app version or wire the same secrets into Streamlit Cloud
+5. For cloud testing, wire the same secrets into Streamlit Cloud for the full app deployment
 
 ## Notes
 

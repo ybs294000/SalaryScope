@@ -1,5 +1,5 @@
 # SalaryScope — Testing Guide
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Testing Guide and Test Plan
@@ -41,14 +41,14 @@
 
 ### 1.1 Purpose
 
-This document defines a structured test plan for SalaryScope v1.3.0. It covers manual functional tests for every feature of the application, unit tests for all pure-Python modules (which have no Streamlit dependency and can be run programmatically), integration tests for cross-module workflows, security tests for the authentication and rate limiting systems, and performance benchmarks.
+This document defines a structured test plan for SalaryScope v1.4.0. It covers manual functional tests for every feature of the application, unit tests for key Python modules, integration tests for cross-module workflows, security tests for the authentication and rate limiting systems, and performance benchmarks.
 
 ### 1.2 Test Strategy
 
 SalaryScope uses a hybrid testing approach:
 
 - **Manual UI tests** — executed directly in the browser against the running application. These cover all Streamlit tab functionality, form interactions, and visual output.
-- **Programmatic unit tests** — executed using Python's built-in `unittest` module against pure-Python functions (those without `import streamlit`). These cover password policy, rate limiter logic, NLP extraction functions, financial utility `compute_*()` functions, insights engine functions, and Model Hub validator.
+- **Programmatic unit tests** — the checked-in tests are written with Python's built-in `unittest` style and are typically executed through `pytest`. Some tests mock `streamlit` so focused module logic can be exercised without launching the app UI. These cover password policy, rate limiter logic, NLP extraction functions, financial utility `compute_*()` functions, insights engine functions, and Model Hub validator.
 - **Integration tests** — executed manually or via script, verifying multi-module workflows such as the full prediction pipeline and the Firestore read/write cycle.
 - **Security tests** — targeted manual tests of authentication hardening, rate limiting, and Model Hub access controls.
 - **Performance tests** — timing benchmarks for prediction, batch processing, and PDF generation.
@@ -87,9 +87,9 @@ pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 
 # Configure secrets
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml
-# Fill in real values for FIREBASE_API_KEY, FIREBASE_SERVICE_ACCOUNT,
-# ADMIN_EMAIL, HF_TOKEN, HF_REPO_ID, IS_LOCAL=true
+# Create .streamlit/secrets.toml manually in this repo and fill in:
+# FIREBASE_API_KEY, FIREBASE_SERVICE_ACCOUNT, ADMIN_EMAIL,
+# HF_TOKEN, HF_REPO_ID, and optionally IS_LOCAL=true
 
 # Run the app
 streamlit run app_resume.py
@@ -127,6 +127,8 @@ python -m pytest tests/test_insights_engine.py -v
 ```
 
 If a `tests/` directory does not yet exist, the unit test cases in Sections 17–22 provide the complete test code to populate it.
+
+> Note: The current repository already includes a populated `tests/` directory.
 
 ---
 

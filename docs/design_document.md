@@ -1,5 +1,5 @@
 # SalaryScope — Design Document
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Software Design Document (SDD)
@@ -32,7 +32,7 @@
 
 ### 1.1 Purpose
 
-This document describes the software architecture, module design, data flows, and design decisions for SalaryScope v1.3.0 — a machine learning-powered salary prediction web application built with Python and Streamlit.
+This document describes the software architecture, module design, data flows, and design decisions for SalaryScope v1.4.0 — a machine learning-powered salary prediction web application built with Python and Streamlit.
 
 ### 1.2 Scope
 
@@ -55,7 +55,7 @@ SalaryScope provides salary prediction through three modes of interaction — ma
 - **Model 1 (App 1):** Random Forest Regressor trained on a general salary dataset. Covers a broad range of job roles and countries.
 - **Model 2 (App 2):** XGBoost Regressor trained on a data science salaries dataset. Specialises in data science and ML roles globally.
 
-In addition to prediction, the system provides dataset exploration, model performance analytics, financial planning tools, a dedicated HR & Employer Tools tab for compensation planning workflows, a user account system backed by Firebase, and a Model Hub that allows admins to deploy additional independently trained models without modifying application code.
+In addition to prediction, the system provides dataset exploration, model performance analytics, financial planning tools, a dedicated HR & Employer Tools tab for compensation planning workflows, an AI Assistant for explanation and drafting tasks, a user account system backed by Firebase, and a Model Hub that allows admins to deploy additional independently trained models without modifying application code.
 
 ---
 
@@ -69,9 +69,10 @@ In addition to prediction, the system provides dataset exploration, model perfor
 │                                                                  │
 │  ┌─────────────┐   ┌──────────────────────────────────────────┐ │
 │  │  Sidebar     │   │           Tab Area                        │ │
-│  │  - Model     │   │  Manual | Resume | Batch | Scenario |    │ │
-│  │    Selector  │   │  Analytics | Insights | Hub | HR Tools │ │
-│  │  - Auth      │   │  | Profile | Admin | About             │ │
+│  │  - Model     │   │  Manual | Resume | AI Assistant |      │ │
+│  │    Selector  │   │  Batch | Scenario | Analytics |       │ │
+│  │  - Auth      │   │  Insights | Hub | HR Tools | Profile | │ │
+│  │              │   │  Admin | About                         │ │
 │  └─────────────┘   └──────────────────────────────────────────┘ │
 └────────────────────────────┬────────────────────────────────────┘
                              │
@@ -94,7 +95,8 @@ Layer 0: Entry Point
 
 Layer 1: Tabs (app/tabs/)
     manual_prediction_tab  — Input form + results + financial tools
-    resume_analysis_tab    — PDF upload + NLP + prediction
+    resume_analysis_tab    — Resume PDF workflow + Offer Letter workflow
+    llm_assistant_tab      — Grounded assistant UI for help/explanations/drafting
     batch_prediction_tab   — File upload + bulk prediction
     scenario_analysis_tab  — Multi-scenario comparison
     model_analytics_tab    — Performance metrics + SHAP + association rules
@@ -171,7 +173,7 @@ Layer 5: HR Tools (app/hr_tools/)
 2. Sets page configuration and applies the global dark professional CSS theme.
 3. Loads all ML models, metadata, datasets, and lookup tables using `@st.cache_resource` and `@st.cache_data` decorators to prevent reloading on every Streamlit rerun.
 4. Renders the sidebar with the model selector and authentication widgets.
-5. Constructs the tab list dynamically (Profile and Admin tabs are added conditionally based on login status and admin flag; HR Tools is mounted as a dedicated full-app tab).
+5. Constructs the tab list dynamically (AI Assistant and HR Tools are part of the full-app base set; Profile and Admin tabs are added conditionally based on login status and admin flag).
 6. Mounts each tab renderer, passing all required resources as arguments.
 
 **Design principle:** No business logic lives in `app_resume.py`. It is purely an orchestrator — loading, assembling, and passing resources to tab modules.
@@ -683,8 +685,8 @@ Tabs are constructed dynamically in `app_resume.py`. The base set of tabs is alw
 
 ```
 Base tabs:    Manual Prediction | Resume Analysis | Batch Prediction |
-              Scenario Analysis | Model Analytics | Data Insights |
-              Model Hub | About
+              AI Assistant | Scenario Analysis | Model Analytics |
+              Data Insights | Model Hub | HR Tools | About
 
 Conditional:  Profile  (logged in)
               Admin    (is_admin())

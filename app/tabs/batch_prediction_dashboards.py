@@ -95,6 +95,9 @@ def _render_app1_summary_metrics(df: pd.DataFrame) -> None:
     median_s = df["Predicted Annual Salary"].median()
     min_s = df["Predicted Annual Salary"].min()
     max_s = df["Predicted Annual Salary"].max()
+    std_s = df["Predicted Annual Salary"].std()
+    std_s = 0 if pd.isna(std_s) else std_s
+    p90_s = df["Predicted Annual Salary"].quantile(0.9)
 
     level_counts = df["Estimated Salary Level"].value_counts()
     stage_counts = df["Career Stage"].value_counts()
@@ -107,9 +110,21 @@ def _render_app1_summary_metrics(df: pd.DataFrame) -> None:
 
     bottom_row = st.columns(3)
     bottom_row[0].metric("Min Salary", f"${min_s:,.0f}")
-    bottom_row[1].metric("Professional Range", int(level_counts.get("Professional Range", 0)))
-    bottom_row[2].metric("Growth Stage", int(stage_counts.get("Growth Stage", 0)))
+    bottom_row[1].metric("Std Deviation", f"${std_s:,.0f}")
+    bottom_row[2].metric("90th Percentile", f"${p90_s:,.0f}")
     st.write(f"Salary range in this batch: \\${min_s:,.0f} to \\${max_s:,.0f}")
+
+    st.caption("Salary level summary")
+    level_row = st.columns(3)
+    level_row[0].metric("Early Career Range", int(level_counts.get("Early Career Range", 0)))
+    level_row[1].metric("Professional Range", int(level_counts.get("Professional Range", 0)))
+    level_row[2].metric("Executive Range", int(level_counts.get("Executive Range", 0)))
+
+    st.caption("Career stage summary")
+    stage_row = st.columns(3)
+    stage_row[0].metric("Entry Stage", int(stage_counts.get("Entry Stage", 0)))
+    stage_row[1].metric("Growth Stage", int(stage_counts.get("Growth Stage", 0)))
+    stage_row[2].metric("Leadership Stage", int(stage_counts.get("Leadership Stage", 0)))
 
 
 def _render_app1_overview_charts(df: pd.DataFrame, apply_theme, generate_salary_leaderboard) -> None:
@@ -148,7 +163,7 @@ def _render_app1_overview_charts(df: pd.DataFrame, apply_theme, generate_salary_
         apply_theme(fig)
         st.plotly_chart(fig, width="stretch")
 
-    c3, c4, c5 = st.columns([1, 1, 0.9])
+    c3, c4 = st.columns(2)
     with c3:
         st.caption("This compares the average predicted salary across SalaryScope's salary-level groupings.")
         band_salary = (
@@ -193,27 +208,26 @@ def _render_app1_overview_charts(df: pd.DataFrame, apply_theme, generate_salary_
         apply_theme(fig)
         st.plotly_chart(fig, width="stretch")
 
-    with c5:
-        st.caption("This donut chart shows how the uploaded batch is split across SalaryScope's salary levels.")
-        level_mix = (
-            df["Estimated Salary Level"]
-            .value_counts()
-            .reindex(["Early Career Range", "Professional Range", "Executive Range"], fill_value=0)
-            .reset_index()
-        )
-        level_mix.columns = ["Estimated Salary Level", "Count"]
-        fig = px.pie(
-            level_mix,
-            names="Estimated Salary Level",
-            values="Count",
-            hole=0.55,
-            title="Salary Level Share",
-            color="Estimated Salary Level",
-            color_discrete_sequence=get_colorway_3_stages(),
-        )
-        fig.update_traces(textposition="inside", textinfo="percent+label")
-        apply_theme(fig)
-        st.plotly_chart(fig, width="stretch")
+    st.caption("This donut chart shows how the uploaded batch is split across SalaryScope's salary levels.")
+    level_mix = (
+        df["Estimated Salary Level"]
+        .value_counts()
+        .reindex(["Early Career Range", "Professional Range", "Executive Range"], fill_value=0)
+        .reset_index()
+    )
+    level_mix.columns = ["Estimated Salary Level", "Count"]
+    fig = px.pie(
+        level_mix,
+        names="Estimated Salary Level",
+        values="Count",
+        hole=0.55,
+        title="Salary Level Share",
+        color="Estimated Salary Level",
+        color_discrete_sequence=get_colorway_3_stages(),
+    )
+    fig.update_traces(textposition="inside", textinfo="percent+label")
+    apply_theme(fig)
+    st.plotly_chart(fig, width="stretch")
 
 
 def _render_app1_progression_charts(df: pd.DataFrame, sampled_df: pd.DataFrame, apply_theme) -> None:
@@ -373,8 +387,7 @@ def _render_app2_summary_metrics(df: pd.DataFrame, EXPERIENCE_MAP) -> None:
     max_s = df["Predicted Annual Salary (USD)"].max()
     std_s = df["Predicted Annual Salary (USD)"].std()
     std_s = 0 if pd.isna(std_s) else std_s
-    top_experience_code = _safe_mode_label(df["experience_level"])
-    top_experience_label = EXPERIENCE_MAP.get(top_experience_code, top_experience_code)
+    p90_s = df["Predicted Annual Salary (USD)"].quantile(0.9)
 
     top_row = st.columns(4)
     top_row[0].metric("Records", f"{df.shape[0]:,}")
@@ -384,8 +397,8 @@ def _render_app2_summary_metrics(df: pd.DataFrame, EXPERIENCE_MAP) -> None:
 
     bottom_row = st.columns(3)
     bottom_row[0].metric("Min Salary", f"${min_s:,.0f}")
-    bottom_row[1].metric("Top Experience Group", top_experience_label)
-    bottom_row[2].metric("Std Deviation", f"${std_s:,.0f}")
+    bottom_row[1].metric("Std Deviation", f"${std_s:,.0f}")
+    bottom_row[2].metric("90th Percentile", f"${p90_s:,.0f}")
     st.write(f"Salary range in this batch: \\${min_s:,.0f} to \\${max_s:,.0f}")
 
 

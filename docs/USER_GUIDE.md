@@ -188,9 +188,13 @@ Resume Analysis automatically extracts your professional details from a PDF resu
 ### 5.1 Uploading Your Resume
 
 1. Go to the **Resume Analysis** tab.
-2. Click **Browse files** or drag and drop your PDF resume.
-3. Only PDF format is supported.
-4. Click **Extract Resume Features**.
+2. Choose the document type:
+   - **Resume PDF** for salary prediction from a resume
+   - **Offer Letter** for extracting compensation details from an offer document
+3. For resume-based salary prediction, keep **Resume PDF** selected.
+4. Click **Browse files** or drag and drop your PDF resume.
+5. Only PDF format is supported.
+6. Click **Extract Resume Features**.
 
 The system will extract your job title, years of experience, education level, country, and detected technical skills from the resume text.
 
@@ -681,8 +685,8 @@ Files above 10,000 rows will be noticeably slower. Ensure your file format is co
 **The Model Hub says "Could not load model registry".**
 This indicates a configuration issue with the HuggingFace repository secrets. Contact the admin.
 
-**The AI Assistant is not available on Streamlit Cloud.**
-If you are not logged in, sign in first. Cloud AI chat is disabled for anonymous users. If you are already logged in, the Hugging Face Space backend may be asleep or temporarily unavailable.
+**The AI Assistant is unavailable or not responding on Streamlit Cloud.**
+If you are not logged in, sign in first. Cloud AI chat is disabled for anonymous users. If you are already logged in, the Hugging Face Space backend may be asleep, cold-starting, or temporarily unavailable.
 
 ---
 

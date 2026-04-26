@@ -12,3 +12,4 @@ app/tabs/data_insights_tab.old.py
 col_indices_custom.json
 app/local_llm/runtime/
 app/local_llm/output/
+app_resume_llm.py
