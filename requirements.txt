@@ -30,3 +30,8 @@ onnxruntime
 skl2onnx
 pillow
 langdetect
+
+# Note:
+# The Streamlit app uses the local/cloud AI assistant through existing app deps.
+# The separate Hugging Face Space app has its own isolated requirements file at:
+#   hf_space_app/requirements.txt

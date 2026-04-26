@@ -1399,8 +1399,7 @@ else:
 tabs = [
     ":material/edit_note: Manual Prediction",
     ":material/description: Resume Analysis",
-    # AI TAB — rollback: remove this label and the corresponding render block below
-    ":material/smart_toy: AI Assistant",
+    ":material/smart_toy: AI Draft Assistant",
     ":material/batch_prediction: Batch Prediction",
     ":material/analytics: Scenario Analysis", 
     ":material/model_training: Model Analytics",
@@ -1504,8 +1503,7 @@ with tab_objects[1]:
     )
  
 # ==================================================
-# TAB 3: AI ASSISTANT
-# ROLLBACK: remove this whole block and the import above.
+# TAB 3: AI DRAFT ASSISTANT
 # ==================================================
 with tab_objects[2]:
     render_llm_assistant_tab()
