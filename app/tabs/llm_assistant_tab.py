@@ -12,8 +12,9 @@ from app.local_llm.service import (
     get_backend_label,
     generate_assistant_reply,
     is_local_llm_available,
-    list_local_models,
+    list_assistant_models,
 )
+from app.local_llm.deployment import is_local_runtime
 from app.local_llm.storage_router import (
     add_message,
     create_conversation,
@@ -96,7 +97,7 @@ def _cached_llm_status() -> tuple[bool, str]:
 
 @st.cache_data(ttl=20, show_spinner=False)
 def _cached_model_options() -> list[str]:
-    return list_local_models()
+    return list_assistant_models()
 
 
 def _trim_text(value: str, limit: int = 800) -> str:
@@ -350,6 +351,7 @@ def render_llm_assistant_tab():
 
     username = _current_username()
     config = LocalLLMConfig.from_env()
+    local_runtime = is_local_runtime()
     available, status = _cached_llm_status()
     model_options = _cached_model_options() if available else [config.model]
     backend_label = get_backend_label()
@@ -423,11 +425,22 @@ def render_llm_assistant_tab():
             ASSISTANT_MODES,
             index=ASSISTANT_MODES.index(default_mode) if default_mode in ASSISTANT_MODES else 0,
         )
-        selected_model = st.selectbox(
-            "Model",
-            model_options,
-            index=model_options.index(default_model) if default_model in model_options else 0,
-        )
+        if local_runtime:
+            selected_model = st.selectbox(
+                "Model",
+                model_options,
+                index=model_options.index(default_model) if default_model in model_options else 0,
+            )
+        else:
+            deployed_model = model_options[0] if model_options else default_model
+            selected_model = deployed_model
+            st.selectbox(
+                "Cloud Model",
+                [deployed_model],
+                index=0,
+                disabled=True,
+                help="The free Hugging Face Space runs one deployed model at a time.",
+            )
         tone = st.selectbox(
             "Tone",
             ASSISTANT_TONES,
@@ -485,7 +498,8 @@ def render_llm_assistant_tab():
             st.write(context_note)
             st.caption(
                 "Fast is best for app help and prediction explanation. "
-                "Balanced is a good default. Detailed is best reserved for drafting tasks."
+                "Balanced is a good default. Detailed is best reserved for drafting tasks. "
+                "On Streamlit Cloud, the assistant uses a smaller Space-friendly model and shorter outputs."
             )
 
     with right_col:
@@ -536,7 +550,8 @@ def render_llm_assistant_tab():
                 )
 
                 try:
-                    with st.spinner("Generating local assistant response..."):
+                    spinner_text = "Generating assistant response..." if local_runtime else "Contacting Hugging Face assistant..."
+                    with st.spinner(spinner_text):
                         result = generate_assistant_reply(
                             mode=mode,
                             user_message=prompt_input,
@@ -563,7 +578,7 @@ def render_llm_assistant_tab():
                     friendly = (
                         "The assistant took too long to respond. "
                         "Try again with `Performance = Fast`, use a shorter prompt, "
-                        "or switch to a smaller model such as `llama3.2:1b` or `qwen2.5:1.5b`."
+                        "or switch to a smaller model such as `llama3.2:1b`, `qwen2.5:0.5b`, or `smollm2:360m`."
                     )
                     st.warning(friendly)
                 except LocalLLMError as exc:
@@ -636,3 +651,7 @@ def render_llm_assistant_tab():
             "When Hugging Face chat storage is configured, logged-in users get separate persistent history there. "
             "Otherwise the assistant falls back to local SQLite."
         )
+        if not local_runtime:
+            st.caption(
+                "Cloud mode is tuned for the free Hugging Face Space path, so responses stay shorter and the deployed model is fixed by Space settings."
+            )

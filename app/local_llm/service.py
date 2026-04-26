@@ -5,7 +5,7 @@ High-level local LLM services for the SalaryScope assistant.
 from __future__ import annotations
 
 from .client import LocalLLMError, LocalLLMTimeoutError, OllamaLocalClient
-from .config import LocalLLMConfig, SUPPORTED_MODELS
+from .config import CLOUD_SAFE_MODELS, LocalLLMConfig, SUPPORTED_MODELS, get_cloud_active_model
 from .deployment import deployment_label, is_local_runtime
 from .hf_space_client import HFSpaceClient
 from .prompts import (
@@ -34,6 +34,23 @@ def _resolve_generation_settings(mode: str, profile: str) -> tuple[float, int]:
     if mode in FAST_CHAT_MODES:
         return 0.2, 220
     return 0.3, 360
+
+
+def _resolve_cloud_generation_settings(mode: str, profile: str) -> tuple[float, int]:
+    """
+    Lighter defaults for the free HF Space path.
+    """
+    if profile == "Fast":
+        if mode in FAST_CHAT_MODES:
+            return 0.15, 96
+        return 0.2, 120
+    if profile == "Balanced":
+        if mode in FAST_CHAT_MODES:
+            return 0.2, 120
+        return 0.25, 144
+    if mode in FAST_CHAT_MODES:
+        return 0.2, 140
+    return 0.3, 168
 
 
 def _client_for(model_name: str | None = None) -> OllamaLocalClient:
@@ -72,6 +89,22 @@ def list_local_models() -> list[str]:
     return merged
 
 
+def list_assistant_models() -> list[str]:
+    """
+    Return the models the UI should expose for the current deployment target.
+    Local runs can show multiple Ollama options; cloud runs should expose the
+    single deployed HF Space model plus tiny safe fallbacks for documentation.
+    """
+    if is_local_runtime():
+        return list_local_models()
+    active = get_cloud_active_model()
+    models = [active]
+    for name in CLOUD_SAFE_MODELS:
+        if name not in models:
+            models.append(name)
+    return models
+
+
 def generate_resume_summary(
     *,
     candidate_name: str,
@@ -95,19 +128,20 @@ def generate_resume_summary(
         content = client.chat(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.3, num_predict=260)
         model_used = client.config.model
     else:
+        cloud_model = get_cloud_active_model()
         result = _space_client().predict(
             {
                 "task": "resume_summary",
-                "model_name": model_name or LocalLLMConfig.from_env().model,
+                "model_name": cloud_model,
                 "system_prompt": system_prompt,
                 "user_prompt": user_prompt,
-                "temperature": 0.3,
-                "num_predict": 260,
+                "temperature": 0.25,
+                "num_predict": 140,
                 "deployment": deployment_label(),
             }
         )
         content = str(result.get("content", "")).strip()
-        model_used = str(result.get("model", model_name or LocalLLMConfig.from_env().model))
+        model_used = str(result.get("model", cloud_model))
     return {
         "mode": "Resume Assistant",
         "model": model_used,
@@ -140,19 +174,20 @@ def generate_negotiation_script(
         content = client.chat(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.45, num_predict=320)
         model_used = client.config.model
     else:
+        cloud_model = get_cloud_active_model()
         result = _space_client().predict(
             {
                 "task": "negotiation_script",
-                "model_name": model_name or LocalLLMConfig.from_env().model,
+                "model_name": cloud_model,
                 "system_prompt": system_prompt,
                 "user_prompt": user_prompt,
-                "temperature": 0.45,
-                "num_predict": 320,
+                "temperature": 0.35,
+                "num_predict": 160,
                 "deployment": deployment_label(),
             }
         )
         content = str(result.get("content", "")).strip()
-        model_used = str(result.get("model", model_name or LocalLLMConfig.from_env().model))
+        model_used = str(result.get("model", cloud_model))
     return {
         "mode": "Negotiation Assistant",
         "model": model_used,
@@ -197,7 +232,11 @@ def generate_assistant_reply(
         }
     )
 
-    temperature, num_predict = _resolve_generation_settings(mode, performance_profile)
+    temperature, num_predict = (
+        _resolve_generation_settings(mode, performance_profile)
+        if is_local_runtime()
+        else _resolve_cloud_generation_settings(mode, performance_profile)
+    )
     if is_local_runtime():
         client = _client_for(model_name)
         try:
@@ -235,11 +274,12 @@ def generate_assistant_reply(
             )
         model_used = client.config.model
     else:
+        cloud_model = get_cloud_active_model()
         result = _space_client().predict(
             {
                 "task": "assistant_chat",
                 "mode": mode,
-                "model_name": model_name or LocalLLMConfig.from_env().model,
+                "model_name": cloud_model,
                 "tone": tone,
                 "performance_profile": performance_profile,
                 "context_note": context_note,
@@ -250,7 +290,7 @@ def generate_assistant_reply(
             }
         )
         content = str(result.get("content", "")).strip()
-        model_used = str(result.get("model", model_name or LocalLLMConfig.from_env().model))
+        model_used = str(result.get("model", cloud_model))
     return {
         "mode": mode,
         "model": model_used,
@@ -265,6 +305,7 @@ __all__ = [
     "generate_negotiation_script",
     "generate_resume_summary",
     "is_local_llm_available",
+    "list_assistant_models",
     "list_local_models",
     "get_backend_label",
 ]

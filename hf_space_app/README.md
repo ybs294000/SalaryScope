@@ -21,10 +21,15 @@ is running on Streamlit Cloud.
 
 For a free CPU Space, start with:
 
-- `qwen2.5:1.5b` -> `Qwen/Qwen2.5-1.5B-Instruct`
+- `qwen2.5:0.5b` -> `Qwen/Qwen2.5-0.5B-Instruct`
+
+If you want an even lighter fallback, you can also try:
+
+- `smollm2:360m` -> `HuggingFaceTB/SmolLM2-360M-Instruct`
 
 If that works comfortably and you want stronger output quality, then try:
 
+- `qwen2.5:1.5b` -> `Qwen/Qwen2.5-1.5B-Instruct`
 - `qwen2.5:3b` -> `Qwen/Qwen2.5-3B-Instruct`
 
 ## Variable to set in Space settings
@@ -33,6 +38,8 @@ If that works comfortably and you want stronger output quality, then try:
 
 Suggested values:
 
+- `qwen2.5:0.5b`
+- `smollm2:360m`
 - `qwen2.5:1.5b`
 - `qwen2.5:3b`
 - `gemma2:2b`

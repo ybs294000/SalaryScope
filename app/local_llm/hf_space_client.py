@@ -81,7 +81,7 @@ class HFSpaceClient:
         try:
             submit_response = requests.post(
                 submit_url,
-                json={"data": [payload]},
+                json={"data": [json.dumps(payload)]},
                 headers=self._headers(content_type=True),
                 timeout=self.timeout_seconds,
             )

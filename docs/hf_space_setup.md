@@ -46,18 +46,22 @@ On Hugging Face:
 
 In the Space settings, add a variable:
 
-- `SPACE_MODEL_NAME = qwen2.5:1.5b`
+- `SPACE_MODEL_NAME = qwen2.5:0.5b`
 
 Recommended first choice:
 
-- `qwen2.5:1.5b`
+- `qwen2.5:0.5b`
 
 Why:
 
 - ungated
 - strong instruction-following
-- better chance of fitting comfortably on a free CPU Space
+- much better chance of fitting comfortably on a free CPU Space
 - still good for drafting/explaining tasks
+
+Even lighter fallback:
+
+- `smollm2:360m`
 
 Gemma note:
 
@@ -136,6 +140,6 @@ python -m streamlit run app_resume_llm.py
 
 Use:
 
-- `Qwen/Qwen2.5-1.5B-Instruct`
+- `Qwen/Qwen2.5-0.5B-Instruct`
 
-Only move to Qwen 3B, Gemma, or Llama after the basic cloud path works.
+Only move to Qwen 1.5B, Qwen 3B, Gemma, or Llama after the basic cloud path works.
