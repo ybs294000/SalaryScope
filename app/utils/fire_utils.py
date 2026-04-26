@@ -400,6 +400,14 @@ def render_fire_calculator(
                 return _fmt_local(v * fx_rate, cur_sym, cur_code)
             return _fmt_usd(v)
 
+        def _to_input_currency(v_usd: float) -> float:
+            return v_usd * fx_rate if use_local else v_usd
+
+        def _from_input_currency(v_input: float) -> float:
+            if use_local and fx_rate > 0:
+                return v_input / fx_rate
+            return v_input
+
         # ------------------------------------------------------------------
         # Derived defaults from upstream modules
         # ------------------------------------------------------------------
@@ -455,13 +463,15 @@ def render_fire_calculator(
             )
 
         c3, c4 = st.columns(2)
+        portfolio_label = f"Current invested portfolio ({cur_code})" if use_local else "Current invested portfolio (USD)"
+        contribution_label = f"Annual contribution to investments ({cur_code})" if use_local else "Annual contribution to investments (USD)"
         with c3:
-            current_portfolio = st.number_input(
-                "Current invested portfolio (USD)",
+            current_portfolio_input = st.number_input(
+                portfolio_label,
                 min_value=0.0,
-                max_value=100_000_000.0,
-                value=float(round(annual_salary_usd * 0.5, -3)),
-                step=1000.0,
+                max_value=float(_to_input_currency(100_000_000.0)),
+                value=float(round(_to_input_currency(annual_salary_usd * 0.5), -3)),
+                step=float(max(1000.0, round(_to_input_currency(1000.0), -2))),
                 key=f"{widget_key}_portfolio",
                 help=(
                     "Total value of your current investment accounts "
@@ -471,11 +481,11 @@ def render_fire_calculator(
             )
         with c4:
             annual_contribution_input = st.number_input(
-                "Annual contribution to investments (USD)",
+                contribution_label,
                 min_value=0.0,
-                max_value=float(annual_salary_usd * 2),
-                value=float(round(default_monthly_contribution * 12, -2)),
-                step=500.0,
+                max_value=float(_to_input_currency(annual_salary_usd * 2)),
+                value=float(round(_to_input_currency(default_monthly_contribution * 12), -2)),
+                step=float(max(500.0, round(_to_input_currency(500.0), -2))),
                 key=f"{widget_key}_contrib",
                 help=(
                     "How much you invest per year across all accounts. "
@@ -495,13 +505,14 @@ def render_fire_calculator(
         )
 
         c5, c6 = st.columns(2)
+        expenses_label = f"Current annual living expenses ({cur_code})" if use_local else "Current annual living expenses (USD)"
         with c5:
             annual_expenses_input = st.number_input(
-                "Current annual living expenses (USD)",
-                min_value=1000.0,
-                max_value=10_000_000.0,
-                value=float(round(default_annual_expenses, -2)),
-                step=500.0,
+                expenses_label,
+                min_value=float(max(1000.0, round(_to_input_currency(1000.0), -2))),
+                max_value=float(_to_input_currency(10_000_000.0)),
+                value=float(round(_to_input_currency(default_annual_expenses), -2)),
+                step=float(max(500.0, round(_to_input_currency(500.0), -2))),
                 key=f"{widget_key}_expenses",
                 help=(
                     "Your total annual spending on housing, food, transport, "
@@ -527,12 +538,17 @@ def render_fire_calculator(
         # Conditional input: Barista FIRE part-time income
         barista_income = 0.0
         if fire_variant == "Barista FIRE":
+            barista_label = (
+                f"Expected annual part-time income in semi-retirement ({cur_code})"
+                if use_local else
+                "Expected annual part-time income in semi-retirement (USD)"
+            )
             barista_income = st.number_input(
-                "Expected annual part-time income in semi-retirement (USD)",
+                barista_label,
                 min_value=0.0,
                 max_value=float(annual_expenses_input),
                 value=float(round(annual_expenses_input * 0.30, -2)),
-                step=500.0,
+                step=float(max(500.0, round(_to_input_currency(500.0), -2))),
                 key=f"{widget_key}_barista",
                 help=(
                     "Annual income from part-time work, freelancing, or side income "
@@ -567,13 +583,18 @@ def render_fire_calculator(
         # ------------------------------------------------------------------
         # Compute
         # ------------------------------------------------------------------
+        current_portfolio = _from_input_currency(float(current_portfolio_input))
+        annual_contribution_input_usd = _from_input_currency(float(annual_contribution_input))
+        annual_expenses_input_usd = _from_input_currency(float(annual_expenses_input))
+        barista_income_usd = _from_input_currency(float(barista_income))
+
         result = compute_fire(
-            annual_expenses_usd=annual_expenses_input,
+            annual_expenses_usd=annual_expenses_input_usd,
             current_portfolio_usd=current_portfolio,
-            annual_contribution_usd=annual_contribution_input,
+            annual_contribution_usd=annual_contribution_input_usd,
             fire_variant=fire_variant,
             return_rate_label=return_rate_label,
-            barista_part_time_income_usd=barista_income,
+            barista_part_time_income_usd=barista_income_usd,
             coast_target_age=int(target_retirement_age),
             current_age=int(current_age),
         )
@@ -724,18 +745,18 @@ def render_fire_calculator(
             unsafe_allow_html=True,
         )
         rows_html = (
-            _info_row("Annual expenses (current)", _loc(annual_expenses_input))
+            _info_row("Annual expenses (current)", _loc(annual_expenses_input_usd))
             + _info_row("Target annual expenses in retirement", _loc(result["target_expenses"]))
             + _info_row("Safe withdrawal rate", f"{result['withdrawal_rate']*100:.0f}%")
             + _info_row("Assumed nominal return", f"{result['nominal_return']*100:.0f}%")
             + _info_row("Assumed inflation", "3.0%")
             + _info_row("Real (inflation-adjusted) return", f"{result['real_return']*100:.1f}%")
-            + _info_row("Annual investment contribution", _loc(annual_contribution_input))
+            + _info_row("Annual investment contribution", _loc(annual_contribution_input_usd))
         )
-        if fire_variant == "Barista FIRE" and barista_income > 0:
+        if fire_variant == "Barista FIRE" and barista_income_usd > 0:
             rows_html += _info_row(
                 "Part-time income in semi-retirement",
-                _loc(barista_income),
+                _loc(barista_income_usd),
                 color=variant_colors["Barista FIRE"],
             )
         if fire_variant == "Coast FIRE":
@@ -874,12 +895,12 @@ def render_fire_calculator(
         compare_rows = []
         for v_name in _WITHDRAWAL_RATES.keys():
             v_res = compute_fire(
-                annual_expenses_usd=annual_expenses_input,
+                annual_expenses_usd=annual_expenses_input_usd,
                 current_portfolio_usd=current_portfolio,
-                annual_contribution_usd=annual_contribution_input,
+                annual_contribution_usd=annual_contribution_input_usd,
                 fire_variant=v_name,
                 return_rate_label=return_rate_label,
-                barista_part_time_income_usd=barista_income,
+                barista_part_time_income_usd=barista_income_usd,
                 coast_target_age=int(target_retirement_age),
                 current_age=int(current_age),
             )
@@ -923,18 +944,18 @@ def render_fire_calculator(
             "Other inputs held constant."
         )
 
-        base_contrib = annual_contribution_input or 1.0
+        base_contrib = annual_contribution_input_usd or 1.0
         contrib_range = [base_contrib * m for m in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]]
         contrib_labels = [_loc(c) for c in contrib_range]
         contrib_years = []
         for c in contrib_range:
             cr = compute_fire(
-                annual_expenses_usd=annual_expenses_input,
+                annual_expenses_usd=annual_expenses_input_usd,
                 current_portfolio_usd=current_portfolio,
                 annual_contribution_usd=c,
                 fire_variant=fire_variant,
                 return_rate_label=return_rate_label,
-                barista_part_time_income_usd=barista_income,
+                barista_part_time_income_usd=barista_income_usd,
                 coast_target_age=int(target_retirement_age),
                 current_age=int(current_age),
             )
@@ -987,7 +1008,7 @@ def render_fire_calculator(
             "A lower expense level reduces your FIRE number and accelerates retirement."
         )
 
-        base_exp = annual_expenses_input or 1.0
+        base_exp = annual_expenses_input_usd or 1.0
         exp_mults = [0.60, 0.75, 0.90, 1.0, 1.15, 1.30]
         exp_range = [base_exp * m for m in exp_mults]
         exp_labels = [f"{int(m*100)}% ({_loc(e)})" for m, e in zip(exp_mults, exp_range)]
@@ -996,10 +1017,10 @@ def render_fire_calculator(
             er = compute_fire(
                 annual_expenses_usd=e,
                 current_portfolio_usd=current_portfolio,
-                annual_contribution_usd=annual_contribution_input,
+                annual_contribution_usd=annual_contribution_input_usd,
                 fire_variant=fire_variant,
                 return_rate_label=return_rate_label,
-                barista_part_time_income_usd=barista_income,
+                barista_part_time_income_usd=barista_income_usd,
                 coast_target_age=int(target_retirement_age),
                 current_age=int(current_age),
             )
@@ -1050,7 +1071,7 @@ def render_fire_calculator(
 
         insights = []
         years = result["years_to_fire"]
-        contrib_rate = (annual_contribution_input / annual_salary_usd * 100) if annual_salary_usd else 0
+        contrib_rate = (annual_contribution_input_usd / annual_salary_usd * 100) if annual_salary_usd else 0
 
         if already:
             insights.append(("green",

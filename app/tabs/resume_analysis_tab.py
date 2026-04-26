@@ -16,6 +16,7 @@ from app.core.resume_analysis import (
     calculate_resume_score_a2,
     APP2_ALLOWED_ISO_CODES_A2,
 )
+from app.tabs.offer_letter_tab import render_offer_letter_tab
 from app.core.insights_engine import generate_insights_app2, generate_insights_app1
 from app.utils.recommendations import (
     generate_recommendations_app1,
@@ -86,6 +87,20 @@ def render_resume_tab(
         "Upload a resume PDF to automatically extract structured features using NLP. "
         "The extracted fields can be reviewed and edited before salary prediction."
     )
+
+    # ROLLBACK: Offer Letter Parser integration
+    # Remove this selector block and the import above to restore the original
+    # single-flow Resume Analysis tab.
+    document_mode = st.radio(
+        "Choose a document type",
+        options=["Resume PDF", "Offer Letter"],
+        horizontal=True,
+        key="resume_document_workflow_mode",
+        help="Use Resume PDF for salary prediction from a resume, or Offer Letter to extract compensation details from an offer document.",
+    )
+    if document_mode == "Offer Letter":
+        render_offer_letter_tab()
+        return
 
     if not IS_APP1:
         # ----------------------------------------------------------------
