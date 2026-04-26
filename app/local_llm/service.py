@@ -43,14 +43,25 @@ def _resolve_cloud_generation_settings(mode: str, profile: str) -> tuple[float, 
     if profile == "Fast":
         if mode in FAST_CHAT_MODES:
             return 0.15, 96
-        return 0.2, 120
+        return 0.2, 140
     if profile == "Balanced":
         if mode in FAST_CHAT_MODES:
             return 0.2, 120
-        return 0.25, 144
+        return 0.25, 180
     if mode in FAST_CHAT_MODES:
         return 0.2, 140
-    return 0.3, 168
+    return 0.3, 220
+
+
+def _looks_truncated(text: str) -> bool:
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return False
+    if cleaned.endswith(("...", "…", ":", ",", ";", " and", " or", " if", " we could explore")):
+        return True
+    if cleaned.count("[") != cleaned.count("]"):
+        return True
+    return cleaned[-1] not in {".", "!", "?", "\""}
 
 
 def _client_for(model_name: str | None = None) -> OllamaLocalClient:
@@ -141,6 +152,38 @@ def generate_resume_summary(
             }
         )
         content = str(result.get("content", "")).strip()
+        if mode in DRAFT_HEAVIER_MODES and _looks_truncated(content):
+            retry_messages = [{"role": "system", "content": system_prompt}]
+            retry_messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        build_chat_user_prompt(
+                            user_message=user_message,
+                            context_note=context_note,
+                        )
+                        + "\n\nExtra instruction: rewrite the answer more compactly so it finishes cleanly. "
+                          "If drafting an email, keep it under 120 words and include a short closing."
+                    ),
+                }
+            )
+            retry_result = _space_client().predict(
+                {
+                    "task": "assistant_chat",
+                    "mode": mode,
+                    "model_name": cloud_model,
+                    "tone": tone,
+                    "performance_profile": "Fast",
+                    "context_note": context_note,
+                    "messages": retry_messages,
+                    "temperature": min(temperature, 0.2),
+                    "num_predict": min(max(num_predict, 160), 200),
+                    "deployment": deployment_label(),
+                }
+            )
+            retry_content = str(retry_result.get("content", "")).strip()
+            if retry_content:
+                content = retry_content
         model_used = str(result.get("model", cloud_model))
     return {
         "mode": "Resume Assistant",

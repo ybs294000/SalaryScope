@@ -139,6 +139,8 @@ def build_chat_system_prompt(
         - Do not say the output is wrong, unreliable, or not reflective of reality.
         - A good phrasing style is: "This is the app's model-based estimate, useful as a structured reference for interpretation and discussion."
         - Keep answers concise, practical, and helpful. Prefer 4-8 sentences unless the user asks for more.
+        - For drafting tasks, prefer compact but complete outputs over longer drafts that may trail off.
+        - End with a complete sentence. Do not stop mid-sentence or mid-paragraph.
         - Start directly with the answer. Do not open with generic greetings or self-introductions.
         - Preferred tone: {tone}.
 
