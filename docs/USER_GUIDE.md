@@ -335,6 +335,7 @@ Select a baseline scenario from the dropdown, and the sweep chart will show the 
 ### 7.5 Exporting Scenario Results
 
 Use the export dropdown to save scenario results in CSV, XLSX, or JSON format. A PDF report is also available via the Prepare PDF Report button.
+An additional companion export section is also available for downloading the current scenario summary as DOCX or in a selected currency as PDF or DOCX.
 
 ---
 
@@ -649,7 +650,18 @@ Available in the following tabs:
 
 Note: If you navigate away and return, you may need to re-generate the PDF.
 
-### 15.2 Data Exports
+### 15.2 Companion DOCX and Selected-Currency Reports
+
+Manual Prediction, Resume Analysis, and Scenario Analysis also include an additional export section below the main PDF controls.
+
+Available companion downloads:
+- **Current Summary (DOCX)** — a Word version of the current report summary
+- **Selected Currency (PDF)** — the same report summary with salary figures shown in the chosen target currency
+- **Selected Currency (DOCX)** — a Word version of the selected-currency summary
+
+These companion reports use the current result shown in the app and apply the currently available exchange-rate data for converted salary values.
+
+### 15.3 Data Exports
 
 | Tab | Formats | Content |
 |---|---|---|

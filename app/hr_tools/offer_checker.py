@@ -18,9 +18,13 @@ import pandas as pd
 from app.hr_tools.predict_helpers import (
     predict_app1,
     predict_app2,
-    render_override_widget,
 )
+from app.hr_tools.export_utils import render_export_buttons
 from app.theme import apply_theme, get_gauge_colors
+
+
+_OC_APP1_STATE_KEY = "oc_a1_result_payload"
+_OC_APP2_STATE_KEY = "oc_a2_result_payload"
 
 
 def render_offer_checker(**kwargs):
@@ -63,45 +67,86 @@ def _render_app1_checker(kwargs, title_features):
         st.warning("Model 1 is not loaded.")
         return
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        job     = st.selectbox("Job Title", app1_job_titles, key="oc_a1_job")
-        country = st.selectbox("Country", app1_countries, key="oc_a1_country")
-    with col2:
-        yrs = st.number_input("Years of Experience", 0.0, 40.0, 5.0, 0.5, key="oc_a1_yrs")
-        edu = st.selectbox(
-            "Education Level", [0, 1, 2, 3],
-            format_func=lambda x: {0: "High School", 1: "Bachelor", 2: "Master", 3: "PhD"}[x],
-            index=1, key="oc_a1_edu",
+    with st.form("oc_a1_form"):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            job     = st.selectbox("Job Title", app1_job_titles, key="oc_a1_job")
+            country = st.selectbox("Country", app1_countries, key="oc_a1_country")
+        with col2:
+            yrs = st.number_input("Years of Experience", 0.0, 40.0, 5.0, 0.5, key="oc_a1_yrs")
+            edu = st.selectbox(
+                "Education Level", [0, 1, 2, 3],
+                format_func=lambda x: {0: "High School", 1: "Bachelor", 2: "Master", 3: "PhD"}[x],
+                index=1, key="oc_a1_edu",
+            )
+        with col3:
+            age    = st.number_input("Age", 18, 70, 30, key="oc_a1_age")
+            gender = st.selectbox("Gender", app1_genders, key="oc_a1_gender")
+            senior = st.selectbox("Senior Role", [0, 1], format_func=lambda x: "Yes" if x else "No", key="oc_a1_senior")
+
+        st.markdown("#### Compensation Reference")
+        st.caption("Use an override only when your internal reference figure should replace the model estimate.")
+        col_ov1, col_ov2 = st.columns([1, 2])
+        with col_ov1:
+            apply_override = st.checkbox("Apply override", key="oc_a1_apply_override")
+            override_val = None
+            if apply_override:
+                override_val = st.number_input(
+                    "Override salary (USD / year)",
+                    min_value=10_000,
+                    max_value=2_000_000,
+                    value=80_000,
+                    step=1_000,
+                    key="oc_a1_override_val",
+                )
+        with col_ov2:
+            override_reason = st.text_input(
+                "Reason for override",
+                placeholder="e.g. Internal band policy, local market adjustment",
+                key="oc_a1_override_reason",
+            )
+
+        planned_offer = st.number_input(
+            "Planned offer salary (USD / year)",
+            min_value=10_000,
+            max_value=2_000_000,
+            value=80_000,
+            step=1_000,
+            key="oc_a1_planned_offer",
+            help="Enter the salary you intend to offer the candidate.",
         )
-    with col3:
-        age    = st.number_input("Age", 18, 70, 30, key="oc_a1_age")
-        gender = st.selectbox("Gender", app1_genders, key="oc_a1_gender")
-        senior = st.selectbox("Senior Role", [0, 1], format_func=lambda x: "Yes" if x else "No", key="oc_a1_senior")
+        submitted = st.form_submit_button("Check Offer", type="primary", width="stretch")
 
-    # Read override state before predict — one predict() call only.
-    override_active = st.session_state.get("oc_a1_apply_override", False)
-    override_val    = st.session_state.get("oc_a1_override_val", None) if override_active else None
-    override_reason = st.session_state.get("oc_a1_override_reason", "") if override_active else ""
+    if submitted:
+        result = predict_app1(
+            model=app1_model,
+            salary_band_model=app1_salary_band_model,
+            job_title=job,
+            country=country,
+            years_experience=yrs,
+            education_level=edu,
+            age=age,
+            gender=gender,
+            is_senior=senior,
+            title_features=title_features,
+            SALARY_BAND_LABELS=SALARY_BAND_LABELS,
+            override_usd=float(override_val) if apply_override and override_val else None,
+            override_reason=override_reason,
+        )
+        st.session_state[_OC_APP1_STATE_KEY] = {
+            "result": result,
+            "planned_offer": planned_offer,
+            "key_prefix": "oc_a1",
+            "job_title": job,
+        }
 
-    result = predict_app1(
-        model=app1_model,
-        salary_band_model=app1_salary_band_model,
-        job_title=job,
-        country=country,
-        years_experience=yrs,
-        education_level=edu,
-        age=age,
-        gender=gender,
-        is_senior=senior,
-        title_features=title_features,
-        SALARY_BAND_LABELS=SALARY_BAND_LABELS,
-        override_usd=float(override_val) if override_active and override_val else None,
-        override_reason=override_reason,
-    )
+    payload = st.session_state.get(_OC_APP1_STATE_KEY)
+    if payload is None:
+        st.info("Fill in the role profile and click Check Offer to compare the planned offer against the reference salary.")
+        return
 
-    render_override_widget("oc_a1", result["predicted_usd"])
-    _render_checker_output(result, key_prefix="oc_a1", job_title=job)
+    st.caption("Update the form and click Check Offer again whenever you want to refresh the comparison.")
+    _render_checker_output(**payload)
 
 
 # ---------------------------------------------------------------------------
@@ -135,67 +180,96 @@ def _render_app2_checker(kwargs, title_features):
     size_display   = [COMPANY_SIZE_MAP.get(s, s) for s in app2_company_sizes]
     remote_display = [REMOTE_MAP.get(r, str(r)) for r in app2_remote_ratios]
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        job     = st.selectbox("Job Title", app2_job_titles, key="oc_a2_job")
-        exp_sel = st.selectbox("Experience Level", exp_display, key="oc_a2_exp")
-        emp_sel = st.selectbox("Employment Type", emp_display, key="oc_a2_emp")
-    with col2:
-        loc_sel = st.selectbox("Company Location", app2_country_display_options, key="oc_a2_loc")
-        res_sel = st.selectbox("Employee Residence", app2_employee_residence_display_options, key="oc_a2_res")
-    with col3:
-        size_sel   = st.selectbox("Company Size", size_display, key="oc_a2_size")
-        remote_sel = st.selectbox("Work Mode", remote_display, key="oc_a2_remote")
+    with st.form("oc_a2_form"):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            job     = st.selectbox("Job Title", app2_job_titles, key="oc_a2_job")
+            exp_sel = st.selectbox("Experience Level", exp_display, key="oc_a2_exp")
+            emp_sel = st.selectbox("Employment Type", emp_display, key="oc_a2_emp")
+        with col2:
+            loc_sel = st.selectbox("Company Location", app2_country_display_options, key="oc_a2_loc")
+            res_sel = st.selectbox("Employee Residence", app2_employee_residence_display_options, key="oc_a2_res")
+        with col3:
+            size_sel   = st.selectbox("Company Size", size_display, key="oc_a2_size")
+            remote_sel = st.selectbox("Work Mode", remote_display, key="oc_a2_remote")
 
-    loc_code = loc_sel.split("(")[-1].rstrip(")") if "(" in loc_sel else loc_sel
-    res_code = res_sel.split("(")[-1].rstrip(")") if "(" in res_sel else res_sel
-    rem_val  = app2_remote_ratios[remote_display.index(remote_sel)]
+        loc_code = loc_sel.split("(")[-1].rstrip(")") if "(" in loc_sel else loc_sel
+        res_code = res_sel.split("(")[-1].rstrip(")") if "(" in res_sel else res_sel
+        rem_val  = app2_remote_ratios[remote_display.index(remote_sel)]
 
-    override_active = st.session_state.get("oc_a2_apply_override", False)
-    override_val    = st.session_state.get("oc_a2_override_val", None) if override_active else None
-    override_reason = st.session_state.get("oc_a2_override_reason", "") if override_active else ""
+        st.markdown("#### Compensation Reference")
+        st.caption("Use an override only when your internal reference figure should replace the model estimate.")
+        col_ov1, col_ov2 = st.columns([1, 2])
+        with col_ov1:
+            apply_override = st.checkbox("Apply override", key="oc_a2_apply_override")
+            override_val = None
+            if apply_override:
+                override_val = st.number_input(
+                    "Override salary (USD / year)",
+                    min_value=10_000,
+                    max_value=2_000_000,
+                    value=80_000,
+                    step=1_000,
+                    key="oc_a2_override_val",
+                )
+        with col_ov2:
+            override_reason = st.text_input(
+                "Reason for override",
+                placeholder="e.g. Internal band policy, local market adjustment",
+                key="oc_a2_override_reason",
+            )
 
-    result = predict_app2(
-        model=app2_model,
-        job_title=job,
-        experience_level=exp_sel,
-        employment_type=emp_sel,
-        company_location=loc_code,
-        employee_residence=res_code,
-        remote_ratio=rem_val,
-        company_size=size_sel,
-        title_features=title_features,
-        EXPERIENCE_REVERSE=EXPERIENCE_REVERSE,
-        EMPLOYMENT_REVERSE=EMPLOYMENT_REVERSE,
-        COMPANY_SIZE_REVERSE=COMPANY_SIZE_REVERSE,
-        override_usd=float(override_val) if override_active and override_val else None,
-        override_reason=override_reason,
-    )
+        planned_offer = st.number_input(
+            "Planned offer salary (USD / year)",
+            min_value=10_000,
+            max_value=2_000_000,
+            value=80_000,
+            step=1_000,
+            key="oc_a2_planned_offer",
+            help="Enter the salary you intend to offer the candidate.",
+        )
+        submitted = st.form_submit_button("Check Offer", type="primary", width="stretch")
 
-    render_override_widget("oc_a2", result["predicted_usd"])
-    _render_checker_output(result, key_prefix="oc_a2", job_title=job)
+    if submitted:
+        result = predict_app2(
+            model=app2_model,
+            job_title=job,
+            experience_level=exp_sel,
+            employment_type=emp_sel,
+            company_location=loc_code,
+            employee_residence=res_code,
+            remote_ratio=rem_val,
+            company_size=size_sel,
+            title_features=title_features,
+            EXPERIENCE_REVERSE=EXPERIENCE_REVERSE,
+            EMPLOYMENT_REVERSE=EMPLOYMENT_REVERSE,
+            COMPANY_SIZE_REVERSE=COMPANY_SIZE_REVERSE,
+            override_usd=float(override_val) if apply_override and override_val else None,
+            override_reason=override_reason,
+        )
+        st.session_state[_OC_APP2_STATE_KEY] = {
+            "result": result,
+            "planned_offer": planned_offer,
+            "key_prefix": "oc_a2",
+            "job_title": job,
+        }
+
+    payload = st.session_state.get(_OC_APP2_STATE_KEY)
+    if payload is None:
+        st.info("Fill in the role profile and click Check Offer to compare the planned offer against the reference salary.")
+        return
+
+    st.caption("Update the form and click Check Offer again whenever you want to refresh the comparison.")
+    _render_checker_output(**payload)
 
 
 # ---------------------------------------------------------------------------
 # Shared checker output
 # ---------------------------------------------------------------------------
 
-def _render_checker_output(result: dict, key_prefix: str, job_title: str):
+def _render_checker_output(result: dict, planned_offer: float, key_prefix: str, job_title: str):
 
     reference = result["final_usd"]
-
-    st.divider()
-    st.markdown("#### Planned Offer")
-
-    planned_offer = st.number_input(
-        "Planned offer salary (USD / year)",
-        min_value=10_000,
-        max_value=2_000_000,
-        value=int(round(reference / 1000) * 1000),
-        step=1_000,
-        key=f"{key_prefix}_planned_offer",
-        help="Enter the salary you intend to offer the candidate.",
-    )
 
     delta     = planned_offer - reference
     delta_pct = (delta / reference * 100) if reference else 0
@@ -270,10 +344,20 @@ def _render_checker_output(result: dict, key_prefix: str, job_title: str):
         "Notes":                  result["note"],
     }])
 
-    st.download_button(
-        label=":material/download: Export Offer Analysis (CSV)",
-        data=export_df.to_csv(index=False),
-        file_name="offer_checker.csv",
-        mime="text/csv",
-        key=f"{key_prefix}_export",
+    summary_lines = [
+        f"Role: {job_title}",
+        f"Reference salary: ${reference:,.0f}",
+        f"Planned offer: ${planned_offer:,.0f}",
+        f"Difference vs reference: {sign}{delta_pct:.1f}% ({sign}${delta:,.0f})",
+    ]
+    render_export_buttons(
+        title="SalaryScope HR Tools — Offer Competitiveness Analysis",
+        file_stem="offer_checker",
+        csv_df=export_df,
+        summary_lines=summary_lines,
+        key_prefix=f"{key_prefix}_export",
+        csv_label=":material/download: Download CSV",
+        xlsx_label=":material/table_view: Download XLSX",
+        pdf_label=":material/picture_as_pdf: Download PDF",
+        docx_label=":material/description: Download DOCX",
     )

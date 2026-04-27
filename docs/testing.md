@@ -1398,6 +1398,23 @@ If a `tests/` directory does not yet exist, the unit test cases in Sections 17�
 
 **Expected Result:** The Download button is still active. Clicking it downloads the same PDF without needing to re-prepare.
 
+### PDF-009 — Companion Selected-Currency Report Export
+
+1. Run a manual or resume prediction.
+2. Open the additional export section.
+3. Choose a non-USD currency such as INR or KRW.
+4. Download the selected-currency PDF and DOCX variants.
+
+**Expected Result:** Both files download successfully. Salary values reflect the selected currency. The original USD PDF flow remains unchanged.
+
+### PDF-010 — Companion Current Summary DOCX Export
+
+1. Run a manual, resume, or scenario result.
+2. Open the additional export section.
+3. Click **Download Current Summary (DOCX)**.
+
+**Expected Result:** A DOCX file downloads successfully and reflects the current result summary shown in the app.
+
 ---
 
 ## 17. Core Unit Tests — Password Policy

@@ -19,6 +19,7 @@ from app.hr_tools.predict_helpers import (
     predict_app1,
     predict_app2,
 )
+from app.hr_tools.export_utils import render_export_buttons
 from app.theme import apply_theme, get_colorway
 
 _EDUCATION_LABELS = {
@@ -27,6 +28,8 @@ _EDUCATION_LABELS = {
     "Master":      2,
     "PhD":         3,
 }
+_CC_APP1_STATE_KEY = "cc_a1_results_payload"
+_CC_APP2_STATE_KEY = "cc_a2_results_payload"
 
 
 def render_candidate_comparison(**kwargs):
@@ -46,6 +49,12 @@ def render_candidate_comparison(**kwargs):
         min_value=2, max_value=5, value=3, step=1,
         key="cc_n_candidates",
     )
+
+    prev_n = st.session_state.get("cc_prev_n_candidates")
+    if prev_n is not None and prev_n != int(n_candidates):
+        st.session_state.pop(_CC_APP1_STATE_KEY, None)
+        st.session_state.pop(_CC_APP2_STATE_KEY, None)
+    st.session_state["cc_prev_n_candidates"] = int(n_candidates)
 
     if is_app1:
         _render_app1_comparison(kwargs, title_features, int(n_candidates))
@@ -70,61 +79,82 @@ def _render_app1_comparison(kwargs, title_features, n: int):
         st.warning("Model 1 is not loaded.")
         return
 
-    cols = st.columns(n)
-    results = []
+    with st.form("cc_a1_form"):
+        cols = st.columns(n)
+        candidate_inputs = []
 
-    for i, col in enumerate(cols):
-        with col:
-            st.markdown(f"**Candidate {i + 1}**")
-            name     = st.text_input("Name / ID", value=f"Candidate {i + 1}", key=f"cc_a1_name_{i}")
-            job      = st.selectbox("Job Title", app1_job_titles, key=f"cc_a1_job_{i}")
-            country  = st.selectbox("Country", app1_countries, key=f"cc_a1_country_{i}")
-            yrs      = st.number_input("Years Exp.", 0.0, 40.0, 5.0, 0.5, key=f"cc_a1_yrs_{i}")
-            edu_lbl  = st.selectbox("Education", list(_EDUCATION_LABELS.keys()), index=1, key=f"cc_a1_edu_{i}")
-            age      = st.number_input("Age", 18, 70, 30, key=f"cc_a1_age_{i}")
-            gender   = st.selectbox("Gender", app1_genders, key=f"cc_a1_gender_{i}")
-            senior   = st.selectbox("Senior", [0, 1], format_func=lambda x: "Yes" if x else "No", key=f"cc_a1_senior_{i}")
+        for i, col in enumerate(cols):
+            with col:
+                st.markdown(f"**Candidate {i + 1}**")
+                name     = st.text_input("Name / ID", value=f"Candidate {i + 1}", key=f"cc_a1_name_{i}")
+                job      = st.selectbox("Job Title", app1_job_titles, key=f"cc_a1_job_{i}")
+                country  = st.selectbox("Country", app1_countries, key=f"cc_a1_country_{i}")
+                yrs      = st.number_input("Years Exp.", 0.0, 40.0, 5.0, 0.5, key=f"cc_a1_yrs_{i}")
+                edu_lbl  = st.selectbox("Education", list(_EDUCATION_LABELS.keys()), index=1, key=f"cc_a1_edu_{i}")
+                age      = st.number_input("Age", 18, 70, 30, key=f"cc_a1_age_{i}")
+                gender   = st.selectbox("Gender", app1_genders, key=f"cc_a1_gender_{i}")
+                senior   = st.selectbox("Senior", [0, 1], format_func=lambda x: "Yes" if x else "No", key=f"cc_a1_senior_{i}")
 
-            # Read override state before predict — one predict() call per candidate.
-            ov_apply  = st.checkbox("Apply override", key=f"cc_a1_ov_apply_{i}")
-            ov_val    = None
-            ov_note   = ""
-            if ov_apply:
-                ov_val  = st.number_input(
-                    "Candidate expectation / override (USD)",
-                    min_value=10_000, max_value=2_000_000,
-                    value=st.session_state.get(f"cc_a1_ov_val_{i}", 80_000),
-                    step=1_000,
-                    key=f"cc_a1_ov_val_{i}",
-                )
-                ov_note = st.text_input(
-                    "Override reason",
-                    key=f"cc_a1_ov_reason_{i}",
-                    placeholder="e.g. Candidate stated expectation",
-                )
+                ov_apply  = st.checkbox("Apply override", key=f"cc_a1_ov_apply_{i}")
+                ov_val    = None
+                ov_note   = ""
+                if ov_apply:
+                    ov_val  = st.number_input(
+                        "Candidate expectation / override (USD)",
+                        min_value=10_000, max_value=2_000_000,
+                        value=st.session_state.get(f"cc_a1_ov_val_{i}", 80_000),
+                        step=1_000,
+                        key=f"cc_a1_ov_val_{i}",
+                    )
+                    ov_note = st.text_input(
+                        "Override reason",
+                        key=f"cc_a1_ov_reason_{i}",
+                        placeholder="e.g. Candidate stated expectation",
+                    )
 
+                candidate_inputs.append({
+                    "name": name,
+                    "job": job,
+                    "country": country,
+                    "yrs": yrs,
+                    "edu_lbl": edu_lbl,
+                    "age": age,
+                    "gender": gender,
+                    "senior": senior,
+                    "ov_apply": ov_apply,
+                    "ov_val": ov_val,
+                    "ov_note": ov_note,
+                })
+
+        submitted = st.form_submit_button("Compare Candidates", type="primary", width="stretch")
+
+    if submitted:
+        results = []
+        for item in candidate_inputs:
             result = predict_app1(
                 model=app1_model,
                 salary_band_model=app1_salary_band_model,
-                job_title=job,
-                country=country,
-                years_experience=yrs,
-                education_level=_EDUCATION_LABELS[edu_lbl],
-                age=age,
-                gender=gender,
-                is_senior=senior,
+                job_title=item["job"],
+                country=item["country"],
+                years_experience=item["yrs"],
+                education_level=_EDUCATION_LABELS[item["edu_lbl"]],
+                age=item["age"],
+                gender=item["gender"],
+                is_senior=item["senior"],
                 title_features=title_features,
                 SALARY_BAND_LABELS=SALARY_BAND_LABELS,
-                override_usd=float(ov_val) if ov_apply and ov_val else None,
-                override_reason=ov_note,
+                override_usd=float(item["ov_val"]) if item["ov_apply"] and item["ov_val"] else None,
+                override_reason=item["ov_note"],
             )
+            results.append({"name": item["name"], "job": item["job"], "country": item["country"], "result": result})
+        st.session_state[_CC_APP1_STATE_KEY] = results
 
-            st.caption(f"Model: **${result['predicted_usd']:,.0f}**")
-            if result["override_applied"]:
-                st.caption(f"Override: **${result['final_usd']:,.0f}**")
+    results = st.session_state.get(_CC_APP1_STATE_KEY)
+    if not results:
+        st.info("Enter candidate details and click Compare Candidates to generate the side-by-side comparison.")
+        return
 
-            results.append({"name": name, "job": job, "country": country, "result": result})
-
+    st.caption("Update the candidate inputs and click Compare Candidates again whenever you want to refresh the comparison.")
     _render_comparison_output(results)
 
 
@@ -159,61 +189,84 @@ def _render_app2_comparison(kwargs, title_features, n: int):
     size_display   = [COMPANY_SIZE_MAP.get(s, s) for s in app2_company_sizes]
     remote_display = [REMOTE_MAP.get(r, str(r)) for r in app2_remote_ratios]
 
-    cols = st.columns(n)
-    results = []
+    with st.form("cc_a2_form"):
+        cols = st.columns(n)
+        candidate_inputs = []
 
-    for i, col in enumerate(cols):
-        with col:
-            st.markdown(f"**Candidate {i + 1}**")
-            name       = st.text_input("Name / ID", value=f"Candidate {i + 1}", key=f"cc_a2_name_{i}")
-            job        = st.selectbox("Job Title", app2_job_titles, key=f"cc_a2_job_{i}")
-            exp_sel    = st.selectbox("Experience Level", exp_display, key=f"cc_a2_exp_{i}")
-            emp_sel    = st.selectbox("Employment Type", emp_display, key=f"cc_a2_emp_{i}")
-            loc_sel    = st.selectbox("Company Location", app2_country_display_options, key=f"cc_a2_loc_{i}")
-            res_sel    = st.selectbox("Residence", app2_employee_residence_display_options, key=f"cc_a2_res_{i}")
-            size_sel   = st.selectbox("Company Size", size_display, key=f"cc_a2_size_{i}")
-            remote_sel = st.selectbox("Work Mode", remote_display, key=f"cc_a2_remote_{i}")
+        for i, col in enumerate(cols):
+            with col:
+                st.markdown(f"**Candidate {i + 1}**")
+                name       = st.text_input("Name / ID", value=f"Candidate {i + 1}", key=f"cc_a2_name_{i}")
+                job        = st.selectbox("Job Title", app2_job_titles, key=f"cc_a2_job_{i}")
+                exp_sel    = st.selectbox("Experience Level", exp_display, key=f"cc_a2_exp_{i}")
+                emp_sel    = st.selectbox("Employment Type", emp_display, key=f"cc_a2_emp_{i}")
+                loc_sel    = st.selectbox("Company Location", app2_country_display_options, key=f"cc_a2_loc_{i}")
+                res_sel    = st.selectbox("Residence", app2_employee_residence_display_options, key=f"cc_a2_res_{i}")
+                size_sel   = st.selectbox("Company Size", size_display, key=f"cc_a2_size_{i}")
+                remote_sel = st.selectbox("Work Mode", remote_display, key=f"cc_a2_remote_{i}")
 
-            loc_code = loc_sel.split("(")[-1].rstrip(")") if "(" in loc_sel else loc_sel
-            res_code = res_sel.split("(")[-1].rstrip(")") if "(" in res_sel else res_sel
-            rem_val  = app2_remote_ratios[remote_display.index(remote_sel)]
+                loc_code = loc_sel.split("(")[-1].rstrip(")") if "(" in loc_sel else loc_sel
+                res_code = res_sel.split("(")[-1].rstrip(")") if "(" in res_sel else res_sel
+                rem_val  = app2_remote_ratios[remote_display.index(remote_sel)]
 
-            ov_apply = st.checkbox("Apply override", key=f"cc_a2_ov_apply_{i}")
-            ov_val   = None
-            ov_note  = ""
-            if ov_apply:
-                ov_val  = st.number_input(
-                    "Override (USD)",
-                    min_value=10_000, max_value=2_000_000,
-                    value=st.session_state.get(f"cc_a2_ov_val_{i}", 80_000),
-                    step=1_000,
-                    key=f"cc_a2_ov_val_{i}",
-                )
-                ov_note = st.text_input("Override reason", key=f"cc_a2_ov_reason_{i}")
+                ov_apply = st.checkbox("Apply override", key=f"cc_a2_ov_apply_{i}")
+                ov_val   = None
+                ov_note  = ""
+                if ov_apply:
+                    ov_val  = st.number_input(
+                        "Override (USD)",
+                        min_value=10_000, max_value=2_000_000,
+                        value=st.session_state.get(f"cc_a2_ov_val_{i}", 80_000),
+                        step=1_000,
+                        key=f"cc_a2_ov_val_{i}",
+                    )
+                    ov_note = st.text_input("Override reason", key=f"cc_a2_ov_reason_{i}")
 
+                candidate_inputs.append({
+                    "name": name,
+                    "job": job,
+                    "loc_sel": loc_sel,
+                    "exp_sel": exp_sel,
+                    "emp_sel": emp_sel,
+                    "loc_code": loc_code,
+                    "res_code": res_code,
+                    "rem_val": rem_val,
+                    "size_sel": size_sel,
+                    "ov_apply": ov_apply,
+                    "ov_val": ov_val,
+                    "ov_note": ov_note,
+                })
+
+        submitted = st.form_submit_button("Compare Candidates", type="primary", width="stretch")
+
+    if submitted:
+        results = []
+        for item in candidate_inputs:
             result = predict_app2(
                 model=app2_model,
-                job_title=job,
-                experience_level=exp_sel,
-                employment_type=emp_sel,
-                company_location=loc_code,
-                employee_residence=res_code,
-                remote_ratio=rem_val,
-                company_size=size_sel,
+                job_title=item["job"],
+                experience_level=item["exp_sel"],
+                employment_type=item["emp_sel"],
+                company_location=item["loc_code"],
+                employee_residence=item["res_code"],
+                remote_ratio=item["rem_val"],
+                company_size=item["size_sel"],
                 title_features=title_features,
                 EXPERIENCE_REVERSE=EXPERIENCE_REVERSE,
                 EMPLOYMENT_REVERSE=EMPLOYMENT_REVERSE,
                 COMPANY_SIZE_REVERSE=COMPANY_SIZE_REVERSE,
-                override_usd=float(ov_val) if ov_apply and ov_val else None,
-                override_reason=ov_note,
+                override_usd=float(item["ov_val"]) if item["ov_apply"] and item["ov_val"] else None,
+                override_reason=item["ov_note"],
             )
+            results.append({"name": item["name"], "job": item["job"], "country": item["loc_sel"], "result": result})
+        st.session_state[_CC_APP2_STATE_KEY] = results
 
-            st.caption(f"Model: **${result['predicted_usd']:,.0f}**")
-            if result["override_applied"]:
-                st.caption(f"Override: **${result['final_usd']:,.0f}**")
+    results = st.session_state.get(_CC_APP2_STATE_KEY)
+    if not results:
+        st.info("Enter candidate details and click Compare Candidates to generate the side-by-side comparison.")
+        return
 
-            results.append({"name": name, "job": job, "country": loc_sel, "result": result})
-
+    st.caption("Update the candidate inputs and click Compare Candidates again whenever you want to refresh the comparison.")
     _render_comparison_output(results)
 
 
@@ -275,10 +328,20 @@ def _render_comparison_output(results: list[dict]):
         "Notes":                r["result"]["note"],
     } for r in results]
 
-    st.download_button(
-        label=":material/download: Export Comparison (CSV)",
-        data=pd.DataFrame(export_rows).to_csv(index=False),
-        file_name="candidate_comparison.csv",
-        mime="text/csv",
-        key="cc_export",
+    export_df = pd.DataFrame(export_rows)
+    summary_lines = [
+        f"Candidates compared: {len(results)}",
+        f"Highest final salary: ${max(final_vals):,.0f}",
+        f"Lowest final salary: ${min(final_vals):,.0f}",
+    ]
+    render_export_buttons(
+        title="SalaryScope HR Tools — Candidate Comparison",
+        file_stem="candidate_comparison",
+        csv_df=export_df,
+        summary_lines=summary_lines,
+        key_prefix="cc_export",
+        csv_label=":material/download: Download CSV",
+        xlsx_label=":material/table_view: Download XLSX",
+        pdf_label=":material/picture_as_pdf: Download PDF",
+        docx_label=":material/description: Download DOCX",
     )

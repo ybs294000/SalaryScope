@@ -13,7 +13,19 @@ from app.utils.negotiation_tips import (
     generate_negotiation_tips_app2,
     render_negotiation_tips,
 )
-from app.utils.currency_utils import render_currency_converter, get_active_currency, get_active_rates
+from app.utils.currency_utils import (
+    render_currency_converter,
+    get_active_currency,
+    get_active_rates,
+    currency_dropdown_options,
+    parse_currency_option,
+    guess_currency,
+    get_exchange_rates,
+)
+from app.utils.currency_report_exports import (
+    build_manual_prediction_export_pdf,
+    build_manual_prediction_export_docx,
+)
 from app.utils.tax_utils import render_tax_adjuster
 from app.utils.col_utils import render_col_adjuster
 from app.utils.ctc_utils import render_ctc_adjuster
@@ -80,6 +92,53 @@ def render_manual_prediction_tab(
     REMOTE_REVERSE,
     title_features,
 ):
+    def _default_currency_option(options, preferred_code):
+        preferred = (preferred_code or "USD").upper()
+        return next((option for option in options if option.startswith(f"{preferred} — ")), options[0])
+
+    def _app1_manual_extra_sections():
+        return [
+            (
+                "Model Information",
+                pd.DataFrame(
+                    [
+                        ("Salary Prediction Model", "Random Forest Regressor"),
+                        ("Test R²", f"{app1_metadata['test_r2']:.4f}"),
+                        ("Cross-Validation R²", f"{app1_metadata['cv_mean_r2']:.4f}"),
+                        ("MAE (USD)", f"${app1_metadata['mae']:,.2f}"),
+                        ("RMSE (USD)", f"${app1_metadata['rmse']:,.2f}"),
+                        ("Salary Level Classifier", app1_classifier_metadata.get("model_type", "Classifier")),
+                        ("Accuracy", f"{app1_classifier_metadata.get('accuracy', 0):.4f}" if "accuracy" in app1_classifier_metadata else ""),
+                        ("Precision (Macro)", f"{app1_classifier_metadata.get('precision_macro', 0):.4f}" if "precision_macro" in app1_classifier_metadata else ""),
+                        ("Recall (Macro)", f"{app1_classifier_metadata.get('recall_macro', 0):.4f}" if "recall_macro" in app1_classifier_metadata else ""),
+                        ("F1 Score (Macro)", f"{app1_classifier_metadata.get('f1_macro', 0):.4f}" if "f1_macro" in app1_classifier_metadata else ""),
+                        ("Career Stage Clustering Model", app1_cluster_metadata_a1.get("model_type", "KMeans")),
+                        ("Silhouette Score", f"{app1_cluster_metadata_a1.get('silhouette_score', 0):.4f}"),
+                        ("Davies-Bouldin Score", f"{app1_cluster_metadata_a1.get('davies_bouldin_score', 0):.4f}"),
+                    ],
+                    columns=["Metric", "Value"],
+                ),
+            )
+        ]
+
+    def _app2_manual_extra_sections():
+        return [
+            (
+                "Model Information",
+                pd.DataFrame(
+                    [
+                        ("Prediction Model", "XGBoost Regressor"),
+                        ("Target Transformation", "log1p(salary_in_usd)"),
+                        ("Feature Engineering", "Job title seniority/domain features + interaction term"),
+                        ("R² (log scale)", f"{app2_metadata['test_r2_log_scale']:.4f}"),
+                        ("MAE (USD)", f"${app2_metadata['mae_usd']:,.0f}"),
+                        ("RMSE (USD)", f"${app2_metadata['rmse_usd']:,.0f}"),
+                    ],
+                    columns=["Metric", "Value"],
+                ),
+            )
+        ]
+
     # ------------------------------------------------------------------
     # APP 1 — Manual Prediction
     # ------------------------------------------------------------------
@@ -415,6 +474,88 @@ def render_manual_prediction_tab(
                     width='stretch',
                     disabled=True
                 )
+
+            st.divider()
+            st.subheader("Additional Report Formats")
+            st.caption(
+                "Keep the current PDF above, or download the same summary as DOCX or in another currency."
+            )
+            manual_rate_data = get_exchange_rates()
+            manual_currency_options = currency_dropdown_options()
+            manual_default_option = _default_currency_option(
+                manual_currency_options,
+                active_currency or guess_currency(country),
+            )
+            manual_selected_option = st.selectbox(
+                "Target currency for companion report",
+                manual_currency_options,
+                index=manual_currency_options.index(manual_default_option),
+                key="manual_a1_export_currency",
+            )
+            manual_target_currency = parse_currency_option(manual_selected_option)
+            st.caption(
+                f"Selected currency: {manual_target_currency}. Salary figures in these companion exports follow the chosen currency."
+            )
+
+            manual_docx_usd = build_manual_prediction_export_docx(
+                data,
+                "USD",
+                manual_rate_data,
+                "Manual Prediction",
+                extra_sections=_app1_manual_extra_sections(),
+            )
+            manual_pdf_selected = build_manual_prediction_export_pdf(
+                data,
+                manual_target_currency,
+                manual_rate_data,
+                "Manual Prediction",
+                extra_sections=_app1_manual_extra_sections(),
+            )
+            manual_docx_selected = build_manual_prediction_export_docx(
+                data,
+                manual_target_currency,
+                manual_rate_data,
+                "Manual Prediction",
+                extra_sections=_app1_manual_extra_sections(),
+            )
+
+            manual_export_cols = st.columns(3)
+            if manual_docx_usd is not None:
+                with manual_export_cols[0]:
+                    st.download_button(
+                        "Download Current Summary (DOCX)",
+                        data=manual_docx_usd,
+                        file_name="salary_prediction_report.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="manual_a1_docx_usd_download",
+                        width="stretch",
+                    )
+            with manual_export_cols[1]:
+                st.download_button(
+                    "Download Selected Currency (PDF)",
+                    data=manual_pdf_selected,
+                    file_name=f"salary_prediction_report_{manual_target_currency.lower()}.pdf",
+                    mime="application/pdf",
+                    key="manual_a1_pdf_selected_download",
+                    width="stretch",
+                )
+            with manual_export_cols[2]:
+                if manual_docx_selected is not None:
+                    st.download_button(
+                        "Download Selected Currency (DOCX)",
+                        data=manual_docx_selected,
+                        file_name=f"salary_prediction_report_{manual_target_currency.lower()}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="manual_a1_docx_selected_download",
+                        width="stretch",
+                    )
+                else:
+                    st.button(
+                        "Download Selected Currency (DOCX)",
+                        disabled=True,
+                        key="manual_a1_docx_selected_disabled",
+                        width="stretch",
+                    )
             # ------------- SALARY CARD DOWNLOAD (App 1) -------------
             render_salary_card_download(
                 predicted_usd = data["prediction"],
@@ -733,3 +874,85 @@ def render_manual_prediction_tab(
                     width='stretch',
                     disabled=True
                 )
+
+            st.divider()
+            st.subheader("Additional Report Formats")
+            st.caption(
+                "Keep the current PDF above, or download the same summary as DOCX or in another currency."
+            )
+            manual_rate_data_a2 = get_exchange_rates()
+            manual_currency_options_a2 = currency_dropdown_options()
+            manual_default_option_a2 = _default_currency_option(
+                manual_currency_options_a2,
+                active_currency_a2 or guess_currency(company_location),
+            )
+            manual_selected_option_a2 = st.selectbox(
+                "Target currency for companion report",
+                manual_currency_options_a2,
+                index=manual_currency_options_a2.index(manual_default_option_a2),
+                key="manual_a2_export_currency",
+            )
+            manual_target_currency_a2 = parse_currency_option(manual_selected_option_a2)
+            st.caption(
+                f"Selected currency: {manual_target_currency_a2}. Salary figures in these companion exports follow the chosen currency."
+            )
+
+            manual_docx_usd_a2 = build_manual_prediction_export_docx(
+                data_a2,
+                "USD",
+                manual_rate_data_a2,
+                "Manual Prediction",
+                extra_sections=_app2_manual_extra_sections(),
+            )
+            manual_pdf_selected_a2 = build_manual_prediction_export_pdf(
+                data_a2,
+                manual_target_currency_a2,
+                manual_rate_data_a2,
+                "Manual Prediction",
+                extra_sections=_app2_manual_extra_sections(),
+            )
+            manual_docx_selected_a2 = build_manual_prediction_export_docx(
+                data_a2,
+                manual_target_currency_a2,
+                manual_rate_data_a2,
+                "Manual Prediction",
+                extra_sections=_app2_manual_extra_sections(),
+            )
+
+            manual_export_cols_a2 = st.columns(3)
+            if manual_docx_usd_a2 is not None:
+                with manual_export_cols_a2[0]:
+                    st.download_button(
+                        "Download Current Summary (DOCX)",
+                        data=manual_docx_usd_a2,
+                        file_name="salary_prediction_report_app2.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="manual_a2_docx_usd_download",
+                        width="stretch",
+                    )
+            with manual_export_cols_a2[1]:
+                st.download_button(
+                    "Download Selected Currency (PDF)",
+                    data=manual_pdf_selected_a2,
+                    file_name=f"salary_prediction_report_app2_{manual_target_currency_a2.lower()}.pdf",
+                    mime="application/pdf",
+                    key="manual_a2_pdf_selected_download",
+                    width="stretch",
+                )
+            with manual_export_cols_a2[2]:
+                if manual_docx_selected_a2 is not None:
+                    st.download_button(
+                        "Download Selected Currency (DOCX)",
+                        data=manual_docx_selected_a2,
+                        file_name=f"salary_prediction_report_app2_{manual_target_currency_a2.lower()}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="manual_a2_docx_selected_download",
+                        width="stretch",
+                    )
+                else:
+                    st.button(
+                        "Download Selected Currency (DOCX)",
+                        disabled=True,
+                        key="manual_a2_docx_selected_disabled",
+                        width="stretch",
+                    )

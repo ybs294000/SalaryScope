@@ -27,6 +27,7 @@ from app.hr_tools.predict_helpers import (
     batch_predict_app1,
     batch_predict_app2,
 )
+from app.hr_tools.export_utils import render_export_buttons
 from app.theme import apply_theme, get_token
 
 APP1_AUDIT_REQUIRED = [
@@ -302,10 +303,44 @@ def _render_audit_output(result_df: pd.DataFrame, current_col: str, global_adj_p
             },
         )
 
-    st.download_button(
-        label=":material/download: Export Full Audit (CSV)",
-        data=result_df.to_csv(index=False),
-        file_name="team_compensation_audit.csv",
-        mime="text/csv",
-        key="ta_export",
+    summary_df = pd.DataFrame([{
+        "Total Employees": n_total,
+        "Within Range": n_ok,
+        "Potentially Underpaid": n_underpaid,
+        "Potentially Overpaid": n_overpaid,
+        "Global Adjustment (%)": global_adj_pct,
+    }])
+
+    flagged_export = result_df[result_df["Flag"] != "Within Range"].copy()
+    if flagged_export.empty:
+        flagged_export = result_df.head(25).copy()
+
+    render_export_buttons(
+        title="SalaryScope HR Tools — Team Compensation Audit",
+        file_stem="team_compensation_audit",
+        csv_df=result_df,
+        xlsx_sections=[
+            ("Summary", summary_df),
+            ("Full Audit", result_df),
+            ("Flagged Records", flagged_export),
+        ],
+        pdf_sections=[
+            ("Summary", summary_df),
+            ("Flagged Records", flagged_export),
+        ],
+        docx_sections=[
+            ("Summary", summary_df),
+            ("Flagged Records", flagged_export),
+        ],
+        summary_lines=[
+            f"Employees reviewed: {n_total}",
+            f"Potentially underpaid: {n_underpaid}",
+            f"Potentially overpaid: {n_overpaid}",
+            f"Global adjustment applied: {global_adj_pct:+.0f}%",
+        ],
+        key_prefix="ta_export",
+        csv_label=":material/download: Download CSV",
+        xlsx_label=":material/table_view: Download XLSX",
+        pdf_label=":material/picture_as_pdf: Download PDF",
+        docx_label=":material/description: Download DOCX",
     )

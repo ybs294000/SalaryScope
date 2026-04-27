@@ -178,6 +178,7 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Negotiation tips and career recommendations
 - Confidence interval estimation based on residual standard deviation — Model 1
 - Downloadable PDF prediction report
+- Companion report exports for Manual Prediction and Resume Analysis: current-summary DOCX plus selected-currency PDF and DOCX
 - Shareable salary card: download a branded 1200x630 PNG image of the prediction result for sharing
 - Prediction feedback collection after each result (accuracy rating, direction, star rating, optional actual salary) 
 - Optional currency conversion with global currency support (toggle-based)
@@ -238,6 +239,7 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Company size sweep across Small, Medium, and Large companies for a selected baseline scenario — Model 2
 - For Model Hub models: sweep field and mode (continuous range or discrete values) declared in schema.json via the `scenario_sweep` key
 - Export scenario results in CSV, XLSX, or JSON format
+- Companion scenario report exports: current-summary DOCX plus selected-currency PDF and DOCX
 
 ### Prediction Feedback
 
@@ -1045,6 +1047,7 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 5. Review and edit extracted features (skills, experience, job role, etc.)
 6. Click **Predict Salary from Resume** to run prediction
 7. View results and download PDF report
+8. Use the companion export section if you also want a DOCX version or the same report in a selected currency
 
 ### Offer Letter Parser
 1. Navigate to the **Resume Analysis** tab
@@ -1068,6 +1071,7 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 5. Review the comparison table, salary charts, and confidence interval ranges
 6. Select a baseline scenario from the sensitivity sweep dropdown to simulate how salary responds to changes in experience or education while everything else stays fixed
 7. Use the export dropdown and download button to save scenario results
+8. Use the companion report export section if you want a DOCX version or a selected-currency scenario report
 
 ### Model Hub
 1. Log in to access the **Model Hub** tab
@@ -1134,6 +1138,7 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 | Association Mining | MLxtend (Apriori) |
 | Visualisation | Plotly, Matplotlib |
 | PDF Generation | ReportLab, optional md2pdf/WeasyPrint path for AI Assistant exports |
+| DOCX Generation | python-docx |
 | Authentication | Firebase Authentication |
 | Database | Firebase Firestore, Firebase Admin SDK |
 | Model Storage | HuggingFace Dataset Repo (via huggingface_hub SDK) |
@@ -1249,6 +1254,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - The confidence interval shown for Model 1 is an approximation based on training residuals and should be interpreted as an estimate rather than an exact range.
 - Feedback submitted anonymously cannot be linked to a specific user session and is stored without any personal identifier.
 - Currency conversion uses external exchange rate data and may not reflect real-time market fluctuations or transaction-specific rates.
+- Companion currency-based PDF and DOCX reports for prediction tabs use the currently available exchange-rate data and are intended for reporting convenience rather than accounting-grade conversion.
 - Tax estimation uses approximate effective rates and does not model detailed national tax rules.
 - Cost-of-living adjustments are based on generalized indices and may not reflect individual lifestyle differences.
 - Combined currency, tax, and COL adjustments are intended for comparative insight, not exact financial planning.
@@ -1287,6 +1293,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Expose HR Tools benchmarking grid as a downloadable formatted PDF report consistent with the existing ReportLab report system.
 - Improve the AI Assistant with stronger grounding, richer report export workflows, and more polished contextual actions inside prediction and resume tabs.
 - Improve AI Assistant export styling further, including richer Markdown-to-PDF theming when optional document-rendering dependencies are available.
+- Extend companion report exports to additional sections such as batch analytics and model analytics where alternate-currency summaries may be useful.
 - Explore more efficient cloud-friendly open models or alternative hosting strategies to improve AI Assistant latency and stability on free-tier deployments.
 
 ---

@@ -81,6 +81,8 @@ Renders the Manual Prediction tab for both App 1 and App 2 based on `IS_APP1`.
 
 **Side effects:** Renders full prediction form and results. Calls `save_prediction()` if logged in. Calls `feedback_ui()`. Calls all financial tool renderers. Generates PDF on button click.
 
+**Additional report exports:** Manual Prediction also exposes companion report downloads for current-summary DOCX plus selected-currency PDF and DOCX output through `currency_report_exports.py`.
+
 ---
 
 ### `resume_analysis_tab.py`
@@ -104,6 +106,8 @@ The tab now contains a document-mode selector:
 | `app2_job_titles` | list | Allowed App 2 job titles |
 | `app1_generate_resume_pdf` | callable | PDF generator |
 | `app2_generate_resume_pdf` | callable | PDF generator |
+
+**Additional report exports:** Resume Analysis also exposes companion report downloads for current-summary DOCX plus selected-currency PDF and DOCX output through `currency_report_exports.py`.
 
 **Internal `@st.fragment` functions (App 1):**
 - `render_resume_editor()` — editable extracted feature form
@@ -714,6 +718,17 @@ Renders the currency converter toggle + expander widget.
 #### `get_active_currency(widget_key) → str`
 
 Returns the currently selected currency code for the given widget instance. Used by downstream modules (e.g. `tax_utils`) to display post-tax figures in the same currency.
+
+#### `currency_report_exports.py`
+
+Companion export helper for Manual Prediction, Resume Analysis, and Scenario Analysis.
+
+Provides:
+- current-summary DOCX export
+- selected-currency PDF export
+- selected-currency DOCX export
+
+This helper is intentionally separate from `pdf_utils.py` so the original USD-based report pipeline remains unchanged.
 
 ---
 

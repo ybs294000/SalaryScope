@@ -414,8 +414,14 @@ The admin panel shall display session state key counts grouped by category (admi
 #### FR-PDF01 — Report Types
 The system shall generate downloadable PDF reports for: manual prediction, resume-based prediction, batch prediction, scenario analysis, and model analytics.
 
+#### FR-PDF01A — Companion Report Formats
+For Manual Prediction, Resume Analysis, and Scenario Analysis, the system shall also provide companion report downloads in DOCX format and selected-currency PDF/DOCX variants without replacing the original USD-based PDF flow.
+
 #### FR-PDF02 — Two-Step Download
 For prediction-specific reports (manual, resume, batch, scenario), the system shall use a two-step pattern: a Prepare button generates the report and a Download button saves it. This prevents regeneration on every Streamlit rerun.
+
+#### FR-PDF02A — Companion Export Independence
+Companion DOCX and selected-currency report downloads shall remain separate from the original Prepare → Download PDF workflow so the legacy report path is preserved and rollback remains simple.
 
 #### FR-PDF03 — Model Analytics PDF
 The model analytics PDF shall be generated once using `@st.cache_data` and made available immediately as a download button without a separate prepare step.

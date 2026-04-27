@@ -28,12 +28,24 @@ from app.utils.negotiation_tips import (
     generate_negotiation_tips_app2,
     render_negotiation_tips,
 )
-from app.utils.currency_utils import render_currency_converter, get_active_currency, get_active_rates
+from app.utils.currency_utils import (
+    render_currency_converter,
+    get_active_currency,
+    get_active_rates,
+    currency_dropdown_options,
+    parse_currency_option,
+    guess_currency,
+    get_exchange_rates,
+)
 from app.utils.tax_utils import render_tax_adjuster
 from app.utils.col_utils import render_col_adjuster
 from app.core.database import save_prediction
 
 from app.utils.salary_card import render_salary_card_download
+from app.utils.currency_report_exports import (
+    build_resume_export_pdf,
+    build_resume_export_docx,
+)
 
 try:
     from app.core.resume_lang import detect_resume_language, render_language_badge
@@ -82,6 +94,48 @@ def render_resume_tab(
     REMOTE_REVERSE,
     title_features,
 ):
+    def _default_currency_option(options, preferred_code):
+        preferred = (preferred_code or "USD").upper()
+        return next((option for option in options if option.startswith(f"{preferred} — ")), options[0])
+
+    def _app1_resume_extra_sections(result_payload):
+        score_data = result_payload.get("resume_score_data", {})
+        return [
+            (
+                "Profile Summary",
+                pd.DataFrame(
+                    [
+                        (
+                            "Summary",
+                            f"This resume is classified as a {score_data.get('level', '')} profile with a total score of "
+                            f"{score_data.get('total_score', 0)}/100. The predicted salary reflects the combined impact "
+                            f"of experience, education, and detected skills."
+                        )
+                    ],
+                    columns=["Type", "Details"],
+                ),
+            )
+        ]
+
+    def _app2_resume_extra_sections(result_payload):
+        score_data = result_payload.get("resume_score_data_a2", {})
+        return [
+            (
+                "Profile Summary",
+                pd.DataFrame(
+                    [
+                        (
+                            "Summary",
+                            f"This resume is classified as a {score_data.get('level_a2', '')} profile with a total score of "
+                            f"{score_data.get('total_score_a2', 0)}/100. The predicted salary reflects the combined impact "
+                            f"of experience level, job role, and detected skills."
+                        )
+                    ],
+                    columns=["Type", "Details"],
+                ),
+            )
+        ]
+
     st.header(":material/description: Resume Analysis")
     st.caption(
         "Upload a resume PDF to automatically extract structured features using NLP. "
@@ -537,6 +591,88 @@ salary_card_html(f"${prediction_a2_r:,.2f}"),
                     disabled=True,
                     key="resume_pdf_disabled_a2"
                 )
+
+            st.divider()
+            st.subheader("Additional Report Formats")
+            st.caption(
+                "Keep the current PDF above, or download the same summary as DOCX or in another currency."
+            )
+            resume_rate_data_a2 = get_exchange_rates()
+            resume_currency_options_a2 = currency_dropdown_options()
+            resume_default_option_a2 = _default_currency_option(
+                resume_currency_options_a2,
+                active_currency_a2_r or guess_currency(data_a2_r["company_location_code_a2"]),
+            )
+            resume_selected_option_a2 = st.selectbox(
+                "Target currency for companion report",
+                resume_currency_options_a2,
+                index=resume_currency_options_a2.index(resume_default_option_a2),
+                key="resume_a2_export_currency",
+            )
+            resume_target_currency_a2 = parse_currency_option(resume_selected_option_a2)
+            st.caption(
+                f"Selected currency: {resume_target_currency_a2}. Salary figures in these companion exports follow the chosen currency."
+            )
+
+            resume_docx_usd_a2 = build_resume_export_docx(
+                data_a2_r,
+                "USD",
+                resume_rate_data_a2,
+                "Resume Analysis",
+                extra_sections=_app2_resume_extra_sections(data_a2_r),
+            )
+            resume_pdf_selected_a2 = build_resume_export_pdf(
+                data_a2_r,
+                resume_target_currency_a2,
+                resume_rate_data_a2,
+                "Resume Analysis",
+                extra_sections=_app2_resume_extra_sections(data_a2_r),
+            )
+            resume_docx_selected_a2 = build_resume_export_docx(
+                data_a2_r,
+                resume_target_currency_a2,
+                resume_rate_data_a2,
+                "Resume Analysis",
+                extra_sections=_app2_resume_extra_sections(data_a2_r),
+            )
+
+            resume_export_cols_a2 = st.columns(3)
+            if resume_docx_usd_a2 is not None:
+                with resume_export_cols_a2[0]:
+                    st.download_button(
+                        "Download Current Summary (DOCX)",
+                        data=resume_docx_usd_a2,
+                        file_name="resume_salary_report_app2.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="resume_a2_docx_usd_download",
+                        width="stretch",
+                    )
+            with resume_export_cols_a2[1]:
+                st.download_button(
+                    "Download Selected Currency (PDF)",
+                    data=resume_pdf_selected_a2,
+                    file_name=f"resume_salary_report_app2_{resume_target_currency_a2.lower()}.pdf",
+                    mime="application/pdf",
+                    key="resume_a2_pdf_selected_download",
+                    width="stretch",
+                )
+            with resume_export_cols_a2[2]:
+                if resume_docx_selected_a2 is not None:
+                    st.download_button(
+                        "Download Selected Currency (DOCX)",
+                        data=resume_docx_selected_a2,
+                        file_name=f"resume_salary_report_app2_{resume_target_currency_a2.lower()}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="resume_a2_docx_selected_download",
+                        width="stretch",
+                    )
+                else:
+                    st.button(
+                        "Download Selected Currency (DOCX)",
+                        disabled=True,
+                        key="resume_a2_docx_selected_disabled",
+                        width="stretch",
+                    )
         # ==============================
         # FILE UPLOADER + RESET (APP 2)
         # ==============================
@@ -1015,6 +1151,88 @@ association_insight_card_html(assoc_text_a1_improved),
                     disabled=True,
                     key="resume_pdf_disabled"
                 )
+
+            st.divider()
+            st.subheader("Additional Report Formats")
+            st.caption(
+                "Keep the current PDF above, or download the same summary as DOCX or in another currency."
+            )
+            resume_rate_data = get_exchange_rates()
+            resume_currency_options = currency_dropdown_options()
+            resume_default_option = _default_currency_option(
+                resume_currency_options,
+                active_currency_a1_r or guess_currency(data["input_details"]["Country"]),
+            )
+            resume_selected_option = st.selectbox(
+                "Target currency for companion report",
+                resume_currency_options,
+                index=resume_currency_options.index(resume_default_option),
+                key="resume_a1_export_currency",
+            )
+            resume_target_currency = parse_currency_option(resume_selected_option)
+            st.caption(
+                f"Selected currency: {resume_target_currency}. Salary figures in these companion exports follow the chosen currency."
+            )
+
+            resume_docx_usd = build_resume_export_docx(
+                data,
+                "USD",
+                resume_rate_data,
+                "Resume Analysis",
+                extra_sections=_app1_resume_extra_sections(data),
+            )
+            resume_pdf_selected = build_resume_export_pdf(
+                data,
+                resume_target_currency,
+                resume_rate_data,
+                "Resume Analysis",
+                extra_sections=_app1_resume_extra_sections(data),
+            )
+            resume_docx_selected = build_resume_export_docx(
+                data,
+                resume_target_currency,
+                resume_rate_data,
+                "Resume Analysis",
+                extra_sections=_app1_resume_extra_sections(data),
+            )
+
+            resume_export_cols = st.columns(3)
+            if resume_docx_usd is not None:
+                with resume_export_cols[0]:
+                    st.download_button(
+                        "Download Current Summary (DOCX)",
+                        data=resume_docx_usd,
+                        file_name="resume_salary_report.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="resume_a1_docx_usd_download",
+                        width="stretch",
+                    )
+            with resume_export_cols[1]:
+                st.download_button(
+                    "Download Selected Currency (PDF)",
+                    data=resume_pdf_selected,
+                    file_name=f"resume_salary_report_{resume_target_currency.lower()}.pdf",
+                    mime="application/pdf",
+                    key="resume_a1_pdf_selected_download",
+                    width="stretch",
+                )
+            with resume_export_cols[2]:
+                if resume_docx_selected is not None:
+                    st.download_button(
+                        "Download Selected Currency (DOCX)",
+                        data=resume_docx_selected,
+                        file_name=f"resume_salary_report_{resume_target_currency.lower()}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="resume_a1_docx_selected_download",
+                        width="stretch",
+                    )
+                else:
+                    st.button(
+                        "Download Selected Currency (DOCX)",
+                        disabled=True,
+                        key="resume_a1_docx_selected_disabled",
+                        width="stretch",
+                    )
             # ------------- SALARY CARD DOWNLOAD (App 1 Resume) -------------
             render_salary_card_download(
                 predicted_usd = data["prediction"],

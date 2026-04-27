@@ -23,6 +23,7 @@ from app.hr_tools.predict_helpers import (
     predict_app1,
     predict_app2,
 )
+from app.hr_tools.export_utils import render_export_buttons
 from app.theme import apply_theme, get_colorway
 
 _APP1_EXPERIENCE_LABELS = {
@@ -38,6 +39,8 @@ _EDUCATION_LABELS = {
     "Master":      2,
     "PhD":         3,
 }
+_BT_APP1_STATE_KEY = "bt_a1_grid_payload"
+_BT_APP2_STATE_KEY = "bt_a2_grid_payload"
 
 
 # ---------------------------------------------------------------------------
@@ -153,29 +156,40 @@ def _render_app1_bench(kwargs, title_features):
         st.warning("Model 1 is not loaded.")
         return
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        job_title = st.selectbox("Job Title", app1_job_titles, key="bt_a1_job")
-    with col2:
-        country = st.selectbox("Country", app1_countries, key="bt_a1_country")
-    with col3:
-        gender    = st.selectbox("Gender (for model input)", app1_genders, key="bt_a1_gender")
-        education = st.selectbox("Education Level", list(_EDUCATION_LABELS.keys()), index=1, key="bt_a1_edu")
+    with st.form("bt_a1_form"):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            job_title = st.selectbox("Job Title", app1_job_titles, key="bt_a1_job")
+        with col2:
+            country = st.selectbox("Country", app1_countries, key="bt_a1_country")
+        with col3:
+            gender    = st.selectbox("Gender (for model input)", app1_genders, key="bt_a1_gender")
+            education = st.selectbox("Education Level", list(_EDUCATION_LABELS.keys()), index=1, key="bt_a1_edu")
+        submitted = st.form_submit_button("Generate Benchmark Grid", type="primary", width="stretch")
 
-    edu_val = _EDUCATION_LABELS[education]
+    if submitted:
+        edu_val = _EDUCATION_LABELS[education]
+        model_hash = str(id(app1_model))
+        with st.spinner("Computing benchmark grid..."):
+            rows = _cached_app1_grid(
+                job_title, country, gender, edu_val,
+                model_hash,
+                app1_model, app1_salary_band_model, title_features, SALARY_BAND_LABELS,
+            )
+        st.session_state[_BT_APP1_STATE_KEY] = {
+            "rows": rows,
+            "job_title": job_title,
+            "location": country,
+            "key_prefix": "bt_a1",
+        }
 
-    # Use id(model) as a cheap hash-safe proxy for which model is loaded.
-    # st.cache_resource ensures the model object is stable across rerenders.
-    model_hash = str(id(app1_model))
+    payload = st.session_state.get(_BT_APP1_STATE_KEY)
+    if payload is None:
+        st.info("Select a role profile and click Generate Benchmark Grid to build the salary benchmarking table.")
+        return
 
-    with st.spinner("Computing benchmark grid..."):
-        rows = _cached_app1_grid(
-            job_title, country, gender, edu_val,
-            model_hash,
-            app1_model, app1_salary_band_model, title_features, SALARY_BAND_LABELS,
-        )
-
-    _render_bench_output(rows, job_title, country, key_prefix="bt_a1")
+    st.caption("Update the role inputs and click Generate Benchmark Grid again whenever you want to refresh the table.")
+    _render_bench_output(**payload)
 
 
 # ---------------------------------------------------------------------------
@@ -209,31 +223,46 @@ def _render_app2_bench(kwargs, title_features):
     size_display   = [COMPANY_SIZE_MAP.get(s, s) for s in app2_company_sizes]
     remote_display = [REMOTE_MAP.get(r, str(r)) for r in app2_remote_ratios]
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        job_title = st.selectbox("Job Title", app2_job_titles, key="bt_a2_job")
-        loc_sel   = st.selectbox("Company Location", app2_country_display_options, key="bt_a2_loc")
-    with col2:
-        emp_sel = st.selectbox("Employment Type", emp_display, key="bt_a2_emp")
-        res_sel = st.selectbox("Employee Residence", app2_employee_residence_display_options, key="bt_a2_res")
-    with col3:
-        size_sel   = st.selectbox("Company Size", size_display, key="bt_a2_size")
-        remote_sel = st.selectbox("Work Mode", remote_display, key="bt_a2_remote")
+    with st.form("bt_a2_form"):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            job_title = st.selectbox("Job Title", app2_job_titles, key="bt_a2_job")
+            loc_sel   = st.selectbox("Company Location", app2_country_display_options, key="bt_a2_loc")
+        with col2:
+            emp_sel = st.selectbox("Employment Type", emp_display, key="bt_a2_emp")
+            res_sel = st.selectbox("Employee Residence", app2_employee_residence_display_options, key="bt_a2_res")
+        with col3:
+            size_sel   = st.selectbox("Company Size", size_display, key="bt_a2_size")
+            remote_sel = st.selectbox("Work Mode", remote_display, key="bt_a2_remote")
+        submitted = st.form_submit_button("Generate Benchmark Grid", type="primary", width="stretch")
 
-    loc_code = loc_sel.split("(")[-1].rstrip(")") if "(" in loc_sel else loc_sel
-    res_code = res_sel.split("(")[-1].rstrip(")") if "(" in res_sel else res_sel
-    rem_val  = app2_remote_ratios[remote_display.index(remote_sel)]
-    model_hash = str(id(app2_model))
+    if submitted:
+        loc_code = loc_sel.split("(")[-1].rstrip(")") if "(" in loc_sel else loc_sel
+        res_code = res_sel.split("(")[-1].rstrip(")") if "(" in res_sel else res_sel
+        rem_val  = app2_remote_ratios[remote_display.index(remote_sel)]
+        model_hash = str(id(app2_model))
 
-    with st.spinner("Computing benchmark grid..."):
-        rows = _cached_app2_grid(
-            job_title, emp_sel, loc_code, res_code, rem_val, size_sel,
-            model_hash,
-            app2_model, tuple(exp_display), title_features,
-            EXPERIENCE_REVERSE, EMPLOYMENT_REVERSE, COMPANY_SIZE_REVERSE,
-        )
+        with st.spinner("Computing benchmark grid..."):
+            rows = _cached_app2_grid(
+                job_title, emp_sel, loc_code, res_code, rem_val, size_sel,
+                model_hash,
+                app2_model, tuple(exp_display), title_features,
+                EXPERIENCE_REVERSE, EMPLOYMENT_REVERSE, COMPANY_SIZE_REVERSE,
+            )
+        st.session_state[_BT_APP2_STATE_KEY] = {
+            "rows": rows,
+            "job_title": job_title,
+            "location": loc_sel,
+            "key_prefix": "bt_a2",
+        }
 
-    _render_bench_output(rows, job_title, loc_sel, key_prefix="bt_a2")
+    payload = st.session_state.get(_BT_APP2_STATE_KEY)
+    if payload is None:
+        st.info("Select a role profile and click Generate Benchmark Grid to build the salary benchmarking table.")
+        return
+
+    st.caption("Update the role inputs and click Generate Benchmark Grid again whenever you want to refresh the table.")
+    _render_bench_output(**payload)
 
 
 # ---------------------------------------------------------------------------
@@ -297,10 +326,19 @@ def _render_bench_output(rows: list[dict], job_title: str, location: str, key_pr
     apply_theme(fig)
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    st.download_button(
-        label=":material/download: Export Benchmark Table (CSV)",
-        data=edited.to_csv(index=False),
-        file_name=f"salary_benchmark_{job_title.replace(' ', '_')}.csv",
-        mime="text/csv",
-        key=f"{key_prefix}_export",
+    summary_lines = [
+        f"Role: {job_title}",
+        f"Location: {location}",
+        "The table combines model estimates with editable HR band planning fields.",
+    ]
+    render_export_buttons(
+        title="SalaryScope HR Tools — Salary Benchmarking Table",
+        file_stem=f"salary_benchmark_{job_title.replace(' ', '_')}",
+        csv_df=edited,
+        summary_lines=summary_lines,
+        key_prefix=f"{key_prefix}_export",
+        csv_label=":material/download: Download CSV",
+        xlsx_label=":material/table_view: Download XLSX",
+        pdf_label=":material/picture_as_pdf: Download PDF",
+        docx_label=":material/description: Download DOCX",
     )

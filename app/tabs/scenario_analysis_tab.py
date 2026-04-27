@@ -55,6 +55,16 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 from io import BytesIO
+from app.utils.currency_utils import (
+    currency_dropdown_options,
+    parse_currency_option,
+    guess_currency,
+    get_exchange_rates,
+)
+from app.utils.currency_report_exports import (
+    build_scenario_export_pdf,
+    build_scenario_export_docx,
+)
 
 
 def render_scenario_tab(
@@ -96,6 +106,10 @@ def render_scenario_tab(
     app1_generate_scenario_pdf,
     app2_generate_scenario_pdf,
 ):
+    def _default_currency_option(options, preferred_code):
+        preferred = (preferred_code or "USD").upper()
+        return next((option for option in options if option.startswith(f"{preferred} — ")), options[0])
+
     st.header(":material/analytics: Scenario Analysis & What-If Simulation")
     st.caption(
         "Build and compare multiple salary prediction scenarios side by side. "
@@ -548,6 +562,85 @@ def render_scenario_tab(
                         disabled=True,
                         key="scenario_pdf_disabled"
                     )
+
+                st.divider()
+                st.subheader("Additional Report Formats")
+                st.caption(
+                    "Keep the current PDF above, or download the same scenario summary as DOCX or in another currency."
+                )
+                scenario_rate_data_a1 = get_exchange_rates()
+                scenario_currency_options_a1 = currency_dropdown_options()
+                scenario_default_option_a1 = _default_currency_option(
+                    scenario_currency_options_a1,
+                    guess_currency(res_df_a1["Country"].iloc[0] if not res_df_a1.empty else "US"),
+                )
+                scenario_selected_option_a1 = st.selectbox(
+                    "Target currency for companion report",
+                    scenario_currency_options_a1,
+                    index=scenario_currency_options_a1.index(scenario_default_option_a1),
+                    key="scenario_a1_export_currency",
+                )
+                scenario_target_currency_a1 = parse_currency_option(scenario_selected_option_a1)
+                st.caption(
+                    f"Selected currency: {scenario_target_currency_a1}. Salary figures in these companion exports follow the chosen currency."
+                )
+
+                scenario_docx_usd_a1 = build_scenario_export_docx(
+                    res_df_a1,
+                    "USD",
+                    scenario_rate_data_a1,
+                    "Scenario Analysis",
+                )
+                scenario_pdf_selected_a1 = build_scenario_export_pdf(
+                    res_df_a1,
+                    scenario_target_currency_a1,
+                    scenario_rate_data_a1,
+                    "Scenario Analysis",
+                )
+                scenario_docx_selected_a1 = build_scenario_export_docx(
+                    res_df_a1,
+                    scenario_target_currency_a1,
+                    scenario_rate_data_a1,
+                    "Scenario Analysis",
+                )
+
+                scenario_export_cols_a1 = st.columns(3)
+                if scenario_docx_usd_a1 is not None:
+                    with scenario_export_cols_a1[0]:
+                        st.download_button(
+                            "Download Current Summary (DOCX)",
+                            data=scenario_docx_usd_a1,
+                            file_name="scenario_analysis_app1.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            key="scenario_a1_docx_usd_download",
+                            width="stretch",
+                        )
+                with scenario_export_cols_a1[1]:
+                    st.download_button(
+                        "Download Selected Currency (PDF)",
+                        data=scenario_pdf_selected_a1,
+                        file_name=f"scenario_analysis_app1_{scenario_target_currency_a1.lower()}.pdf",
+                        mime="application/pdf",
+                        key="scenario_a1_pdf_selected_download",
+                        width="stretch",
+                    )
+                with scenario_export_cols_a1[2]:
+                    if scenario_docx_selected_a1 is not None:
+                        st.download_button(
+                            "Download Selected Currency (DOCX)",
+                            data=scenario_docx_selected_a1,
+                            file_name=f"scenario_analysis_app1_{scenario_target_currency_a1.lower()}.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            key="scenario_a1_docx_selected_download",
+                            width="stretch",
+                        )
+                    else:
+                        st.button(
+                            "Download Selected Currency (DOCX)",
+                            disabled=True,
+                            key="scenario_a1_docx_selected_disabled",
+                            width="stretch",
+                        )
             render_scenario_results_a1()
 
     # ------------------------------------------------------------------
@@ -1026,4 +1119,83 @@ def render_scenario_tab(
                         disabled=True,
                         key="scenario_pdf_disabled_a2"
                     )
+
+                st.divider()
+                st.subheader("Additional Report Formats")
+                st.caption(
+                    "Keep the current PDF above, or download the same scenario summary as DOCX or in another currency."
+                )
+                scenario_rate_data_a2 = get_exchange_rates()
+                scenario_currency_options_a2 = currency_dropdown_options()
+                scenario_default_option_a2 = _default_currency_option(
+                    scenario_currency_options_a2,
+                    guess_currency(res_df_a2["Company Location"].iloc[0] if not res_df_a2.empty else "US"),
+                )
+                scenario_selected_option_a2 = st.selectbox(
+                    "Target currency for companion report",
+                    scenario_currency_options_a2,
+                    index=scenario_currency_options_a2.index(scenario_default_option_a2),
+                    key="scenario_a2_export_currency",
+                )
+                scenario_target_currency_a2 = parse_currency_option(scenario_selected_option_a2)
+                st.caption(
+                    f"Selected currency: {scenario_target_currency_a2}. Salary figures in these companion exports follow the chosen currency."
+                )
+
+                scenario_docx_usd_a2 = build_scenario_export_docx(
+                    res_df_a2,
+                    "USD",
+                    scenario_rate_data_a2,
+                    "Scenario Analysis",
+                )
+                scenario_pdf_selected_a2 = build_scenario_export_pdf(
+                    res_df_a2,
+                    scenario_target_currency_a2,
+                    scenario_rate_data_a2,
+                    "Scenario Analysis",
+                )
+                scenario_docx_selected_a2 = build_scenario_export_docx(
+                    res_df_a2,
+                    scenario_target_currency_a2,
+                    scenario_rate_data_a2,
+                    "Scenario Analysis",
+                )
+
+                scenario_export_cols_a2 = st.columns(3)
+                if scenario_docx_usd_a2 is not None:
+                    with scenario_export_cols_a2[0]:
+                        st.download_button(
+                            "Download Current Summary (DOCX)",
+                            data=scenario_docx_usd_a2,
+                            file_name="scenario_analysis_app2.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            key="scenario_a2_docx_usd_download",
+                            width="stretch",
+                        )
+                with scenario_export_cols_a2[1]:
+                    st.download_button(
+                        "Download Selected Currency (PDF)",
+                        data=scenario_pdf_selected_a2,
+                        file_name=f"scenario_analysis_app2_{scenario_target_currency_a2.lower()}.pdf",
+                        mime="application/pdf",
+                        key="scenario_a2_pdf_selected_download",
+                        width="stretch",
+                    )
+                with scenario_export_cols_a2[2]:
+                    if scenario_docx_selected_a2 is not None:
+                        st.download_button(
+                            "Download Selected Currency (DOCX)",
+                            data=scenario_docx_selected_a2,
+                            file_name=f"scenario_analysis_app2_{scenario_target_currency_a2.lower()}.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            key="scenario_a2_docx_selected_download",
+                            width="stretch",
+                        )
+                    else:
+                        st.button(
+                            "Download Selected Currency (DOCX)",
+                            disabled=True,
+                            key="scenario_a2_docx_selected_disabled",
+                            width="stretch",
+                        )
             render_scenario_results_a2()

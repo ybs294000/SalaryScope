@@ -20,7 +20,7 @@
 10. [Financial Tools Design](#10-financial-tools-design)
 11. [Database Design](#11-database-design)
 12. [UI and Theming Design](#12-ui-and-theming-design)
-13. [PDF Report Generation](#13-pdf-report-generation)
+13. [PDF and Report Export Generation](#13-pdf-and-report-export-generation)
 14. [Feedback and Data Collection Design](#14-feedback-and-data-collection-design)
 15. [Deployment Architecture](#15-deployment-architecture)
 16. [Design Decisions and Rationale](#16-design-decisions-and-rationale)
@@ -36,7 +36,7 @@ This document describes the software architecture, module design, data flows, an
 
 ### 1.2 Scope
 
-The document covers all components of the system including the Streamlit frontend, ML model integration, NLP resume analysis pipeline, Firebase authentication and database layer, Model Hub extensibility framework, financial utility modules, and PDF report generation.
+The document covers all components of the system including the Streamlit frontend, ML model integration, NLP resume analysis pipeline, Firebase authentication and database layer, Model Hub extensibility framework, financial utility modules, and report export generation.
 
 ### 1.3 Intended Audience
 
@@ -704,7 +704,7 @@ Conditional:  Profile  (logged in)
 
 ---
 
-## 13. PDF Report Generation
+## 13. PDF and Report Export Generation
 
 ### 13.1 Architecture
 
@@ -725,6 +725,15 @@ A centralised `_fig_to_image(fig, dpi=150)` helper renders matplotlib figures to
 ### 13.3 PDF Caching
 
 Model Analytics PDFs are generated once and cached with `@st.cache_data`. Prediction-specific PDFs (manual, resume, batch, scenario) are generated on-demand and stored in `st.session_state` as `BytesIO` buffers. A two-step pattern (Prepare → Download) is used to prevent regenerating the PDF on every rerun.
+
+### 13.4 Companion DOCX and Selected-Currency Exports
+
+Manual Prediction, Resume Analysis, and Scenario Analysis also expose a separate companion export path for:
+- current-summary DOCX downloads
+- selected-currency PDF downloads
+- selected-currency DOCX downloads
+
+This companion path is intentionally isolated from `pdf_utils.py` in a separate helper module so the original USD-based PDF generation flow remains unchanged. The companion exports derive from the current result state and currency utility data rather than maintaining their own long-lived `BytesIO` buffers, which reduces stale-download risk.
 
 ---
 

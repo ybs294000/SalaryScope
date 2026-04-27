@@ -419,6 +419,7 @@ All session state is per-browser-tab and expires when the tab closes or the sess
 | `manual_prediction_result` | Dict | Result of most recent manual prediction |
 | `manual_pdf_buffer` | BytesIO | Generated PDF buffer for manual prediction report |
 | `manual_pdf_ready` | Boolean | Whether the manual PDF has been generated |
+| `manual_a1_export_currency` / `manual_a2_export_currency` | String | Selected target currency option for companion manual-report exports |
 | `resume_features` | Dict | Extracted features from uploaded resume (App 1) |
 | `resume_features_a2` | Dict | Extracted features from uploaded resume (App 2) |
 | `resume_text` | String | Raw extracted text from uploaded PDF resume (App 1) |
@@ -427,8 +428,10 @@ All session state is per-browser-tab and expires when the tab closes or the sess
 | `resume_prediction_result` | Dict | Prediction result from resume analysis (App 1) |
 | `resume_pdf_ready` | Boolean | Whether resume PDF has been generated |
 | `resume_pdf_buffer` | BytesIO | Generated PDF buffer for resume report |
+| `resume_a1_export_currency` / `resume_a2_export_currency` | String | Selected target currency option for companion resume-report exports |
 | `bulk_result_df` | DataFrame | Results dataframe from batch prediction |
 | `bulk_pdf_buffer` | BytesIO | Generated PDF buffer for batch report |
+| `scenario_a1_export_currency` / `scenario_a2_export_currency` | String | Selected target currency option for companion scenario-report exports |
 | `scenarios_a1` | List\<Dict\> | List of up to 5 scenario configurations (App 1) |
 | `scenarios_a2` | List\<Dict\> | List of up to 5 scenario configurations (App 2) |
 | `scenario_results_a1` | List\<Dict\> | Computed results for all App 1 scenarios |

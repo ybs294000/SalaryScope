@@ -8,6 +8,7 @@ joblib
 requests
 reportlab
 openpyxl
+python-docx
 shap
 mlxtend
 xlrd
