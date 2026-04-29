@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "title": "Interview Prep Registry",
+  "sets": [
+    {
+      "set_id": "quant_foundations_ds",
+      "title": "Quantitative Aptitude Foundations",
+      "subtitle": "Core arithmetic and data interpretation practice",
+      "description": "Build speed and confidence across percentages, ratios, averages, and practical data reasoning.",
+      "file": "sample_sets/quantitative_aptitude_foundations.json",
+      "category": "Aptitude",
+      "role_family": "Data and Analytics",
+      "difficulty": "Intermediate",
+      "estimated_minutes": 18,
+      "question_count": 6,
+      "enabled": true,
+      "sort_order": 10,
+      "tags": ["quantitative", "percentages", "ratios", "data interpretation"],
+      "ai_integration": {
+        "enabled": false,
+        "provider_hint": "future_api",
+        "mode": "post_attempt_review"
+      }
+    },
+    {
+      "set_id": "data_interview_core",
+      "title": "Data Interview Fundamentals",
+      "subtitle": "Short screening questions for analytics and data roles",
+      "description": "Practice common interview-style questions across SQL, experimentation, metrics, and modeling basics.",
+      "file": "sample_sets/data_interview_fundamentals.json",
+      "category": "Interview Questions",
+      "role_family": "Data and Analytics",
+      "difficulty": "Intermediate",
+      "estimated_minutes": 20,
+      "question_count": 6,
+      "enabled": true,
+      "sort_order": 20,
+      "tags": ["sql", "ab testing", "metrics", "machine learning"],
+      "ai_integration": {
+        "enabled": false,
+        "provider_hint": "future_api",
+        "mode": "explanation_review"
+      }
+    }
+  ]
+}

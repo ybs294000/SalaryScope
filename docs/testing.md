@@ -143,6 +143,7 @@ If a `tests/` directory does not yet exist, the unit test cases in Sections 17�
 | Scenario Analysis | SCEN | Manual (browser) |
 | Financial Tools | FINT | Manual (browser) |
 | HR Tools | HRT | Manual (browser) |
+| Interview Prep | INTP | Manual (browser) |
 | Model Analytics | MANA | Manual (browser) |
 | Data Insights | DATA | Manual (browser) |
 | Model Hub | MHUB | Manual (browser) |
@@ -364,6 +365,48 @@ If a `tests/` directory does not yet exist, the unit test cases in Sections 17�
 4. Click the delete button.
 
 **Expected Result:** An error message states the exact phrase must be typed. The account is not deleted.
+
+---
+
+## 5A. Module 1A — Interview Prep
+
+### INTP-001 — Registry Loads Available Sets
+
+**Precondition:** The full app is running and `app/interview_aptitude_prep/registry_ia.json` contains at least one enabled set.
+
+**Steps:**
+1. Open the **Interview Prep** tab.
+2. Observe the set picker and top-level filters.
+
+**Expected Result:** Enabled sets appear in the dropdown. Category, role focus, and difficulty filters are visible.
+
+---
+
+### INTP-002 — Start and Submit an Untimed Attempt
+
+**Precondition:** Interview Prep tab is open with a valid set selected.
+
+**Steps:**
+1. Leave timed mode off.
+2. Click **Start Practice Set**.
+3. Answer at least one question.
+4. Click **Submit Answers**.
+
+**Expected Result:** A result summary appears showing score, percentage, and section-wise review. The attempt can be reviewed without errors.
+
+---
+
+### INTP-003 — Timed Attempt Summary
+
+**Precondition:** A selected set has timing enabled.
+
+**Steps:**
+1. Enable timed mode.
+2. Click **Start Practice Set**.
+3. Wait briefly.
+4. Submit the attempt.
+
+**Expected Result:** The result summary includes elapsed time information. If the time limit is exceeded, the attempt is clearly marked as time-exceeded rather than failing silently.
 
 ---
 

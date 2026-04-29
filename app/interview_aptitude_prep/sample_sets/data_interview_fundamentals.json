@@ -1,0 +1,135 @@
+{
+  "set_id": "data_interview_core",
+  "title": "Data Interview Fundamentals",
+  "description": "A compact practice set that mirrors the style of common analytics and data science screening rounds.",
+  "category": "Interview Questions",
+  "role_family": "Data and Analytics",
+  "difficulty": "Intermediate",
+  "estimated_minutes": 20,
+  "instructions": [
+    "Use this set for short interview-style practice across analytics, experimentation, and ML basics.",
+    "Some questions have more than one correct answer.",
+    "Answer review includes explanations after you submit."
+  ],
+  "timer": {
+    "enabled": true,
+    "time_limit_seconds": 1200,
+    "enforce_on_submit": true
+  },
+  "scoring": {
+    "default_marks": 1,
+    "negative_marks": 0.25,
+    "pass_percent": 65
+  },
+  "review": {
+    "show_correct_answers": true,
+    "show_explanations": true
+  },
+  "ai_integration": {
+    "enabled": false,
+    "provider_hint": "future_api",
+    "mode": "follow_up_review"
+  },
+  "sections": [
+    {
+      "id": "analytics_sql_metrics",
+      "title": "Analytics, SQL, and Metrics",
+      "description": "Foundational questions that show up in practical data interviews.",
+      "questions": [
+        {
+          "id": "di_01",
+          "type": "single_choice",
+          "topic": "SQL",
+          "prompt": "Which SQL clause is used to filter aggregated results after GROUP BY?",
+          "options": [
+            { "id": "a", "label": "WHERE" },
+            { "id": "b", "label": "ORDER BY" },
+            { "id": "c", "label": "HAVING" },
+            { "id": "d", "label": "LIMIT" }
+          ],
+          "correct_answer": "c",
+          "marks": 1,
+          "negative_marks": 0.25,
+          "explanation": "WHERE filters rows before aggregation, while HAVING filters aggregated groups after GROUP BY."
+        },
+        {
+          "id": "di_02",
+          "type": "multiple_choice",
+          "topic": "Experimentation",
+          "prompt": "Which checks are useful before trusting an A/B test result?",
+          "options": [
+            { "id": "a", "label": "Verify sample size is large enough" },
+            { "id": "b", "label": "Check whether randomization worked" },
+            { "id": "c", "label": "Ignore variance if the average improved" },
+            { "id": "d", "label": "Review whether the metric matches the business goal" }
+          ],
+          "correct_answer": ["a", "b", "d"],
+          "marks": 2,
+          "negative_marks": 0.5,
+          "explanation": "Good A/B test review includes power, randomization, and metric relevance. Ignoring variance is unsafe."
+        },
+        {
+          "id": "di_03",
+          "type": "text_input",
+          "topic": "Metrics",
+          "prompt": "What metric describes the percentage of users who completed a desired action out of all users who were exposed to the experience?",
+          "accepted_answers": ["conversion rate", "conversion"],
+          "case_sensitive": false,
+          "marks": 1,
+          "negative_marks": 0.25,
+          "placeholder": "Type a short metric name",
+          "explanation": "Conversion rate is the share of exposed users who completed the target action."
+        }
+      ]
+    },
+    {
+      "id": "modeling_reasoning",
+      "title": "Modeling and Reasoning",
+      "description": "Short concept checks for data science and applied ML interviews.",
+      "questions": [
+        {
+          "id": "di_04",
+          "type": "single_choice",
+          "topic": "Model Evaluation",
+          "prompt": "If a classifier performs well on training data but poorly on unseen validation data, what is the most likely issue?",
+          "options": [
+            { "id": "a", "label": "Underfitting" },
+            { "id": "b", "label": "Overfitting" },
+            { "id": "c", "label": "Data type mismatch" },
+            { "id": "d", "label": "Feature scaling is always wrong" }
+          ],
+          "correct_answer": "b",
+          "marks": 1,
+          "negative_marks": 0.25,
+          "explanation": "A large performance gap between train and validation data is a classic sign of overfitting."
+        },
+        {
+          "id": "di_05",
+          "type": "dropdown",
+          "topic": "Feature Engineering",
+          "prompt": "A column contains hundreds of possible city names with a long tail of rare values. Which encoding is usually the safer first choice for a tree-based model?",
+          "options": [
+            { "id": "a", "label": "Drop the feature immediately" },
+            { "id": "b", "label": "One-hot encode every city value without review" },
+            { "id": "c", "label": "Group rare values and encode carefully" },
+            { "id": "d", "label": "Convert the city string directly to an integer rank" }
+          ],
+          "correct_answer": "c",
+          "marks": 1,
+          "negative_marks": 0.25,
+          "explanation": "Grouping rare levels helps reduce noise and cardinality while keeping meaningful signal."
+        },
+        {
+          "id": "di_06",
+          "type": "true_false",
+          "topic": "Bias and Variance",
+          "prompt": "Increasing model complexity can reduce bias but may increase variance.",
+          "correct_answer": "true",
+          "marks": 1,
+          "negative_marks": 0.25,
+          "explanation": "This is the standard bias-variance tradeoff. More flexible models can fit better but may generalize worse."
+        }
+      ]
+    }
+  ]
+}

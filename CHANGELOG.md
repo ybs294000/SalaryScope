@@ -6,6 +6,26 @@ The format is based on Keep a Changelog, and this project loosely follows Semant
 
 ---
 
+## [Unreleased]
+
+### Added
+
+* Interview Prep tab integrated into the full app with a dedicated top-level workflow for aptitude and interview practice
+* New `app/interview_aptitude_prep/` package with isolated modules for:
+  * registry-driven set discovery (`registry_ia.json`)
+  * question-set loading and validation
+  * scoring and answer review
+  * optional timed attempts
+* Two sample JSON-based practice sets covering quantitative aptitude and data interview fundamentals
+* `docs/interview_prep_json_format.md` documenting the registry format, supported question types, scoring fields, timer fields, and authoring conventions for future question sets
+
+### Changed
+
+* About tab and README updated to include the new Interview Prep workflow in feature lists, usage notes, structure references, and limitations
+* Interview Prep design leaves room for future API-based coaching or AI-assisted post-attempt review through question-set metadata, without coupling the first version to any backend service
+
+---
+
 ## [1.4.0] - 2026-04-26
 
 ### Added

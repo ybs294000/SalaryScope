@@ -47,6 +47,8 @@ Both apps share the same Firebase project, Firestore database, and HuggingFace r
 
 The full app can also expose an AI Assistant tab. In local development, the assistant can use a local Ollama server. On Streamlit Cloud, it is designed to call a Hugging Face Space and store logged-in user chat history in a Hugging Face dataset repo when configured.
 
+The full app also includes an Interview Prep tab that loads registry-driven aptitude and interview sets from local JSON files packaged with the application. This feature does not require external services in its current form.
+
 ---
 
 ## 2. Prerequisites
@@ -577,6 +579,7 @@ Both apps share:
 | Scenario Analysis tab | ✅ | ❌ |
 | Model Hub tab | ✅ | ❌ |
 | HR Tools tab | ✅ | ❌ |
+| Interview Prep tab | ✅ | ❌ |
 | Admin Panel tab | ✅ | ❌ |
 | Financial tools (11 modules) | ✅ | ❌ |
 | Prediction feedback system | ✅ | ❌ |
@@ -589,7 +592,7 @@ Both apps share:
 | Memory usage | Higher | Significantly lower |
 | Startup time | Slower | Faster |
 
-> **Note on the Lite App About tab:** The lite app renders its About content inline in `app-lite.py` rather than importing `about_tab.py`. The content is a simplified version — it omits resume analysis, scenario analysis, Model Hub, HR Tools, and financial tools from the feature list.
+> **Note on the Lite App About tab:** The lite app renders its About content inline in `app-lite.py` rather than importing `about_tab.py`. The content is a simplified version — it omits resume analysis, scenario analysis, Interview Prep, Model Hub, HR Tools, and financial tools from the feature list.
 
 > **Note on text input styling:** The lite app applies CSS styling to `.stTextInput` elements (which is commented out in the full app). This is a minor cosmetic difference with no functional impact.
 

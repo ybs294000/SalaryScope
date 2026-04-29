@@ -38,7 +38,7 @@
 3. Dark professional CSS theme injected via `st.markdown()`.
 4. All ML models, datasets, and lookup tables loaded with `@st.cache_resource` / `@st.cache_data`.
 5. Sidebar rendered: model selector dropdown, auth widgets (`login_ui`, `register_ui`, `forgot_password_ui`).
-6. Tab list constructed dynamically; the full app includes AI Assistant and HR Tools in the base tab set, while Profile and Admin are appended conditionally.
+6. Tab list constructed dynamically; the full app includes AI Assistant, Interview Prep, and HR Tools in the base tab set, while Profile and Admin are appended conditionally.
 7. Each tab renderer called with full dependency injection.
 
 **Key globals available to tabs (passed as arguments):**
@@ -137,6 +137,27 @@ Renders the AI Assistant tab in the full app.
 | `app.local_llm.deployment` | Local vs Streamlit Cloud runtime detection |
 
 **Side effects:** Renders the chat UI, stores conversations/messages, and exposes export actions for individual replies and full conversations.
+
+---
+
+### `interview_prep_tab.py`
+
+#### `render_interview_prep_tab()`
+
+Thin wrapper that mounts the Interview Prep feature from `app/interview_aptitude_prep/`.
+
+**Purpose:** Provides a dedicated aptitude and interview practice workflow without placing question loading, validation, scoring, or timer logic directly in `app_resume.py`.
+
+**Key dependencies used internally:**
+
+| Dependency | Description |
+|---|---|
+| `app.interview_aptitude_prep.loader` | Loads the registry and selected question set from JSON |
+| `app.interview_aptitude_prep.validator` | Validates registry and question-set structure before rendering |
+| `app.interview_aptitude_prep.scoring` | Scores submitted answers and builds section summaries |
+| `app.interview_aptitude_prep.timer` | Handles optional timed-attempt state and timer display |
+
+**Side effects:** Renders the practice-set picker, question flow, optional timer panel, result summary, and answer review UI.
 
 ---
 

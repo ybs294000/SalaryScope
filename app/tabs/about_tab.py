@@ -10,7 +10,7 @@ Sections
 - Quick-start guide (new users)
 - Example prediction card (easy to remove -- single block marked below)
 - Features & Modules expander
-  - Model 1, Model 2, Model Hub, Resume Analysis,
+  - Model 1, Model 2, Model Hub, Resume Analysis, Interview Prep,
     Salary Adjustment, Financial Planning Tools,
     Prediction Feedback, Scenario Analysis,
     User Account System, User Profile,
@@ -254,6 +254,7 @@ def render_about_tab():
                 estimate compensation from structured inputs, resume data, uploaded datasets, and
                 scenario comparisons. Alongside the prediction itself, the system provides supporting
                 analytics, financial context, an AI assistant for guided explanation and drafting,
+                an interview and aptitude practice layer for preparation workflows,
                 extensibility through the Model Hub, and HR-oriented
                 planning tools to make the output more useful for interpretation and decision-making.
             </div>
@@ -278,8 +279,8 @@ def render_about_tab():
                 </div>
                 <div class="about-preview-stat">
                     <div class="about-preview-stat-kicker">Decision Support</div>
-                    <div class="about-preview-stat-value">Analytics + Financial Context</div>
-                    <div class="about-preview-stat-note">Currency, tax, CoL, planning utilities, diagnostics, and explainability in one flow.</div>
+                    <div class="about-preview-stat-value">Analytics, Planning, and Prep</div>
+                    <div class="about-preview-stat-note">Currency, tax, CoL, planning utilities, diagnostics, explainability, and practice support in one flow.</div>
                 </div>
                 <div class="about-preview-stat">
                     <div class="about-preview-stat-kicker">Extensibility</div>
@@ -533,6 +534,19 @@ def render_about_tab():
 
         st.divider()
 
+        st.markdown("### Interview Prep")
+        st.markdown("""
+- Dedicated top-level tab for aptitude and interview preparation
+- Practice sets are loaded from external JSON files through a registry-driven picker
+- Filters help users narrow the available sets by category, role focus, and difficulty
+- Supported question formats currently include single choice, multiple choice, dropdown, true/false, numeric input, and short text input
+- Includes scoring, section summaries, answer review, and optional timed attempts
+- Validation checks help prevent broken registry entries or malformed question sets from being shown in the UI
+- Leaves room for future API-based coaching or AI-assisted review through metadata in the set files
+        """)
+
+        st.divider()
+
         st.markdown("### HR & Employer Tools")
         st.markdown("""
 - Dedicated tab for HR teams and hiring managers; available to all users
@@ -636,7 +650,7 @@ def render_about_tab():
         st.markdown("""
 - Model switcher to toggle between both built-in prediction systems
 - Unified theme across the entire application with dynamic light/dark mode support
-- Dynamic tab layout: Manual Prediction, Resume Analysis, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, AI Assistant, HR Tools, Profile (logged-in only), About
+- Dynamic tab layout: Manual Prediction, Resume Analysis, AI Assistant, Interview Prep, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, HR Tools, Profile (logged-in only), About
 - ReportLab-based multi-page PDF reports with embedded charts
 - State-managed UI to prevent re-computation on interaction
 - Google Drive public link upload for batch files
@@ -921,6 +935,12 @@ def render_about_tab():
 - On Streamlit Cloud, login is required before using it.
 - The assistant can make mistakes, so important details should be checked before relying on them.
 
+**Interview Prep**
+- Practice aptitude and interview question sets from a dedicated tab.
+- Use the filters at the top to narrow available sets by category, role focus, or difficulty.
+- Start a timed or untimed attempt, submit once, and review your score with explanations afterward.
+- The available sets are loaded from JSON files, so the library can be extended without changing the overall tab workflow.
+
 **HR Tools**
 - Five compensation planning tools for HR teams and hiring managers.
 - Hiring Budget: enter a role profile and headcount to estimate total annual payroll cost; adjust benefits, overhead, and recruiting assumptions.
@@ -997,6 +1017,12 @@ def render_about_tab():
 - On Streamlit Cloud, sign in first before using it. Local testing can use the assistant without login.
 - Treat the output as AI assistance rather than final authority, and check important details before relying on them.
 
+**Interview Prep**
+- Open the Interview Prep tab to browse available aptitude or interview practice sets.
+- Use the filters to narrow the library by category, role focus, or difficulty, then choose a set from the dropdown.
+- Click **Start Practice Set** to begin. If the selected set supports timing, you can choose a timed attempt.
+- Answer the questions and click **Submit Answers** to score the set and view the review summary.
+
 **HR Tools**
 - Open the HR Tools tab and select a tool from the inner sub-tabs.
 - **Hiring Budget**: fill in the role profile and headcount, then adjust the employer cost assumptions (benefits %, overhead %, recruiting cost). The budget summary and chart update automatically.
@@ -1037,6 +1063,7 @@ def render_about_tab():
 - Model Hub ONNX bundles (model.onnx) are loaded via onnxruntime and carry no arbitrary code execution risk. Pickle bundles (model.pkl) are deserialized using joblib -- only upload pickle files from sources you control entirely.
 - Model Hub predictions are only as reliable as the model and training data used -- the system does not validate model quality or dataset coverage.
 - Per-bundle lexicons (skills.json, job_titles.json) in the Model Hub override global lexicons for resume extraction; if not uploaded, the shared app-level lexicons are used as fallback.
+- Interview Prep results depend on the quality of the authored question sets and answer keys. Timing and scoring are only as reliable as the question-set configuration supplied to the app.
         """)
 
     # -----------------------------------------------------------------------

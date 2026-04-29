@@ -93,6 +93,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Dual machine learning models (Random Forest + XGBoost)
 - Resume-based salary prediction using NLP (spaCy + data-driven JSON lexicons)
 - Offer letter parsing for compensation and employment-term extraction
+- Interview Prep tab with registry-driven aptitude and interview question sets
 - Scenario analysis and sensitivity simulation
 - Batch prediction (up to 50,000 records for built-in models; up to 10,000 for Model Hub)
 - Grouped batch dashboards with summary KPIs, distribution views, and advanced statistical visuals
@@ -139,6 +140,7 @@ The application runs in a web browser, making it platform-independent and easily
 | Prediction Feedback System | ✅ | ❌ |
 | HR & Employer Tools | ✅ | ❌ |
 | AI Assistant | ✅ | ❌ |
+| Interview Prep | ✅ | ❌ |
 
 The lite app was built to stay within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, and the full financial tools chain). Both apps share the same Firebase project, so prediction history is unified across them.
 
@@ -214,6 +216,14 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Includes matched-text evidence and structured JSON output for transparency
 - Connects directly to the built-in financial planning tools so offer details can be explored without manual re-entry
 - Best suited to text-based offer letters where compensation and employment terms are clearly written
+
+### Interview Prep
+- Dedicated top-level tab for aptitude and interview preparation
+- Practice sets are loaded from external JSON files through a registry-driven picker, making the system extensible without changing the main workflow
+- Filter sets by category, role focus, and difficulty before starting
+- Supports single-choice, multiple-choice, dropdown, true/false, numeric, and short-text question types
+- Includes scoring, section summaries, answer review, and optional timed attempts
+- Leaves room for future AI-assisted review or coaching through metadata fields in the question-set format
 
 ### Batch Prediction
 - Upload files in CSV, XLSX, JSON, or SQL format
@@ -812,10 +822,21 @@ salaryscope/
 │   │   ├── exporters.py                 # AI reply and conversation PDF export
 │   │   └── README.md                    # Local assistant notes
 │   │
+│   ├── interview_aptitude_prep/         # Interview Prep package
+│   │   ├── __init__.py
+│   │   ├── loader.py                    # Registry and set loading helpers
+│   │   ├── validator.py                 # Registry and question-set validation
+│   │   ├── renderer.py                  # Interview Prep UI renderer
+│   │   ├── scoring.py                   # Question scoring and result summaries
+│   │   ├── timer.py                     # Attempt timing helpers
+│   │   ├── registry_ia.json             # Interview Prep set registry
+│   │   └── sample_sets/                 # Example aptitude and interview sets
+│   │
 │   ├── tabs/
 │   │   ├── manual_prediction_tab.py     # Manual Prediction
 │   │   ├── resume_analysis_tab.py       # Resume Prediction (full app only)
 │   │   ├── llm_assistant_tab.py         # AI Assistant (full app only)
+│   │   ├── interview_prep_tab.py        # Interview Prep (full app only)
 │   │   ├── batch_prediction_tab.py      # Batch Prediction
 │   │   ├── batch_prediction_dashboards.py # Grouped dashboards for batch prediction analytics
 │   │   ├── offer_letter_tab.py          # Offer letter parser workflow inside Resume Analysis
@@ -1099,6 +1120,12 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 
 > Note: AI Assistant PDF export uses a fallback-safe approach. By default it works with the built-in ReportLab path. If the optional `md2pdf` + WeasyPrint stack is installed and available, the app prefers direct Markdown-to-PDF conversion for richer formatting.
 
+### Interview Prep
+1. Open the **Interview Prep** tab in the full app
+2. Use the filters to narrow the available practice sets by category, role focus, or difficulty
+3. Choose a set from the dropdown and start a timed or untimed attempt
+4. Submit once to see your score, section-wise summary, and answer explanations
+
 ### Model Analytics
 - Navigate to the **Model Analytics** tab to view full model diagnostics, comparison charts, and download the analytics PDF report
 
@@ -1269,6 +1296,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - The AI Assistant is a supporting layer for explanation and drafting, not the source of salary prediction. It can make mistakes or produce incomplete wording and should be reviewed before use.
 - On Streamlit Cloud, the AI Assistant depends on a free Hugging Face Space backend, so response speed and availability may vary more than the rest of the application.
 - Rich Markdown-to-PDF export for AI Assistant outputs is optional. If `md2pdf` and its WeasyPrint requirements are unavailable, the app automatically falls back to the built-in ReportLab export path.
+- Interview Prep results are only as strong as the authored question sets and answer keys. Timing and scoring depend on valid registry and set configuration.
 
 ---
 
@@ -1293,6 +1321,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Expose HR Tools benchmarking grid as a downloadable formatted PDF report consistent with the existing ReportLab report system.
 - Improve the AI Assistant with stronger grounding, richer report export workflows, and more polished contextual actions inside prediction and resume tabs.
 - Improve AI Assistant export styling further, including richer Markdown-to-PDF theming when optional document-rendering dependencies are available.
+- Expand Interview Prep with broader role libraries, richer section-level analytics, and optional AI-assisted answer review after submission.
 - Extend companion report exports to additional sections such as batch analytics and model analytics where alternate-currency summaries may be useful.
 - Explore more efficient cloud-friendly open models or alternative hosting strategies to improve AI Assistant latency and stability on free-tier deployments.
 
@@ -1313,6 +1342,7 @@ Detailed project documentation is available in the `docs/` directory:
 | [`testing.md`](docs/testing.md) | Test plan, unit test code, manual test cases, and test results log template |
 | [`model_hub_extended_schema.md`](docs/model_hub_extended_schema.md) | Extended schema reference: plots, scenario_sweep, per-bundle lexicons (skills.json, job_titles.json), extractor hints, and resume_config.json full format |
 | [`hf_space_setup.md`](docs/hf_space_setup.md) | Hugging Face Space and dataset setup for the AI Assistant cloud backend |
+| [`interview_prep_json_format.md`](docs/interview_prep_json_format.md) | Registry and question-set format for the Interview Prep tab |
 
 
 ---

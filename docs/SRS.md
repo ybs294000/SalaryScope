@@ -153,7 +153,7 @@ The system shall compute and display a resume score (out of 100) with component 
 After reviewing the extracted features, the user shall be able to run a salary prediction using the same pipeline as manual prediction.
 
 #### FR-R07 — Lite App Scope
-The lite app deployment (`app-lite.py`) shall include only the following tabs: Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. The Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, and HR Tools tabs shall not be present. The 11 financial planning tools, the prediction feedback system, and the HuggingFace Hub dependency shall be excluded from the lite app. The lite app's About tab shall be rendered inline with simplified content reflecting its reduced feature set.
+The lite app deployment (`app-lite.py`) shall include only the following tabs: Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. The Resume Analysis, Scenario Analysis, Interview Prep, Model Hub, Admin Panel, and HR Tools tabs shall not be present. The 11 financial planning tools, the prediction feedback system, and the HuggingFace Hub dependency shall be excluded from the lite app. The lite app's About tab shall be rendered inline with simplified content reflecting its reduced feature set.
 
 ### 3.3 Batch Prediction
 
@@ -221,7 +221,33 @@ The system shall display a Resume NLP Module section in the Model Analytics tab 
 #### FR-A09 — Analytics PDF Download
 The system shall provide a downloadable PDF report of all model analytics for the active model.
 
-### 3.6 Data Insights
+### 3.6 Interview Prep
+
+#### FR-IP01 — Interview Prep Tab Availability
+The full application shall expose a dedicated Interview Prep tab.
+
+#### FR-IP02 — Registry-Driven Practice Set Discovery
+The Interview Prep tab shall load available practice sets from a registry JSON file rather than hardcoded Python lists.
+
+#### FR-IP03 — Practice Set Filtering
+The user shall be able to filter available practice sets by category, role focus, and difficulty before selecting a set.
+
+#### FR-IP04 — Supported Question Types
+The first version shall support at least the following question types: single choice, multiple choice, dropdown, true/false, numeric input, and text input.
+
+#### FR-IP05 — Timed Attempts
+When a practice set enables timing, the system shall support a timed attempt mode that records start and submission timestamps and reports elapsed time in the result summary.
+
+#### FR-IP06 — Scoring and Review
+After submission, the system shall display total score, percentage, correct/incorrect/skipped counts, section-wise summary, and answer review with explanations when available.
+
+#### FR-IP07 — Validation and Error Handling
+The system shall validate the registry and selected question-set structure before rendering questions. Invalid sets shall not be rendered as active practice flows.
+
+#### FR-IP08 — Extensibility and Future AI Integration
+The question-set format shall allow metadata to be stored for future AI-assisted review or coaching workflows without requiring the first implementation to depend on an AI backend.
+
+### 3.7 Data Insights
 
 #### FR-D01 — Dataset Dashboards
 The system shall provide three collapsible interactive dashboards per model for exploring the training dataset. Each dashboard shall have independent filter controls and KPI tile summaries.
@@ -232,7 +258,7 @@ For Model 1, the three dashboards shall cover: (1) salary landscape and distribu
 #### FR-D03 — App 2 Dashboards
 For Model 2, the three dashboards shall cover: (1) salary distribution by experience level and employment type, (2) work mode and company size interactions, (3) job roles and geographic salary patterns.
 
-### 3.7 Model Hub
+### 3.8 Model Hub
 
 #### FR-H01 — Authentication Gate
 The Model Hub tab shall require the user to be logged in. A warning message shall be displayed and the tab content shall be hidden for unauthenticated users.
@@ -279,7 +305,7 @@ The schema.json format shall support optional top-level `layout.columns` (intege
 #### FR-H15 — Result Card Label Override
 The schema.json format shall support an optional top-level `result_label` string key. When present, this string shall be used as the label on the prediction result card in place of the registry `target` field. When absent, the registry `target` field shall be used, preserving existing behaviour.
 
-### 3.8 Financial Tools
+### 3.9 Financial Tools
 
 #### FR-F01 — Currency Converter
 The system shall convert the predicted salary to any of 100+ supported currencies using live exchange rates from open.er-api.com. Rates shall be cached in memory for 60 minutes. A fallback to a local rates file shall be used if the network is unavailable.
@@ -326,7 +352,7 @@ The system shall split discretionary income (net minus essentials) across lifest
 #### FR-F12 — Financial Tool Toggle
 Each financial tool shall be independently toggleable via an on/off toggle control. Tools shall be collapsed by default and expand when toggled on.
 
-### 3.9 Authentication and Account Management
+### 3.10 Authentication and Account Management
 
 #### FR-AC01 — Registration
 The system shall allow users to register with an email address, a display name, and a password. Passwords shall be validated against the policy defined in FR-AC04 before account creation is attempted.
@@ -355,7 +381,7 @@ Logged-in users shall be able to change their password by providing their curren
 #### FR-AC09 — Account Deletion
 Logged-in users shall be able to permanently delete their account by providing their current password and typing the exact phrase "delete my account". On confirmation, the Firebase Authentication account and Firestore user document shall be deleted. Prediction history shall be retained in anonymised form.
 
-### 3.10 User Profile
+### 3.11 User Profile
 
 #### FR-PR01 — Prediction Summary
 The Profile tab shall display total prediction count, average predicted salary, and most recent predicted salary as KPI metrics.
@@ -372,7 +398,7 @@ The Profile tab shall allow the user to select any individual prediction from a 
 #### FR-PR05 — History Export
 The Profile tab shall allow export of the full prediction history in CSV, XLSX, and JSON formats.
 
-### 3.11 Feedback System
+### 3.12 Feedback System
 
 #### FR-FB01 — Feedback Form
 After every manual prediction, a collapsible feedback form shall be displayed. Feedback shall not require login.
@@ -389,7 +415,7 @@ Submitted feedback shall be stored in Firestore under `feedback/{auto-id}`. Anon
 #### FR-FB05 — Feedback Deduplication
 The feedback form shall be keyed by model and predicted salary value within the current session to prevent accidental duplicate submissions.
 
-### 3.12 Admin Panel
+### 3.13 Admin Panel
 
 #### FR-AD01 — Access Control
 The Admin Panel tab shall be visible only to the user whose email matches the ADMIN\_EMAIL secret. A "Access denied" error shall be displayed and execution halted for any other user who navigates to the tab.
@@ -409,7 +435,7 @@ The admin panel shall provide buttons to trigger Python garbage collection and t
 #### FR-AD06 — Session Inspector
 The admin panel shall display session state key counts grouped by category (admin, scenario, bulk, resume) and an option to display all session keys.
 
-### 3.13 PDF Report Generation
+### 3.14 PDF Report Generation
 
 #### FR-PDF01 — Report Types
 The system shall generate downloadable PDF reports for: manual prediction, resume-based prediction, batch prediction, scenario analysis, and model analytics.

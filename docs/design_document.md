@@ -55,7 +55,7 @@ SalaryScope provides salary prediction through three modes of interaction — ma
 - **Model 1 (App 1):** Random Forest Regressor trained on a general salary dataset. Covers a broad range of job roles and countries.
 - **Model 2 (App 2):** XGBoost Regressor trained on a data science salaries dataset. Specialises in data science and ML roles globally.
 
-In addition to prediction, the system provides dataset exploration, model performance analytics, financial planning tools, a dedicated HR & Employer Tools tab for compensation planning workflows, an AI Assistant for explanation and drafting tasks, a user account system backed by Firebase, and a Model Hub that allows admins to deploy additional independently trained models without modifying application code.
+In addition to prediction, the system provides dataset exploration, model performance analytics, financial planning tools, a dedicated HR & Employer Tools tab for compensation planning workflows, an AI Assistant for explanation and drafting tasks, a dedicated Interview Prep tab for aptitude and interview practice, a user account system backed by Firebase, and a Model Hub that allows admins to deploy additional independently trained models without modifying application code.
 
 ---
 
@@ -70,9 +70,9 @@ In addition to prediction, the system provides dataset exploration, model perfor
 │  ┌─────────────┐   ┌──────────────────────────────────────────┐ │
 │  │  Sidebar     │   │           Tab Area                        │ │
 │  │  - Model     │   │  Manual | Resume | AI Assistant |      │ │
-│  │    Selector  │   │  Batch | Scenario | Analytics |       │ │
-│  │  - Auth      │   │  Insights | Hub | HR Tools | Profile | │ │
-│  │              │   │  Admin | About                         │ │
+│  │    Selector  │   │  Interview Prep | Batch | Scenario |  │ │
+│  │  - Auth      │   │  Analytics | Insights | Hub | HR |    │ │
+│  │              │   │  Profile | Admin | About              │ │
 │  └─────────────┘   └──────────────────────────────────────────┘ │
 └────────────────────────────┬────────────────────────────────────┘
                              │
@@ -97,6 +97,7 @@ Layer 1: Tabs (app/tabs/)
     manual_prediction_tab  — Input form + results + financial tools
     resume_analysis_tab    — Resume PDF workflow + Offer Letter workflow
     llm_assistant_tab      — Grounded assistant UI for help/explanations/drafting
+    interview_prep_tab     — Aptitude and interview preparation workflow
     batch_prediction_tab   — File upload + bulk prediction
     scenario_analysis_tab  — Multi-scenario comparison
     model_analytics_tab    — Performance metrics + SHAP + association rules
@@ -144,7 +145,14 @@ Layer 4: Model Hub (app/model_hub/)
     validator.py           — Schema + column consistency validation
     _hf_client.py          — HuggingFace SDK wrapper
 
-Layer 5: HR Tools (app/hr_tools/)
+Layer 5: Interview Prep (app/interview_aptitude_prep/)
+    loader.py              — Registry and question-set loading
+    validator.py           — Registry and question-set validation
+    renderer.py            — Main Interview Prep UI
+    scoring.py             — Attempt scoring and review summaries
+    timer.py               — Optional timed-attempt helpers
+
+Layer 6: HR Tools (app/hr_tools/)
     predict_helpers.py      — Shared single-row and batch inference helpers
     hiring_budget.py        — Payroll budget estimator
     benchmarking_table.py   — Salary benchmarking grid
@@ -173,7 +181,7 @@ Layer 5: HR Tools (app/hr_tools/)
 2. Sets page configuration and applies the global dark professional CSS theme.
 3. Loads all ML models, metadata, datasets, and lookup tables using `@st.cache_resource` and `@st.cache_data` decorators to prevent reloading on every Streamlit rerun.
 4. Renders the sidebar with the model selector and authentication widgets.
-5. Constructs the tab list dynamically (AI Assistant and HR Tools are part of the full-app base set; Profile and Admin tabs are added conditionally based on login status and admin flag).
+5. Constructs the tab list dynamically (AI Assistant, Interview Prep, and HR Tools are part of the full-app base set; Profile and Admin tabs are added conditionally based on login status and admin flag).
 6. Mounts each tab renderer, passing all required resources as arguments.
 
 **Design principle:** No business logic lives in `app_resume.py`. It is purely an orchestrator — loading, assembling, and passing resources to tab modules.
@@ -685,8 +693,9 @@ Tabs are constructed dynamically in `app_resume.py`. The base set of tabs is alw
 
 ```
 Base tabs:    Manual Prediction | Resume Analysis | Batch Prediction |
-              AI Assistant | Scenario Analysis | Model Analytics |
-              Data Insights | Model Hub | HR Tools | About
+              AI Assistant | Interview Prep | Scenario Analysis |
+              Model Analytics | Data Insights | Model Hub |
+              HR Tools | About
 
 Conditional:  Profile  (logged in)
               Admin    (is_admin())

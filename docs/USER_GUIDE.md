@@ -11,6 +11,7 @@
 3. [Selecting a Model](#3-selecting-a-model)
 4. [Manual Prediction](#4-manual-prediction)
 5. [Resume Analysis](#5-resume-analysis)
+5A. [Interview Prep](#5a-interview-prep)
 6. [Batch Prediction](#6-batch-prediction)
 7. [Scenario Analysis](#7-scenario-analysis)
 8. [Model Analytics](#8-model-analytics)
@@ -35,7 +36,7 @@ SalaryScope is a web-based salary prediction tool that uses machine learning to 
 - **Resume Analysis** — upload your PDF resume and let the system extract your details automatically
 - **Batch Prediction** — upload a file with multiple records and get predictions for all of them at once
 
-Beyond salary prediction, SalaryScope includes financial planning tools (tax estimation, cost-of-living comparison, savings potential, loan affordability, and more), a dedicated HR & Employer Tools tab for compensation planning, dataset exploration dashboards, model performance analytics, and a Model Hub where additional trained models can be accessed.
+Beyond salary prediction, SalaryScope includes financial planning tools (tax estimation, cost-of-living comparison, savings potential, loan affordability, and more), a dedicated HR & Employer Tools tab for compensation planning, dataset exploration dashboards, model performance analytics, an Interview Prep tab for aptitude and interview practice, and a Model Hub where additional trained models can be accessed.
 
 In the full app, an AI Assistant tab is also available for app help, prediction explanation, drafting tasks, negotiation wording, and cautious role or career guidance.
 
@@ -104,6 +105,13 @@ Sessions expire after 24 hours and require re-login.
   - cautious job-title clarification or career suggestions
 
 The AI Assistant can make mistakes. Always review important details before relying on them.
+
+### 2.6 Interview Prep
+
+- The full app includes an **Interview Prep** tab for aptitude and interview-style practice.
+- Practice sets are loaded from external JSON files through a registry, so the available library can be extended without changing the main app workflow.
+- Sets can be filtered by category, role focus, and difficulty before starting.
+- Some sets support timed attempts. Results include scoring, section summaries, and answer explanations after submission.
 
 ---
 
@@ -229,6 +237,44 @@ After reviewing and adjusting the extracted fields, click **Predict Salary from 
 - Include your degree title clearly (e.g. "Bachelor of Engineering", "Master of Science").
 - List technical skills in a dedicated skills section.
 - Include your country or city name somewhere in the document.
+
+---
+
+## 5A. Interview Prep
+
+The Interview Prep tab provides structured practice sets for aptitude and interview preparation.
+
+### 5A.1 Choosing a Set
+
+1. Open the **Interview Prep** tab.
+2. Use the filters at the top to narrow visible practice sets by:
+   - category
+   - role focus
+   - difficulty
+3. Choose a set from the dropdown list.
+
+### 5A.2 Starting an Attempt
+
+1. Review the set overview, estimated time, and instructions.
+2. If the set supports timing, choose whether to use a timed attempt.
+3. Click **Start Practice Set**.
+
+### 5A.3 Answering and Submitting
+
+1. Work through each section and answer the questions.
+2. Click **Submit Answers** once you are done.
+3. The app will show:
+   - total score
+   - percentage
+   - correct, incorrect, and skipped counts
+   - section-wise summary
+   - answer review with explanations, where available
+
+### 5A.4 Notes
+
+- Timed attempts record start and submit timestamps.
+- The current version is designed for reliable submit-time enforcement rather than aggressive auto-submission.
+- Results depend on the authored answer keys and explanations in each question set.
 
 ---
 
@@ -708,13 +754,13 @@ If you are not logged in, sign in first. Cloud AI chat is disabled for anonymous
 Prediction inputs and results are stored in Firestore if you are logged in. Feedback is stored in Firestore regardless of login status, but anonymous feedback contains no personal identifiers. Resume text is processed in memory and not stored anywhere.
 
 **Do I need an account to use the application?**
-No. Manual prediction, batch prediction, scenario analysis, model analytics, and data insights are all available without an account. An account is required for the Model Hub, for prediction history in the Profile tab, and for the AI Assistant on Streamlit Cloud.
+No. Manual prediction, batch prediction, scenario analysis, model analytics, data insights, and Interview Prep are all available without an account. An account is required for the Model Hub, for prediction history in the Profile tab, and for the AI Assistant on Streamlit Cloud.
 
 **How accurate are the salary predictions?**
 Predictions are estimates based on patterns in publicly available historical datasets. They may not reflect current market conditions, company-specific salaries, or regional cost variations. Use predictions as a general reference, not as exact figures. See Section 18 for full disclaimers.
 
 **What is the difference between the Full App and the Lite App?**
-The Lite App is a substantially reduced version of the Full App. It includes Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. It does not include Resume Analysis, Scenario Analysis, Model Hub, Admin Panel, HR Tools, or any of the 11 financial planning tools (currency converter, tax estimator, CoL adjuster, etc.). The split exists to keep the Lite App within Streamlit Cloud free-tier memory limits. Both apps share the same Firebase project so prediction history is shared across them.
+The Lite App is a substantially reduced version of the Full App. It includes Manual Prediction, Batch Prediction, Model Analytics, Data Insights, Profile, and About. It does not include Resume Analysis, Scenario Analysis, Interview Prep, Model Hub, Admin Panel, HR Tools, or any of the 11 financial planning tools (currency converter, tax estimator, CoL adjuster, etc.). The split exists to keep the Lite App within Streamlit Cloud free-tier memory limits. Both apps share the same Firebase project so prediction history is shared across them.
 
 **Can I use the Model Hub to deploy my own models?**
 Yes, if you are the admin. You need to train an sklearn-compatible or ONNX-compatible model, prepare the matching columns list, define a `schema.json` file, and optionally attach `aliases.json`, `skills.json`, `job_titles.json`, or `resume_config.json`. Upload the bundle through the Model Hub admin interface.
