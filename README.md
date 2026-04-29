@@ -910,6 +910,9 @@ salaryscope/
 │   ├── testing.md                       # Test plan, unit tests, manual test cases
 │   └── model_hub_extended_schema.md     # Extended schema reference (plots, scenario_sweep, lexicons, extractors, resume_config)
 │   
+├── tests/                               # Checked-in unit and programmatic tests
+│   ├── run_programmatic_tests.py        # Generates Markdown and raw-output test reports from tests/
+│   └── artifacts/                       # Repo-tracked programmatic test evidence
 ├── samples/                             # Sample input files for batch prediction
 ├── assets/                              # Branding and visual assets
 │   └── fonts/                           # Bundled Poppins font weights for salary card (Bold, Medium, Regular, Light)
@@ -983,6 +986,8 @@ SalaryScope is a cross-platform application and has been tested in multiple envi
 - Windows 10 (tested)
 - Ubuntu 24.04 LTS (tested in virtual machine)
 - Python 3.13
+- Checked-in programmatic tests under `tests/`
+- Generated test evidence available in `tests/artifacts/programmatic_test_report.md`
 
 ### Cloud Deployment
 - Deployed on Streamlit Community Cloud
@@ -1033,6 +1038,27 @@ IS_LOCAL = true   # Enables local-only features (e.g. CoL index save/reset to di
 ```
 
 The Model Hub will not load if `HF_TOKEN` and `HF_REPO_ID` are absent, but all other tabs remain unaffected. `ADMIN_EMAIL` is required for the Admin Panel tab; without it, no user has admin access.
+
+### Programmatic Testing
+
+Run the checked-in tests directly:
+
+```bash
+python -m pytest tests -q
+```
+
+To generate a repo-tracked Markdown proof report from the `tests/` suite:
+
+```bash
+python tests/run_programmatic_tests.py
+```
+
+This writes:
+
+- `tests/artifacts/programmatic_test_report.md`
+- `tests/artifacts/programmatic_test_output.txt`
+
+These artifacts provide a lightweight checked-in record of programmatic test execution alongside the source tests themselves.
 
 To enable the cloud AI Assistant backend (full app on Streamlit Cloud), also add:
 
