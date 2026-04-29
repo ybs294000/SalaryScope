@@ -3,6 +3,8 @@ app/__pycache__/
 app/tabs/__pycache__/
 app/core/__pycache__/
 app/utils/__pycache__/
+tests/__pycache__/
+tests/_tmp/
 venv
 old-imp
 a_tmp/
@@ -12,4 +14,3 @@ app/tabs/data_insights_tab.old.py
 col_indices_custom.json
 app/local_llm/runtime/
 app/local_llm/output/
-
