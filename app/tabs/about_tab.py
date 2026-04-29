@@ -309,7 +309,7 @@ def render_about_tab():
     # -----------------------------------------------------------------------
     # Quick-start guide
     # -----------------------------------------------------------------------
-    st.markdown("### Start Here")
+    st.markdown("### :material/near_me: Start Here")
     qs1, qs2, qs3 = st.columns(3)
 
     with qs1:
