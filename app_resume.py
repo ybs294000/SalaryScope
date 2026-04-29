@@ -84,6 +84,7 @@ from app.tabs.admin_panel import show_admin_panel
 from app.tabs.user_profile import show_profile
 from app.tabs.llm_assistant_tab import render_llm_assistant_tab
 from app.tabs.interview_prep_tab import render_interview_prep_tab
+from app.tabs.financial_planning_tab import render_financial_planning_tab
 
 from app.tabs.model_hub_tab import render_model_hub_tab
 
@@ -1403,6 +1404,7 @@ tabs = [
     # AI TAB — rollback: remove this label and the corresponding render block below
     ":material/smart_toy: AI Assistant",
     ":material/quiz: Interview Prep",
+    ":material/account_balance_wallet: Financial Planning",
     ":material/batch_prediction: Batch Prediction",
     ":material/analytics: Scenario Analysis", 
     ":material/model_training: Model Analytics",
@@ -1522,6 +1524,12 @@ with tab_objects[3]:
 # TAB 5: BULK SCANNER
 # ==================================================
 with tab_objects[4]:
+    render_financial_planning_tab()
+
+# ==================================================
+# TAB 6: BULK SCANNER
+# ==================================================
+with tab_objects[5]:
         render_batch_prediction_tab(
             is_app1=IS_APP1,
             app1_model=app1_model if IS_APP1 else None,
@@ -1553,9 +1561,9 @@ with tab_objects[4]:
         )
 
 # ==================================================
-# TAB 6: SCENARIO ANALYSIS / WHAT-IF SIMULATION
+# TAB 7: SCENARIO ANALYSIS / WHAT-IF SIMULATION
 # ==================================================
-with tab_objects[5]:
+with tab_objects[6]:
         render_scenario_tab(
             is_app1=IS_APP1,
             app1_model=app1_model if IS_APP1 else None,
@@ -1591,9 +1599,9 @@ with tab_objects[5]:
             app2_generate_scenario_pdf=app2_generate_scenario_pdf,
         )
 # ==================================================
-# TAB 7: MODEL ANALYTICS
+# TAB 8: MODEL ANALYTICS
 # ==================================================
-with tab_objects[6]:
+with tab_objects[7]:
     render_model_analytics_tab(
         is_app1=IS_APP1,
         # App 1 resources
@@ -1621,9 +1629,9 @@ with tab_objects[6]:
     )
  
 # ==================================================
-# TAB 8: DATA INSIGHTS
+# TAB 9: DATA INSIGHTS
 # ==================================================
-with tab_objects[7]:
+with tab_objects[8]:
     render_data_insights_tab(IS_APP1, df_app1, df_app2, COUNTRY_NAME_MAP)
 
 # ==================================================

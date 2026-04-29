@@ -3,7 +3,13 @@ from __future__ import annotations
 from typing import Any
 
 import streamlit as st
+from app.theme import get_gauge_colors, get_token
 
+from .exporters import (
+    build_interview_prep_csv,
+    build_interview_prep_docx,
+    build_interview_prep_pdf,
+)
 from .loader import IALoadError, load_question_set, load_registry_bundle
 from .scoring import score_question_set
 from .timer import build_attempt, finalize_attempt, render_timer_panel
@@ -13,6 +19,92 @@ ACTIVE_ATTEMPT_KEY = "ia_active_attempt"
 LAST_RESULT_KEY = "ia_last_result"
 LAST_SET_KEY = "ia_last_loaded_set_id"
 QUESTION_KEYS_KEY = "ia_question_widget_keys"
+
+
+def _result_band_color(score: int) -> str:
+    gauge = get_gauge_colors()
+    if score >= 80:
+        return gauge["safe"]
+    if score >= 60:
+        return gauge["warn"]
+    return gauge["danger"]
+
+
+def _result_ring_html(score: float, label: str, note: str, center_caption: str) -> str:
+    ring_color = _result_band_color(int(score))
+    track = get_token("border_subtle")
+    text_main = get_token("text_primary")
+    text_muted = get_token("text_secondary")
+    clamped = max(0, min(100, int(round(score))))
+    return (
+        f"<div style='display:flex;justify-content:flex-start;width:100%;'>"
+        f"<div style='display:flex;flex-direction:column;align-items:center;"
+        f"background:linear-gradient(135deg,{get_token('util_card_start')} 0%,{get_token('util_card_end')} 100%);"
+        f"border:1px solid {get_token('util_card_border')};border-radius:14px;padding:18px 18px 14px 18px;"
+        f"width:min(100%, 280px);min-width:240px;'>"
+        f"<div style='font-size:12px;color:{text_muted};font-weight:600;letter-spacing:0.4px;margin-bottom:10px;'>{label}</div>"
+        f"<div style='width:138px;height:138px;border-radius:50%;"
+        f"background:conic-gradient({ring_color} 0 {clamped}%, {track} {clamped}% 100%);"
+        f"display:flex;align-items:center;justify-content:center;'>"
+        f"<div style='width:102px;height:102px;border-radius:50%;background:{get_token('surface_raised')};"
+        f"display:flex;flex-direction:column;align-items:center;justify-content:center;"
+        f"border:1px solid {get_token('border_subtle')}'>"
+        f"<div style='color:{ring_color};font-size:28px;font-weight:700;line-height:1;'>{clamped}%</div>"
+        f"<div style='color:{text_muted};font-size:11px;margin-top:6px;'>{center_caption}</div>"
+        f"</div></div>"
+        f"<div style='color:{text_main};font-size:13px;font-weight:600;text-align:center;line-height:1.35;margin-top:12px;max-width:180px;'>{note}</div>"
+        f"</div></div>"
+    )
+
+
+def _result_bar_html(label: str, score: float, note: str, value_label: str | None = None) -> str:
+    color = _result_band_color(int(score))
+    track = get_token("border_subtle")
+    text_main = get_token("text_primary")
+    text_muted = get_token("text_secondary")
+    clamped = max(0, min(100, int(round(score))))
+    right_text = value_label or f"{clamped}%"
+    return (
+        f"<div style='margin:8px 0 14px 0;'>"
+        f"<div style='display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;'>"
+        f"<span style='color:{text_main};font-size:13px;font-weight:600;'>{label}</span>"
+        f"<span style='color:{color};font-size:13px;font-weight:700;'>{right_text}</span>"
+        f"</div>"
+        f"<div style='background:{track};border-radius:999px;height:8px;width:100%;overflow:hidden;'>"
+        f"<div style='background:{color};width:{clamped}%;height:8px;border-radius:999px;'></div>"
+        f"</div>"
+        f"<div style='color:{text_muted};font-size:12px;line-height:1.45;margin-top:6px;'>{note}</div>"
+        f"</div>"
+    )
+
+
+def _result_summary_html(
+    percentage: float,
+    outcome_text: str,
+    score_note: str,
+    answered_count: int,
+    total_questions: int,
+    completion_rate: float,
+    correct_count: int,
+    incorrect_count: int,
+    skipped_count: int,
+    correct_rate: float,
+    pass_percent: float,
+    pass_progress: float,
+) -> str:
+    return (
+        f"<div style='display:flex;gap:20px;align-items:center;flex-wrap:wrap;width:100%;'>"
+        f"<div style='flex:0 1 280px;min-width:240px;'>"
+        f"{_result_ring_html(percentage, 'Overall Attempt Result', outcome_text, 'Score')}"
+        f"</div>"
+        f"<div style='flex:1 1 420px;min-width:320px;'>"
+        f"{_result_bar_html('Score Percentage', percentage, score_note, f'{percentage:.1f}%')}"
+        f"{_result_bar_html('Completion Rate', completion_rate, f'You answered {answered_count} of {total_questions} questions in this attempt.', f'{answered_count}/{total_questions}')}"
+        f"{_result_bar_html('Correct Answer Rate', correct_rate, f'{correct_count} correct, {incorrect_count} incorrect, and {skipped_count} skipped.', f'{correct_count}/{total_questions}')}"
+        f"{_result_bar_html('Pass Threshold Progress', pass_progress, f'The current set expects {pass_percent:.0f}% for a pass outcome.', f'{pass_percent:.0f}% target')}"
+        f"</div>"
+        f"</div>"
+    )
 
 
 def _registry_filters(entries: list[dict[str, Any]]) -> dict[str, list[str]]:
@@ -143,16 +235,39 @@ def _render_set_overview(entry: dict[str, Any], question_set: dict[str, Any]) ->
 
 def _render_results(result: dict[str, Any], review_settings: dict[str, Any]) -> None:
     st.subheader("Results")
-    row1 = st.columns(4)
-    row1[0].metric("Score", f"{result['total_obtained']:.2f} / {result['total_marks']:.2f}")
-    row1[1].metric("Percent", f"{result['percentage']:.1f}%")
-    row1[2].metric("Correct", result["correct_count"])
-    row1[3].metric("Skipped", result["skipped_count"])
+    total_questions = max(1, len(result.get("question_results", [])))
+    answered_count = max(0, total_questions - int(result["skipped_count"]))
+    completion_rate = (answered_count / total_questions) * 100
+    correct_rate = (int(result["correct_count"]) / total_questions) * 100
+    pass_progress = (
+        min(100.0, (float(result["percentage"]) / float(result["pass_percent"])) * 100.0)
+        if float(result["pass_percent"]) > 0
+        else 100.0
+    )
+    outcome_text = "Pass" if result["percentage"] >= result["pass_percent"] else "Review Needed"
+    outcome_note = (
+        f"Scored {result['total_obtained']:.2f} out of {result['total_marks']:.2f} marks."
+        if outcome_text == "Pass"
+        else f"Scored {result['total_obtained']:.2f} out of {result['total_marks']:.2f} marks and missed the current target."
+    )
 
-    row2 = st.columns(3)
-    row2[0].metric("Incorrect", result["incorrect_count"])
-    row2[1].metric("Pass Mark", f"{result['pass_percent']:.0f}%")
-    row2[2].metric("Outcome", "Pass" if result["percentage"] >= result["pass_percent"] else "Review Needed")
+    st.markdown(
+        _result_summary_html(
+            float(result["percentage"]),
+            outcome_text,
+            outcome_note,
+            answered_count,
+            total_questions,
+            completion_rate,
+            int(result["correct_count"]),
+            int(result["incorrect_count"]),
+            int(result["skipped_count"]),
+            correct_rate,
+            float(result["pass_percent"]),
+            pass_progress,
+        ),
+        unsafe_allow_html=True,
+    )
 
     timer_snapshot = result.get("timer_snapshot", {})
     if timer_snapshot.get("timer_enabled"):
@@ -164,11 +279,30 @@ def _render_results(result: dict[str, Any], review_settings: dict[str, Any]) -> 
 
     st.subheader("Section Summary")
     for section in result.get("section_summary", []):
-        cols = st.columns(4)
-        cols[0].metric(section["section_title"], f"{section['obtained']:.2f} / {section['marks']:.2f}")
-        cols[1].metric("Correct", section["correct"])
-        cols[2].metric("Skipped", section["skipped"])
-        cols[3].metric("Questions", section["questions"])
+        section_score = (
+            (float(section["obtained"]) / float(section["marks"])) * 100.0
+            if float(section["marks"]) > 0
+            else 0.0
+        )
+        header_col, meta_col = st.columns([1.4, 1], vertical_alignment="center")
+        with header_col:
+            st.markdown(
+                _result_bar_html(
+                    section["section_title"],
+                    section_score,
+                    (
+                        f"Answered {max(0, int(section['questions']) - int(section['skipped']))} of {section['questions']} questions "
+                        f"and earned {section['obtained']:.2f} out of {section['marks']:.2f} marks."
+                    ),
+                    f"{section['obtained']:.2f} / {section['marks']:.2f}",
+                ),
+                unsafe_allow_html=True,
+            )
+        with meta_col:
+            mini1, mini2, mini3 = st.columns(3)
+            mini1.metric("Correct", section["correct"])
+            mini2.metric("Skipped", section["skipped"])
+            mini3.metric("Questions", section["questions"])
 
     st.subheader("Answer Review")
     for question in result.get("question_results", []):
@@ -185,6 +319,50 @@ def _render_results(result: dict[str, Any], review_settings: dict[str, Any]) -> 
                 st.write(f"Correct answer: {question['correct_answer_display']}")
             if review_settings.get("show_explanations", True) and question.get("explanation"):
                 st.write(f"Explanation: {question['explanation']}")
+
+
+def _render_export_section(entry: dict[str, Any], result: dict[str, Any], review_settings: dict[str, Any]) -> None:
+    st.subheader("Download Results")
+    st.caption(
+        "Save this completed attempt for review, submission notes, or offline practice tracking."
+    )
+
+    csv_bytes = build_interview_prep_csv(result, review_settings)
+    pdf_bytes = build_interview_prep_pdf(entry, result, review_settings)
+    docx_bytes = build_interview_prep_docx(entry, result, review_settings)
+
+    cols = st.columns(3 if docx_bytes is not None else 2)
+    file_stub = f"interview_prep_{result.get('set_id', 'attempt')}"
+
+    with cols[0]:
+        st.download_button(
+            "Download CSV",
+            data=csv_bytes,
+            file_name=f"{file_stub}.csv",
+            mime="text/csv",
+            key=f"{file_stub}_csv_download",
+            width="stretch",
+        )
+    with cols[1]:
+        st.download_button(
+            "Download PDF",
+            data=pdf_bytes,
+            file_name=f"{file_stub}.pdf",
+            mime="application/pdf",
+            key=f"{file_stub}_pdf_download",
+            width="stretch",
+        )
+
+    if docx_bytes is not None:
+        with cols[2]:
+            st.download_button(
+                "Download DOCX",
+                data=docx_bytes,
+                file_name=f"{file_stub}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                key=f"{file_stub}_docx_download",
+                width="stretch",
+            )
 
 
 def render_interview_prep() -> None:
@@ -333,5 +511,11 @@ def render_interview_prep() -> None:
     last_result = st.session_state.get(LAST_RESULT_KEY)
     if last_result and last_result.get("set_id") == current_set_id:
         _render_results(last_result, last_result.get("review_settings", question_set.get("review", {})))
+        st.divider()
+        _render_export_section(
+            selected_entry,
+            last_result,
+            last_result.get("review_settings", question_set.get("review", {})),
+        )
     elif not same_set_active:
         st.info("Choose a set and start an attempt to begin practicing.")

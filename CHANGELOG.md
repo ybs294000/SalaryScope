@@ -18,11 +18,16 @@ The format is based on Keep a Changelog, and this project loosely follows Semant
   * optional timed attempts
 * Two sample JSON-based practice sets covering quantitative aptitude and data interview fundamentals
 * `docs/interview_prep_json_format.md` documenting the registry format, supported question types, scoring fields, timer fields, and authoring conventions for future question sets
+* Financial Planning tab integrated into the full app as a dedicated salary-to-planning workspace with reusable source handoff from Manual Prediction, Resume Analysis, Offer Letter extraction, or direct manual entry
+* Resume screening readiness layer for Resume Analysis with rule-based ATS Readiness, Role Match, and Parse Confidence summaries built on the extracted resume content
 
 ### Changed
 
 * About tab and README updated to include the new Interview Prep workflow in feature lists, usage notes, structure references, and limitations
 * Interview Prep design leaves room for future API-based coaching or AI-assisted post-attempt review through question-set metadata, without coupling the first version to any backend service
+* Interview Prep now supports post-attempt export in PDF, DOCX, and CSV formats through an isolated exporter module
+* Resume Analysis UI updated to present screening readiness as a clearer user-facing summary before prediction
+* About tab, README, and changelog updated to reflect the Financial Planning tab, resume screening readiness, and Interview Prep export support
 
 ---
 

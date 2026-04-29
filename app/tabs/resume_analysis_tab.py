@@ -2,7 +2,7 @@ import streamlit as st
 from app.theme import (
     salary_card_html, salary_level_card_html, career_stage_card_html,
     resume_score_card_html, association_insight_card_html,
-    apply_theme, get_colorway, get_token,
+    apply_theme, get_colorway, get_token, get_gauge_colors,
 )
 
 import pandas as pd
@@ -15,6 +15,10 @@ from app.core.resume_analysis import (
     extract_resume_features_a2,
     calculate_resume_score_a2,
     APP2_ALLOWED_ISO_CODES_A2,
+)
+from app.core.resume_screening import (
+    calculate_resume_screening_app1,
+    calculate_resume_screening_app2,
 )
 from app.tabs.offer_letter_tab import render_offer_letter_tab
 from app.core.insights_engine import generate_insights_app2, generate_insights_app1
@@ -97,6 +101,98 @@ def render_resume_tab(
     def _default_currency_option(options, preferred_code):
         preferred = (preferred_code or "USD").upper()
         return next((option for option in options if option.startswith(f"{preferred} — ")), options[0])
+
+    def _screening_band_color(score: int) -> str:
+        gauge = get_gauge_colors()
+        if score >= 80:
+            return gauge["safe"]
+        if score >= 60:
+            return gauge["warn"]
+        return gauge["danger"]
+
+    def _screening_ring_html(score: int, label: str, note: str) -> str:
+        ring_color = _screening_band_color(score)
+        track = get_token("border_subtle")
+        text_main = get_token("text_primary")
+        text_muted = get_token("text_secondary")
+        clamped = max(0, min(100, int(score)))
+        return (
+            f"<div style='display:flex;justify-content:flex-start;width:100%;'>"
+            f"<div style='display:flex;flex-direction:column;align-items:center;"
+            f"background:linear-gradient(135deg,{get_token('util_card_start')} 0%,{get_token('util_card_end')} 100%);"
+            f"border:1px solid {get_token('util_card_border')};border-radius:14px;padding:18px 18px 14px 18px;"
+            f"width:min(100%, 280px);min-width:240px;'>"
+            f"<div style='font-size:12px;color:{text_muted};font-weight:600;letter-spacing:0.4px;margin-bottom:10px;'>{label}</div>"
+            f"<div style='width:138px;height:138px;border-radius:50%;"
+            f"background:conic-gradient({ring_color} 0 {clamped}%, {track} {clamped}% 100%);"
+            f"display:flex;align-items:center;justify-content:center;'>"
+            f"<div style='width:102px;height:102px;border-radius:50%;background:{get_token('surface_raised')};"
+            f"display:flex;flex-direction:column;align-items:center;justify-content:center;"
+            f"border:1px solid {get_token('border_subtle')}'>"
+            f"<div style='color:{ring_color};font-size:28px;font-weight:700;line-height:1;'>{clamped}%</div>"
+            f"<div style='color:{text_muted};font-size:11px;margin-top:6px;'>Readiness</div>"
+            f"</div></div>"
+            f"<div style='color:{text_main};font-size:13px;font-weight:600;text-align:center;line-height:1.35;margin-top:12px;max-width:180px;'>{note}</div>"
+            f"</div></div>"
+        )
+
+    def _screening_bar_html(label: str, score: int, note: str) -> str:
+        color = _screening_band_color(score)
+        track = get_token("border_subtle")
+        text_main = get_token("text_primary")
+        text_muted = get_token("text_secondary")
+        clamped = max(0, min(100, int(score)))
+        return (
+            f"<div style='margin:10px 0 14px 0;'>"
+            f"<div style='display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;'>"
+            f"<span style='color:{text_main};font-size:13px;font-weight:600;'>{label}</span>"
+            f"<span style='color:{color};font-size:13px;font-weight:700;'>{clamped}/100</span>"
+            f"</div>"
+            f"<div style='background:{track};border-radius:999px;height:8px;width:100%;overflow:hidden;'>"
+            f"<div style='background:{color};width:{clamped}%;height:8px;border-radius:999px;'></div>"
+            f"</div>"
+            f"<div style='color:{text_muted};font-size:12px;line-height:1.45;margin-top:6px;'>{note}</div>"
+            f"</div>"
+        )
+
+    def _screening_summary_html(screening: dict) -> str:
+        return (
+            f"<div style='display:flex;gap:20px;align-items:center;flex-wrap:wrap;width:100%;'>"
+            f"<div style='flex:0 1 280px;min-width:240px;'>"
+            f"{_screening_ring_html(screening['overall_score'], 'Overall Screening Outlook', screening['overall_band'])}"
+            f"</div>"
+            f"<div style='flex:1 1 420px;min-width:320px;'>"
+            f"{_screening_bar_html('ATS Readiness', screening['ats_readiness_score'], screening['score_notes']['ats_readiness'])}"
+            f"{_screening_bar_html('Role Match', screening['role_match_score'], screening['score_notes']['role_match'])}"
+            f"{_screening_bar_html('Parse Confidence', screening['parse_confidence_score'], screening['score_notes']['parse_confidence'])}"
+            f"</div>"
+            f"</div>"
+        )
+
+    def _render_resume_screening_block(screening: dict) -> None:
+        st.divider()
+        st.subheader(":material/fact_check: Resume Screening Readiness")
+        st.write(screening["headline"])
+        st.markdown(_screening_summary_html(screening), unsafe_allow_html=True)
+
+        with st.expander("What these screening signals mean", expanded=False):
+            st.write(screening["score_notes"]["ats_readiness"])
+            st.write(screening["score_notes"]["role_match"])
+            st.write(screening["score_notes"]["parse_confidence"])
+
+        strengths_col, gaps_col = st.columns(2)
+        with strengths_col:
+            st.markdown("#### :material/thumb_up: Likely Strengths")
+            for item in screening["strengths"]:
+                st.write(f"- {item}")
+        with gaps_col:
+            st.markdown("#### :material/report_problem: Possible Screening Gaps")
+            for item in screening["gaps"]:
+                st.write(f"- {item}")
+
+        st.markdown("#### :material/build: How to Improve This Resume for Screening")
+        for item in screening["improvements"]:
+            st.write(f"- {item}")
 
     def _app1_resume_extra_sections(result_payload):
         score_data = result_payload.get("resume_score_data", {})
@@ -307,6 +403,11 @@ def render_resume_tab(
         def render_resume_score_a2():
             score_a2 = st.session_state.resume_score_data_a2
             feats_a2 = st.session_state.resume_features_a2
+            screening_a2 = calculate_resume_screening_app2(
+                raw_text=st.session_state.resume_text_a2 or "",
+                features=feats_a2,
+                score_data=score_a2,
+            )
 
             st.divider()
             st.subheader("Resume Score Breakdown")
@@ -334,6 +435,8 @@ def render_resume_tab(
 
             with st.expander("Detection Sources"):
                 st.json(feats_a2["sources_a2"])
+
+            _render_resume_screening_block(screening_a2)
 
         @st.fragment
         def render_resume_prediction_a2():
@@ -837,6 +940,11 @@ salary_card_html(f"${prediction_a2_r:,.2f}"),
         def render_resume_score():
             score_data = st.session_state.resume_score_data
             features = st.session_state.resume_features
+            screening = calculate_resume_screening_app1(
+                raw_text=st.session_state.resume_text or "",
+                features=features,
+                score_data=score_data,
+            )
 
             st.divider()
             st.subheader("Resume Score Breakdown")
@@ -862,6 +970,8 @@ salary_card_html(f"${prediction_a2_r:,.2f}"),
 
             with st.expander("Detection Sources"):
                 st.json(features["sources"])
+
+            _render_resume_screening_block(screening)
 
         @st.fragment
         def render_resume_prediction():

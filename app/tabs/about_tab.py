@@ -255,6 +255,7 @@ def render_about_tab():
                 scenario comparisons. Alongside the prediction itself, the system provides supporting
                 analytics, financial context, an AI assistant for guided explanation and drafting,
                 an interview and aptitude practice layer for preparation workflows,
+                a dedicated financial planning workspace for downstream salary interpretation,
                 extensibility through the Model Hub, and HR-oriented
                 planning tools to make the output more useful for interpretation and decision-making.
             </div>
@@ -493,6 +494,7 @@ def render_about_tab():
 - Detected skill coverage spans programming languages, data science, ML/AI, data engineering, MLOps, cloud platforms, mechanical and civil engineering, electrical and electronics, aerospace, chemical and process engineering, energy and environment, pharmaceutical and drug development, biotechnology and life sciences, neuroscience, mathematics and statistics, and cybersecurity
 - Resume scoring out of 100 across three dimensions: experience (up to 40), education (up to 30), and skills (up to 30)
 - Profile strength label: Basic, Moderate, or Strong
+- Resume screening readiness layer with ATS Readiness, Role Match, and Parse Confidence summaries to flag likely screening strengths and gaps before prediction
 - Extraction quality panel showing auto-extracted field count, fields needing review, and per-field provenance (which extractor matched, what value was found)
 - Extracted fields are fully editable before prediction
 - Uploading a new PDF or switching models clears previous extraction results automatically; an explicit Clear button is also provided
@@ -521,6 +523,17 @@ def render_about_tab():
 
         st.divider()
 
+        st.markdown("### Financial Planning")
+        st.markdown("""
+- Dedicated top-level tab for turning a salary result into a broader personal planning workflow
+- Accepts the latest Manual Prediction, Resume Analysis result, Offer Letter extraction, or a direct manual salary entry as the planning source
+- Starts with a planning snapshot so users can confirm the selected role, location, source, and annual salary before opening calculators
+- Organises the workflow into three grouped sections: Income & Payroll, Monthly Planning, and Goals & Borrowing
+- Reuses the same planning utilities as the rest of the app while giving them a clearer standalone home
+        """)
+
+        st.divider()
+
         st.markdown("### AI Assistant")
         st.markdown("""
 - Chat-style assistant available in the full app
@@ -540,7 +553,7 @@ def render_about_tab():
 - Practice sets are loaded from external JSON files through a registry-driven picker
 - Filters help users narrow the available sets by category, role focus, and difficulty
 - Supported question formats currently include single choice, multiple choice, dropdown, true/false, numeric input, and short text input
-- Includes scoring, section summaries, answer review, and optional timed attempts
+- Includes scoring, section summaries, answer review, optional timed attempts, and post-attempt export support for PDF, DOCX, and CSV
 - Validation checks help prevent broken registry entries or malformed question sets from being shown in the UI
 - Leaves room for future API-based coaching or AI-assisted review through metadata in the set files
         """)
@@ -650,7 +663,7 @@ def render_about_tab():
         st.markdown("""
 - Model switcher to toggle between both built-in prediction systems
 - Unified theme across the entire application with dynamic light/dark mode support
-- Dynamic tab layout: Manual Prediction, Resume Analysis, AI Assistant, Interview Prep, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, HR Tools, Profile (logged-in only), About
+- Dynamic tab layout: Manual Prediction, Resume Analysis, AI Assistant, Interview Prep, Financial Planning, Batch Prediction, Scenario Analysis, Model Analytics, Data Insights, Model Hub, HR Tools, Profile (logged-in only), About
 - ReportLab-based multi-page PDF reports with embedded charts
 - State-managed UI to prevent re-computation on interaction
 - Google Drive public link upload for batch files
@@ -938,8 +951,13 @@ def render_about_tab():
 **Interview Prep**
 - Practice aptitude and interview question sets from a dedicated tab.
 - Use the filters at the top to narrow available sets by category, role focus, or difficulty.
-- Start a timed or untimed attempt, submit once, and review your score with explanations afterward.
+- Start a timed or untimed attempt, submit once, review your score with explanations afterward, and download the result as PDF, DOCX, or CSV if needed.
 - The available sets are loaded from JSON files, so the library can be extended without changing the overall tab workflow.
+
+**Financial Planning**
+- Choose a salary source from the latest manual result, latest resume result, latest offer letter, or a direct manual entry.
+- Confirm the planning snapshot at the top of the tab before opening calculators.
+- Work through grouped sections for payroll context, monthly planning, and longer-term goals.
 
 **HR Tools**
 - Five compensation planning tools for HR teams and hiring managers.
@@ -981,7 +999,7 @@ def render_about_tab():
 **Resume Analysis**
 - Go to the Resume Analysis tab and upload a PDF resume.
 - Click **Extract** (or **Extract Resume Features** in the built-in tab) to run NLP extraction.
-- Review the extraction quality panel and edit any pre-filled field if the extracted value looks wrong.
+- Review the extraction quality panel, screening readiness summary, and edit any pre-filled field if the extracted value looks wrong.
 - Click **Predict Salary from Resume** to get results.
 - Upload a new PDF at any time to restart -- previous results clear automatically.
 - After prediction, you can apply currency conversion, tax estimation, and cost-of-living adjustment.
@@ -1022,6 +1040,12 @@ def render_about_tab():
 - Use the filters to narrow the library by category, role focus, or difficulty, then choose a set from the dropdown.
 - Click **Start Practice Set** to begin. If the selected set supports timing, you can choose a timed attempt.
 - Answer the questions and click **Submit Answers** to score the set and view the review summary.
+- Use the download buttons after submission if you want a PDF, DOCX, or CSV copy of the completed attempt.
+
+**Financial Planning**
+- Open the Financial Planning tab and select the salary source you want to use.
+- Review the planning snapshot so the role, location, and annual salary are correct before exploring calculators.
+- Move through Income & Payroll, Monthly Planning, and Goals & Borrowing as needed.
 
 **HR Tools**
 - Open the HR Tools tab and select a tool from the inner sub-tabs.
@@ -1052,6 +1076,7 @@ def render_about_tab():
 - Some job roles, countries, or inputs may not be fully covered in the dataset.
 - Resume analysis depends on text extraction quality and may not work properly for image-based, scanned, or heavily formatted PDFs. ATS-friendly, text-selectable PDFs extract best.
 - Extraction heuristics (experience years, education level, country, job title) are rule-based and may miss edge cases in unconventional resume layouts.
+- Resume screening readiness is a rule-based support layer built on extracted content. It is useful for surfacing likely screening strengths and gaps, but it does not reproduce the internal scoring logic of any single commercial ATS.
 - Predictions are based on past data and do not consider current market trends or company-specific salaries.
 - Scenario Analysis results are generated by the same underlying model as manual prediction and carry the same limitations.
 - The results should be used only as an estimate, not as an exact salary value.

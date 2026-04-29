@@ -94,6 +94,7 @@ The application runs in a web browser, making it platform-independent and easily
 - Resume-based salary prediction using NLP (spaCy + data-driven JSON lexicons)
 - Offer letter parsing for compensation and employment-term extraction
 - Interview Prep tab with registry-driven aptitude and interview question sets
+- Dedicated Financial Planning tab with reusable salary-source handoff and grouped planning sections
 - Scenario analysis and sensitivity simulation
 - Batch prediction (up to 50,000 records for built-in models; up to 10,000 for Model Hub)
 - Grouped batch dashboards with summary KPIs, distribution views, and advanced statistical visuals
@@ -191,6 +192,7 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Resume Analysis also includes an Offer Letter workflow for extracting structured compensation fields and employment terms from offer-letter PDFs before reusing them in SalaryScope
 - Automatic extraction of: Job Title, Years of Experience, Skills, Education Level, Country
 - Resume scoring out of 100 across three dimensions: experience (up to 40), education (up to 30), and skills (up to 30); profile strength label: Basic, Moderate, or Strong
+- Resume screening readiness summary with ATS Readiness, Role Match, and Parse Confidence to highlight likely screening strengths and gaps before prediction
 - Extraction quality panel showing which fields were auto-matched and which need manual review, with per-field provenance (extractor used, value found, source)
 - Uses a hybrid approach: spaCy PhraseMatcher for skills and job titles, NER for countries, regex for experience years and education level
 - Extraction is data-driven: all skill phrases, job title aliases, education patterns, and country aliases are loaded from JSON lexicons under `app/model_hub/extended_modes/lexicons/` — extendable without code changes
@@ -222,8 +224,15 @@ The repository contains the complete implementation in `app_resume.py`. The lite
 - Practice sets are loaded from external JSON files through a registry-driven picker, making the system extensible without changing the main workflow
 - Filter sets by category, role focus, and difficulty before starting
 - Supports single-choice, multiple-choice, dropdown, true/false, numeric, and short-text question types
-- Includes scoring, section summaries, answer review, and optional timed attempts
+- Includes scoring, section summaries, answer review, optional timed attempts, and post-attempt export support for PDF, DOCX, and CSV
 - Leaves room for future AI-assisted review or coaching through metadata fields in the question-set format
+
+### Financial Planning
+- Dedicated top-level tab for turning a salary result into a broader planning workflow
+- Supports salary handoff from the latest Manual Prediction, Resume Analysis result, Offer Letter extraction, or a direct manual entry
+- Starts with a planning snapshot so the selected role, source, location, and annual salary are easy to confirm before opening calculators
+- Groups the planning workflow into three sections: Income & Payroll, Monthly Planning, and Goals & Borrowing
+- Reuses the built-in utilities for currency conversion, tax context, cost-of-living context, CTC breakdown, take-home estimation, savings, budget planning, emergency fund planning, lifestyle split, loan affordability, investment growth, and FIRE planning
 
 ### Batch Prediction
 - Upload files in CSV, XLSX, JSON, or SQL format
@@ -783,6 +792,7 @@ salaryscope/
 │   │   ├── account_management.py        # Account actions (change password, delete account)
 │   │   ├── insights_engine.py           # Domain detection, market comparison, recommendations
 │   │   ├── resume_analysis.py           # Resume parsing (spaCy, regex, multilingual patterns, feature extraction)
+│   │   ├── resume_screening.py          # Resume screening readiness scoring (ATS, role match, parse confidence)
 │   │   ├── offer_letter_parser.py       # Offer letter parsing and structured compensation extraction
 │   │   └── resume_lang.py               # Resume language detection and extraction warning badge (langdetect)
 │   │
@@ -827,6 +837,7 @@ salaryscope/
 │   │   ├── loader.py                    # Registry and set loading helpers
 │   │   ├── validator.py                 # Registry and question-set validation
 │   │   ├── renderer.py                  # Interview Prep UI renderer
+│   │   ├── exporters.py                 # Interview Prep PDF, DOCX, and CSV exports
 │   │   ├── scoring.py                   # Question scoring and result summaries
 │   │   ├── timer.py                     # Attempt timing helpers
 │   │   ├── registry_ia.json             # Interview Prep set registry
@@ -837,6 +848,7 @@ salaryscope/
 │   │   ├── resume_analysis_tab.py       # Resume Prediction (full app only)
 │   │   ├── llm_assistant_tab.py         # AI Assistant (full app only)
 │   │   ├── interview_prep_tab.py        # Interview Prep (full app only)
+│   │   ├── financial_planning_tab.py    # Financial Planning (full app only)
 │   │   ├── batch_prediction_tab.py      # Batch Prediction
 │   │   ├── batch_prediction_dashboards.py # Grouped dashboards for batch prediction analytics
 │   │   ├── offer_letter_tab.py          # Offer letter parser workflow inside Resume Analysis
@@ -1065,10 +1077,11 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 2. Keep **Resume PDF** selected as the document type
 3. Upload a PDF resume
 4. Click **Extract Resume Features** to parse resume details
-5. Review and edit extracted features (skills, experience, job role, etc.)
-6. Click **Predict Salary from Resume** to run prediction
-7. View results and download PDF report
-8. Use the companion export section if you also want a DOCX version or the same report in a selected currency
+5. Review the extraction quality panel, screening readiness summary, and extracted features
+6. Edit any fields that need correction
+7. Click **Predict Salary from Resume** to run prediction
+8. View results and download PDF report
+9. Use the companion export section if you also want a DOCX version or the same report in a selected currency
 
 ### Offer Letter Parser
 1. Navigate to the **Resume Analysis** tab
@@ -1125,6 +1138,13 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 2. Use the filters to narrow the available practice sets by category, role focus, or difficulty
 3. Choose a set from the dropdown and start a timed or untimed attempt
 4. Submit once to see your score, section-wise summary, and answer explanations
+5. Download the completed attempt as PDF, DOCX, or CSV if needed
+
+### Financial Planning
+1. Open the **Financial Planning** tab in the full app
+2. Choose a salary source such as the latest manual prediction, latest resume prediction, latest offer letter, or a direct manual entry
+3. Confirm the planning snapshot at the top of the tab
+4. Use the grouped planning sections to explore payroll context, monthly planning, and longer-term goals
 
 ### Model Analytics
 - Navigate to the **Model Analytics** tab to view full model diagnostics, comparison charts, and download the analytics PDF report
@@ -1276,6 +1296,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - The models are trained on publicly available datasets and may not fully reflect current real-world salary trends.
 - Model predictions depend on patterns present in the training data and may not generalize well to unseen roles or regions.
 - Resume analysis uses a hybrid approach combining lightweight NLP (spaCy) and rule-based extraction, which may not accurately handle complex or heavily formatted resumes.
+- Resume screening readiness is a rule-based support layer built on the extracted content. It is helpful for identifying likely screening gaps, but it is not a direct replica of any single commercial ATS scoring system.
 - Offer letter parsing uses rule-based extraction and works best on text-based documents with clearly stated compensation and employment terms; heavily styled or image-like PDFs may require manual correction.
 - Predictions do not account for real-time factors such as market demand, company-specific policies, or economic changes.
 - The confidence interval shown for Model 1 is an approximation based on training residuals and should be interpreted as an estimate rather than an exact range.
@@ -1304,6 +1325,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 
 - Improve model performance by training on larger and more recent datasets.
 - Enhance resume parsing using more advanced NLP techniques (e.g. transformer-based models) for better accuracy across diverse resume formats.
+- Extend resume screening readiness with configurable role-specific rules, richer parsing diagnostics, and optional export support inside resume reports.
 - Extend offer letter parsing with richer clause handling for benefits, vesting structures, and region-specific compensation terminology.
 - Expand the system to support additional job roles and domains beyond current datasets.
 - Use collected feedback data to retrain or calibrate models over time.
@@ -1322,6 +1344,7 @@ SalaryScope includes a feedback-driven data collection layer designed to improve
 - Improve the AI Assistant with stronger grounding, richer report export workflows, and more polished contextual actions inside prediction and resume tabs.
 - Improve AI Assistant export styling further, including richer Markdown-to-PDF theming when optional document-rendering dependencies are available.
 - Expand Interview Prep with broader role libraries, richer section-level analytics, and optional AI-assisted answer review after submission.
+- Expand Financial Planning with saved plans, side-by-side source comparison, and deeper local-currency presentation across every planning utility.
 - Extend companion report exports to additional sections such as batch analytics and model analytics where alternate-currency summaries may be useful.
 - Explore more efficient cloud-friendly open models or alternative hosting strategies to improve AI Assistant latency and stability on free-tier deployments.
 
