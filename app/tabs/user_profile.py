@@ -14,6 +14,30 @@ from io import BytesIO
 from app.core.account_management import render_account_management_section
 
 
+def _build_history_export(export_df: pd.DataFrame, export_format: str):
+    if export_format == "CSV":
+        return (
+            export_df.to_csv(index=False).encode("utf-8"),
+            "salaryscope_prediction_history.csv",
+            "text/csv",
+        )
+
+    if export_format == "JSON":
+        return (
+            export_df.to_json(orient="records", indent=2).encode("utf-8"),
+            "salaryscope_prediction_history.json",
+            "application/json",
+        )
+
+    buffer = BytesIO()
+    export_df.to_excel(buffer, index=False)
+    return (
+        buffer.getvalue(),
+        "salaryscope_prediction_history.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
 def show_profile():
     st.header(":material/account_circle: User Profile")
 
@@ -23,7 +47,7 @@ def show_profile():
         st.warning("You are not logged in.")
         st.stop()
 
-    st.write("Username:", username)
+    st.caption("Review your saved prediction history, revisit past inputs, and export your records when needed.")
 
     st.divider()
 
@@ -74,6 +98,7 @@ def show_profile():
         return
 
     df["DateDisplay"] = df["DateTime"].dt.strftime("%d %b %Y, %H:%M")
+    df = df.sort_values("DateTime", ascending=False).reset_index(drop=True)
 
     # -----------------------------
     # Dashboard Metrics
@@ -82,13 +107,58 @@ def show_profile():
 
     total_predictions = len(df)
     avg_salary = df["Predicted Salary"].mean()
-    latest_salary = df.iloc[-1]["Predicted Salary"]
+    latest_salary = df.iloc[0]["Predicted Salary"]
+    top_model = df["Model"].mode().iloc[0] if not df["Model"].mode().empty else "N/A"
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric("Total Predictions", total_predictions)
-    col2.metric("Average Predicted Salary", f"${avg_salary:,.2f}")
-    col3.metric("Latest Prediction", f"${latest_salary:,.2f}")
+    col1.metric("Account", username)
+    col2.metric("Total Predictions", total_predictions)
+    col3.metric("Average Predicted Salary", f"${avg_salary:,.2f}")
+    col4.metric("Latest Prediction", f"${latest_salary:,.2f}")
+
+    st.caption(f"Most used model: {top_model}")
+
+    st.divider()
+
+    filter_cols = st.columns([1.2, 1.2, 1])
+    model_options = ["All"] + sorted(df["Model"].dropna().unique().tolist())
+    selected_model = filter_cols[0].selectbox("Filter by model", model_options, key="profile_model_filter")
+    history_window = filter_cols[1].selectbox(
+        "History window",
+        ["All records", "Latest 100", "Latest 250", "Latest 500"],
+        key="profile_history_window",
+    )
+    show_inputs_mode = filter_cols[2].selectbox(
+        "Input view",
+        ["Readable list", "Raw JSON"],
+        key="profile_input_view_mode",
+    )
+
+    filtered_df = df.copy()
+    if selected_model != "All":
+        filtered_df = filtered_df[filtered_df["Model"] == selected_model].copy()
+
+    if history_window != "All records":
+        limit = int(history_window.split()[1])
+        filtered_df = filtered_df.head(limit).copy()
+
+    if filtered_df.empty:
+        st.info("No saved predictions match the current filter.")
+        st.divider()
+        render_account_management_section()
+        if st.button(":material/logout: Logout", key="profile_logout_filtered_empty"):
+            logout()
+        return
+
+    filtered_total = len(filtered_df)
+    filtered_avg_salary = filtered_df["Predicted Salary"].mean()
+    filtered_latest_salary = filtered_df.iloc[0]["Predicted Salary"]
+
+    summary_cols = st.columns(3)
+    summary_cols[0].metric("Visible Records", filtered_total)
+    summary_cols[1].metric("Visible Average Salary", f"${filtered_avg_salary:,.2f}")
+    summary_cols[2].metric("Visible Latest Salary", f"${filtered_latest_salary:,.2f}")
 
     st.divider()
 
@@ -96,7 +166,7 @@ def show_profile():
     # Prediction History Chart
     # -----------------------------
     st.subheader(":material/show_chart: Prediction History Chart")
-    df_chart = df.tail(500)
+    df_chart = filtered_df.tail(500).sort_values("DateTime")
     fig = px.scatter(
         df_chart,
         x="DateTime",
@@ -137,8 +207,7 @@ def show_profile():
     # -----------------------------
     st.subheader(":material/history: Prediction History")
 
-    df_display = df.copy()
-
+    df_display = filtered_df.copy()
     df_display["Predicted Salary"] = df_display["Predicted Salary"].apply(
         lambda x: f"${x:,.2f}"
     )
@@ -148,7 +217,7 @@ def show_profile():
     ].rename(columns={"DateDisplay": "Date"})
 
     st.dataframe(
-        table_df.tail(500),
+        table_df.head(500),
         width='stretch',
         hide_index=True
     )
@@ -162,11 +231,12 @@ def show_profile():
 
     selection = st.selectbox(
         "Select a prediction",
-        df.index,
-        format_func=lambda x: f"{df.loc[x, 'Model']} -- {df.loc[x, 'DateDisplay']}"
+        filtered_df.index,
+        format_func=lambda x: f"{filtered_df.loc[x, 'Model']} -- {filtered_df.loc[x, 'DateDisplay']}",
+        key="profile_prediction_select",
     )
 
-    selected_row = df.loc[selection]
+    selected_row = filtered_df.loc[selection]
 
     try:
         inputs = json.loads(selected_row["Inputs"])
@@ -175,8 +245,13 @@ def show_profile():
 
     st.markdown("### Input Details")
 
-    for key, value in inputs.items():
-        st.write(f"{key}: {value}")
+    if show_inputs_mode == "Raw JSON":
+        st.code(json.dumps(inputs, indent=2, ensure_ascii=False), language="json")
+    else:
+        input_rows = pd.DataFrame(
+            [{"Field": key, "Value": value} for key, value in inputs.items()]
+        )
+        st.dataframe(input_rows, width="stretch", hide_index=True)
 
     st.divider()
 
@@ -187,56 +262,31 @@ def show_profile():
 
     export_format = st.selectbox(
         "Select export format",
-        ["CSV", "XLSX", "JSON"]
+        ["CSV", "XLSX", "JSON"],
+        key="profile_export_format",
     )
 
-    if "history_file" not in st.session_state:
-        st.session_state.history_file = None
-        st.session_state.history_filename = None
-        st.session_state.history_mime = None
+    export_df = filtered_df.copy()
 
-    if st.button("Prepare Download File"):
+    def safe_json(x):
+        try:
+            return json.dumps(json.loads(x), indent=2)
+        except Exception:
+            return str(x)
 
-        export_df = df.copy()
+    export_df["Inputs"] = export_df["Inputs"].apply(safe_json)
+    file_data, filename, mime = _build_history_export(export_df, export_format)
 
-        def safe_json(x):
-            try:
-                return json.dumps(json.loads(x), indent=2)
-            except Exception:
-                return str(x)
+    st.download_button(
+        label=f"Download {export_format} History",
+        data=file_data,
+        file_name=filename,
+        mime=mime,
+        width="stretch",
+        key=f"profile_history_download_{export_format.lower()}",
+    )
 
-        export_df["Inputs"] = export_df["Inputs"].apply(safe_json)
-
-        if export_format == "CSV":
-            file_data = export_df.to_csv(index=False).encode("utf-8")
-            filename = "salaryscope_prediction_history.csv"
-            mime = "text/csv"
-
-        elif export_format == "JSON":
-            file_data = export_df.to_json(orient="records", indent=2).encode("utf-8")
-            filename = "salaryscope_prediction_history.json"
-            mime = "application/json"
-
-        else:
-            buffer = BytesIO()
-            export_df.to_excel(buffer, index=False)
-            file_data = buffer.getvalue()
-            filename = "salaryscope_prediction_history.xlsx"
-            mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-        st.session_state.history_file = file_data
-        st.session_state.history_filename = filename
-        st.session_state.history_mime = mime
-
-        st.success("File prepared. You can now download it.")
-
-    if st.session_state.history_file is not None:
-        st.download_button(
-            label="Download Prediction History",
-            data=st.session_state.history_file,
-            file_name=st.session_state.history_filename,
-            mime=st.session_state.history_mime
-        )
+    st.divider()
 
     # -- ROLLBACK: account_management --
     render_account_management_section()

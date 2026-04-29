@@ -906,6 +906,21 @@ def show_admin_panel(user_email):
 
     st.header(":material/admin_panel_settings: Admin")
     st.caption("System diagnostics and monitoring. All data is fetched on demand to minimise database reads.")
+    overview_cols = st.columns(4)
+    overview_cols[0].metric("Deployment", _get_deployment_label())
+    mem_now = _mem_mb()
+    overview_cols[1].metric("Current RAM", f"{mem_now:.1f} MB" if mem_now >= 0 else "Unavailable")
+    overview_cols[2].metric(
+        "Feedback Cache",
+        "Loaded" if st.session_state.get("feedback_stats") else "Not Loaded",
+    )
+    recent_loaded = st.session_state.get("recent_feedback")
+    recent_label = len(recent_loaded) if isinstance(recent_loaded, list) else 0
+    overview_cols[3].metric("Recent Feedback Cache", recent_label)
+    st.caption(
+        "Use System for runtime diagnostics, Firebase and Users for project state, "
+        "Feedback for response trends, and Memory & Session for maintenance tasks."
+    )
     st.divider()
 
     # ==============================
