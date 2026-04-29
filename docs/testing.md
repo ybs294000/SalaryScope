@@ -1,5 +1,5 @@
 # SalaryScope — Testing Guide
-**Version:** 1.5.0  
+**Version:** 1.6.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Testing Guide and Test Plan
@@ -41,7 +41,7 @@
 
 ### 1.1 Purpose
 
-This document defines a structured test plan for SalaryScope v1.5.0. It covers manual functional tests for every feature of the application, unit tests for key Python modules, integration tests for cross-module workflows, security tests for the authentication and rate limiting systems, and performance benchmarks.
+This document defines a structured test plan for SalaryScope v1.6.0. It covers manual functional tests for every feature of the application, unit tests for key Python modules, integration tests for cross-module workflows, security tests for the authentication and rate limiting systems, and performance benchmarks.
 
 ### 1.2 Test Strategy
 

@@ -776,6 +776,14 @@ salary_card_html(f"${prediction_a2_r:,.2f}"),
                         key="resume_a2_docx_selected_disabled",
                         width="stretch",
                     )
+            render_salary_card_download(
+                predicted_usd=prediction_a2_r,
+                job_title=data_a2_r["input_details_a2"]["Job Title"],
+                location=data_a2_r["input_details_a2"]["Company Location"],
+                model_name="Model 2 — Data Science Salary",
+                experience_lvl=data_a2_r["input_details_a2"]["Experience Level"],
+                key="card_dl_resume_a2",
+            )
         # ==============================
         # FILE UPLOADER + RESET (APP 2)
         # ==============================

@@ -23,7 +23,7 @@
     <img src="https://img.shields.io/badge/AI%20Assistant-Ollama%20%7C%20HF%20Space-10B981?style=for-the-badge&logo=ollama&logoColor=white&labelColor=2D3748" alt="AI Assistant: Ollama and Hugging Face Space" />
   </a>
   <a>
-    <img src="https://img.shields.io/badge/version-1.5.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.5.0" />
+    <img src="https://img.shields.io/badge/version-1.6.0-blue?style=for-the-badge&labelColor=2D3748" alt="Version: 1.6.0" />
   </a>
 </p>
 

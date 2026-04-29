@@ -956,3 +956,11 @@ def render_manual_prediction_tab(
                         key="manual_a2_docx_selected_disabled",
                         width="stretch",
                     )
+            render_salary_card_download(
+                predicted_usd=prediction_a2,
+                job_title=data_a2["input_details"]["Job Title"],
+                location=data_a2["input_details"]["Company Location"],
+                model_name="Model 2 — Data Science Salary",
+                experience_lvl=data_a2["input_details"]["Experience Level"],
+                key="card_dl_manual_a2",
+            )

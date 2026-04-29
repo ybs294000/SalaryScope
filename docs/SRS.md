@@ -1,5 +1,5 @@
 # SalaryScope — Software Requirements Specification (SRS)
-**Version:** 1.5.0  
+**Version:** 1.6.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Software Requirements Specification  
@@ -25,7 +25,7 @@
 
 ### 1.1 Purpose
 
-This Software Requirements Specification defines the functional and non-functional requirements for SalaryScope v1.5.0 — a machine learning-powered salary prediction web application. It serves as the authoritative reference for the features implemented, the constraints applied, and the behaviour expected from each system component.
+This Software Requirements Specification defines the functional and non-functional requirements for SalaryScope v1.6.0 — a machine learning-powered salary prediction web application. It serves as the authoritative reference for the features implemented, the constraints applied, and the behaviour expected from each system component.
 
 ### 1.2 Scope
 
