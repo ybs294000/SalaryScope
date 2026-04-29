@@ -259,7 +259,7 @@ def render_about_tab():
                 planning tools to make the output more useful for interpretation and decision-making.
             </div>
             <div class="about-preview-pill-row">
-                <span class="about-preview-pill" style="background:#1D4ED833;border:1px solid #3B82F6;color:#93C5FD;">v1.4.0</span>
+                <span class="about-preview-pill" style="background:#1D4ED833;border:1px solid #3B82F6;color:#93C5FD;">v1.5.0</span>
                 <span class="about-preview-pill" style="background:#065F4633;border:1px solid #10B981;color:#6EE7B7;">Python 3.13</span>
                 <span class="about-preview-pill" style="background:#7F1D1D33;border:1px solid #EF4444;color:#FCA5A5;">Streamlit Cloud</span>
                 <span class="about-preview-pill" style="background:#92400E33;border:1px solid #F59E0B;color:#FCD34D;">2 built-in models</span>

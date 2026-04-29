@@ -1,5 +1,5 @@
 # SalaryScope — Design Document
-**Version:** 1.4.0  
+**Version:** 1.5.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Software Design Document (SDD)
@@ -32,7 +32,7 @@
 
 ### 1.1 Purpose
 
-This document describes the software architecture, module design, data flows, and design decisions for SalaryScope v1.4.0 — a machine learning-powered salary prediction web application built with Python and Streamlit.
+This document describes the software architecture, module design, data flows, and design decisions for SalaryScope v1.5.0 — a machine learning-powered salary prediction web application built with Python and Streamlit.
 
 ### 1.2 Scope
 

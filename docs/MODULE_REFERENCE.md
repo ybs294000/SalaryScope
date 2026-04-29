@@ -1,5 +1,5 @@
 # SalaryScope — Module Reference
-**Version:** 1.4.0  
+**Version:** 1.5.0  
 **Project:** SalaryScope — Salary Prediction System using Machine Learning  
 **Author:** Yash Shah  
 **Document Type:** Module Reference / API Documentation
