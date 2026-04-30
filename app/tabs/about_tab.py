@@ -510,7 +510,7 @@ Gandhinagar Institute of Technology
     # -----------------------------------------------------------------------
     # Feature spotlight grid
     # -----------------------------------------------------------------------
-    st.markdown("#### :material/hub: &nbsp;What SalaryScope Does")
+    st.markdown("#### :material/explore: &nbsp;What SalaryScope Does")
     st.markdown(
         '<div class="feature-grid">'
         + _feature_card("Prediction", "Salary Prediction",
