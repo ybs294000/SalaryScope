@@ -1,20 +1,14 @@
 """
 about_tab.py
 ------------
-Renders the "About" tab for SalaryScope.
+Renders the About tab for SalaryScope.
 
 Sections
 --------
-- Hero section: app name, tagline, key stat pills (incl. prediction modes), author info, links
-- CTA buttons (easy to remove -- single block marked below)
+- Hero section: app name, tagline, key stat pills, stat cards, author info, links
 - Quick-start guide (new users)
-- Example prediction card (easy to remove -- single block marked below)
+- Feature spotlight grid
 - Features & Modules expander
-  - Model 1, Model 2, Model Hub, Resume Analysis, Interview Prep,
-    Salary Adjustment, Financial Planning Tools,
-    Prediction Feedback, Scenario Analysis,
-    User Account System, User Profile,
-    Shared System Features, Technologies Used
 - Model Performance Summary expander
 - FAQ expander
 - Privacy & Data Notice expander
@@ -44,192 +38,340 @@ def _info_card(title: str, body: str, accent: str = "#4F8EF7") -> str:
     )
 
 
+def _feature_card(label: str, title: str, body: str, accent: str = "#4F8EF7") -> str:
+    """Return an HTML feature card string for st.markdown."""
+    return (
+        f'<div style="border:1px solid var(--border,#334155);border-radius:12px;'
+        f'background:var(--bg-card,#1E293B);padding:20px 18px 18px 18px;height:100%;">'
+        f'<div style="display:inline-block;padding:3px 8px;border-radius:5px;background:{accent}22;'
+        f'border:1px solid {accent}44;color:{accent};font-size:0.68rem;font-weight:700;'
+        f'letter-spacing:0.08em;text-transform:uppercase;margin-bottom:14px;">{label}</div>'
+        f'<div style="font-size:0.93rem;font-weight:700;color:#f8fafc;margin-bottom:6px;">{title}</div>'
+        f'<div style="font-size:0.83rem;color:#94A3B8;line-height:1.6;">{body}</div>'
+        f'</div>'
+    )
+
+
 def _inject_about_styles():
-    """Inject styling for a more polished About tab layout."""
+    """Inject CSS for the About tab layout."""
     st.markdown(
         """
         <style>
-        .about-preview-shell {
-            position: relative;
-            overflow: hidden;
-            border: 1px solid var(--border, #334155);
-            border-radius: 12px;
-            background: var(--bg-card, #1E293B);
-            padding: 28px 32px 22px 32px;
-            margin-bottom: 8px;
-        }
+/* Shell */
+.about-shell {
+position: relative;
+overflow: hidden;
+border: 1px solid var(--border, #2D3F55);
+border-radius: 16px;
+background: linear-gradient(145deg, #0F1929 0%, #151F2E 60%, #1a2540 100%);
+padding: 36px 36px 28px 36px;
+margin-bottom: 4px;
+}
+.about-shell::before {
+content: '';
+position: absolute;
+top: -80px;
+right: -80px;
+width: 320px;
+height: 320px;
+border-radius: 50%;
+background: radial-gradient(circle, rgba(79,142,247,0.08) 0%, transparent 70%);
+pointer-events: none;
+}
+/* Eyebrow */
+.about-eyebrow {
+display: inline-flex;
+align-items: center;
+gap: 7px;
+margin-bottom: 18px;
+padding: 5px 12px;
+border-radius: 999px;
+border: 1px solid rgba(79,142,247,0.3);
+background: rgba(79,142,247,0.07);
+color: #7EB4FA;
+font-size: 0.72rem;
+font-weight: 700;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+}
+.about-eyebrow-dot {
+width: 6px;
+height: 6px;
+border-radius: 50%;
+background: #4F8EF7;
+animation: pulse-dot 2.4s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+0%, 100% { opacity: 1; transform: scale(1); }
+50% { opacity: 0.5; transform: scale(0.7); }
+}
+/* Title */
+.about-title {
+font-size: clamp(1.9rem, 3vw, 2.9rem);
+line-height: 1.08;
+font-weight: 800;
+color: #f1f5f9;
+letter-spacing: -0.04em;
+margin: 0 0 12px 0;
+}
+.about-title .accent { color: #4F8EF7; }
+/* Subtitle */
+.about-subtitle {
+max-width: 800px;
+color: #94A3B8;
+font-size: 0.91rem;
+line-height: 1.75;
+margin-bottom: 22px;
+}
+/* Pill row */
+.about-pill-row {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+margin: 16px 0 24px 0;
+}
+.about-pill {
+padding: 5px 11px;
+border-radius: 999px;
+font-size: 0.75rem;
+font-weight: 600;
+}
+/* Stat grid */
+.about-stat-grid {
+display: grid;
+grid-template-columns: repeat(4, minmax(0, 1fr));
+gap: 10px;
+margin: 4px 0 24px 0;
+}
+.about-stat {
+border: 1px solid var(--border, #1E3050);
+border-radius: 12px;
+background: rgba(255,255,255,0.03);
+padding: 14px 16px;
+}
+.about-stat-kicker {
+color: #64748B;
+font-size: 0.68rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.09em;
+margin-bottom: 6px;
+}
+.about-stat-value {
+color: #f1f5f9;
+font-size: 1.05rem;
+font-weight: 800;
+line-height: 1.25;
+margin-bottom: 4px;
+}
+.about-stat-note {
+color: #64748B;
+font-size: 0.77rem;
+line-height: 1.5;
+}
+/* Meta footer */
+.about-meta {
+display: flex;
+flex-wrap: wrap;
+justify-content: space-between;
+align-items: flex-start;
+gap: 14px;
+padding-top: 18px;
+border-top: 1px solid rgba(51,65,85,0.6);
+}
+.about-meta-label {
+color: #475569;
+font-size: 0.68rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.09em;
+margin-bottom: 4px;
+}
+.about-meta-value {
+color: #cbd5e1;
+font-size: 0.88rem;
+line-height: 1.55;
+}
+.about-links a {
+color: #60A5FA;
+font-weight: 600;
+font-size: 0.88rem;
+text-decoration: none;
+margin-right: 16px;
+padding: 5px 10px;
+border: 1px solid rgba(96,165,250,0.25);
+border-radius: 6px;
+}
+/* Quick-start steps */
+.qs-step {
+border: 1px solid var(--border, #1E3050);
+border-radius: 12px;
+padding: 20px 18px 18px 18px;
+background: var(--bg-card, #1E293B);
+min-height: 190px;
+}
+.qs-step-no {
+width: 36px;
+height: 36px;
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 0.88rem;
+font-weight: 800;
+margin-bottom: 14px;
+color: #fff;
+}
+.qs-step-title {
+color: #f1f5f9;
+font-size: 0.93rem;
+font-weight: 700;
+margin-bottom: 7px;
+}
+.qs-step-copy {
+color: #94A3B8;
+font-size: 0.84rem;
+line-height: 1.65;
+}
+/* Feature spotlight grid */
+.feature-grid {
+display: grid;
+grid-template-columns: repeat(3, minmax(0, 1fr));
+gap: 12px;
+margin: 4px 0 8px 0;
+}
+/* Tab guide rows */
+.tab-guide-row {
+display: flex;
+gap: 14px;
+align-items: flex-start;
+padding: 14px 0;
+border-bottom: 1px solid #1a2535;
+}
+.tab-guide-row:last-child { border-bottom: none; }
+.tab-guide-icon {
+flex-shrink: 0;
+min-width: 40px;
+height: 26px;
+padding: 0 7px;
+border-radius: 5px;
+background: rgba(79,142,247,0.08);
+border: 1px solid rgba(79,142,247,0.2);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 0.62rem;
+font-weight: 800;
+letter-spacing: 0.07em;
+color: #7EB4FA;
+margin-top: 3px;
+white-space: nowrap;
+}
+.tab-guide-name {
+font-size: 0.88rem;
+font-weight: 700;
+color: #e2e8f0;
+margin-bottom: 3px;
+}
+.tab-guide-desc {
+font-size: 0.82rem;
+color: #64748B;
+line-height: 1.55;
+}
+/* Limitation rows */
+.limit-item {
+display: flex;
+gap: 10px;
+padding: 10px 0;
+border-bottom: 1px solid #1a2535;
+align-items: flex-start;
+}
+.limit-item:last-child { border-bottom: none; }
+.limit-dot {
+flex-shrink: 0;
+width: 6px;
+height: 6px;
+border-radius: 50%;
+background: #F59E0B;
+margin-top: 7px;
+}
+.limit-text {
+font-size: 0.84rem;
+color: #94A3B8;
+line-height: 1.6;
+}
+/* Responsiveness */
+@media (max-width: 980px) {
+.about-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+.about-shell { padding: 22px 16px 18px 16px; border-radius: 12px; }
+.about-stat-grid, .feature-grid { grid-template-columns: 1fr; }
+}
+/* Performance comparison table */
+.perf-table {
+width: 100%;
+border-collapse: collapse;
+font-size: 0.84rem;
+}
+.perf-table th {
+color: #64748B;
+font-weight: 700;
+font-size: 0.72rem;
+text-transform: uppercase;
+letter-spacing: 0.07em;
+padding: 8px 12px;
+border-bottom: 1px solid #1E3050;
+text-align: left;
+}
+.perf-table td {
+color: #CBD5E1;
+padding: 8px 12px;
+border-bottom: 1px solid #1E2535;
+}
+.perf-table tr:last-child td { border-bottom: none; }
+.perf-table tr.best td { color: #f1f5f9; font-weight: 600; }
+.badge-winner {
+display: inline-block;
+padding: 2px 7px;
+border-radius: 4px;
+background: rgba(16,185,129,0.15);
+border: 1px solid rgba(16,185,129,0.3);
+color: #6EE7B7;
+font-size: 0.65rem;
+font-weight: 700;
+letter-spacing: 0.05em;
+margin-left: 6px;
+text-transform: uppercase;
+vertical-align: middle;
+}
 
-        .about-preview-eyebrow {
-            display: inline-block;
-            margin-bottom: 14px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: 1px solid var(--border, #334155);
-            background: rgba(79, 142, 247, 0.10);
-            color: var(--text-muted, #94A3B8);
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        .about-preview-title {
-            font-size: clamp(2rem, 3vw, 3rem);
-            line-height: 1.05;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -0.03em;
-            margin: 0 0 10px 0;
-        }
-
-        .about-preview-title .accent {
-            color: var(--primary, #4F8EF7);
-        }
-
-        .about-preview-subtitle {
-            max-width: 760px;
-            color: var(--text-main, #E2E8F0);
-            font-size: 0.92rem;
-            line-height: 1.72;
-            margin-bottom: 18px;
-        }
-
-        .about-preview-pill-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 16px 0 22px 0;
-        }
-
-        .about-preview-pill {
-            padding: 7px 12px;
-            border-radius: 999px;
-            font-size: 0.78rem;
-            font-weight: 600;
-        }
-
-        .about-preview-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
-            margin: 8px 0 20px 0;
-        }
-
-        .about-preview-stat {
-            border: 1px solid var(--border, #334155);
-            border-radius: 16px;
-            background: var(--bg-input, #1B2230);
-            padding: 14px 16px;
-        }
-
-        .about-preview-stat-kicker {
-            color: var(--text-muted, #94A3B8);
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 6px;
-        }
-
-        .about-preview-stat-value {
-            color: #ffffff;
-            font-size: 1.3rem;
-            font-weight: 800;
-            line-height: 1.15;
-            margin-bottom: 4px;
-        }
-
-        .about-preview-stat-note {
-            color: var(--text-muted, #94A3B8);
-            font-size: 0.83rem;
-            line-height: 1.45;
-        }
-
-        .about-preview-meta {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 16px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border, #334155);
-        }
-
-        .about-preview-meta-label {
-            color: var(--text-muted, #94A3B8);
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 4px;
-        }
-
-        .about-preview-meta-value {
-            color: #f8fafc;
-            font-size: 0.92rem;
-            line-height: 1.55;
-        }
-
-        .about-preview-links a {
-            color: #7dd3fc;
-            font-weight: 600;
-            text-decoration: none;
-            margin-right: 18px;
-        }
-
-        .about-preview-links a:hover {
-            color: #bae6fd;
-        }
-
-        .about-preview-step {
-            border: 1px solid var(--border, #334155);
-            border-radius: 8px;
-            padding: 18px 18px 16px 18px;
-            background: var(--bg-card, #1E293B);
-            min-height: 200px;
-        }
-
-        .about-preview-step-no {
-            width: 38px;
-            height: 38px;
-            border-radius: 999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
-            font-weight: 800;
-            margin-bottom: 14px;
-            color: #fff;
-        }
-
-        .about-preview-step-title {
-            color: #f8fafc;
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .about-preview-step-copy {
-            color: #cbd5e1;
-            font-size: 0.88rem;
-            line-height: 1.65;
-        }
-
-        @media (max-width: 980px) {
-            .about-preview-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 640px) {
-            .about-preview-shell {
-                padding: 22px 18px 18px 18px;
-                border-radius: 12px;
-            }
-
-            .about-preview-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+/* Privacy table */
+.privacy-table {
+width: 100%;
+border-collapse: collapse;
+font-size: 0.84rem;
+margin: 12px 0;
+}
+.privacy-table th {
+color: #64748B;
+font-weight: 700;
+font-size: 0.72rem;
+text-transform: uppercase;
+letter-spacing: 0.07em;
+padding: 8px 12px;
+border-bottom: 1px solid #1E3050;
+text-align: left;
+}
+.privacy-table td {
+color: #CBD5E1;
+padding: 9px 12px;
+border-bottom: 1px solid #1E2535;
+font-size: 0.83rem;
+vertical-align: top;
+}
+.privacy-table tr:last-child td { border-bottom: none; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -244,69 +386,74 @@ def render_about_tab():
     # -----------------------------------------------------------------------
     st.markdown(
         """
-        <div class="about-preview-shell">
-            <div class="about-preview-eyebrow">SalaryScope · Machine Learning + Decision Support</div>
-            <div class="about-preview-title">
-                Salary intelligence for <span class="accent">job seekers, analysts, and hiring teams</span>
-            </div>
-            <div class="about-preview-subtitle">
-                SalaryScope is a machine learning-based salary prediction platform that helps users
-                estimate compensation from structured inputs, resume data, uploaded datasets, and
-                scenario comparisons. Alongside the prediction itself, the system provides supporting
-                analytics, financial context, an AI assistant for guided explanation and drafting,
-                an interview and aptitude practice layer for preparation workflows,
-                a dedicated financial planning workspace for downstream salary interpretation,
-                extensibility through the Model Hub, and HR-oriented
-                planning tools to make the output more useful for interpretation and decision-making.
-            </div>
-            <div class="about-preview-pill-row">
-                <span class="about-preview-pill" style="background:#1D4ED833;border:1px solid #3B82F6;color:#93C5FD;">v1.6.0</span>
-                <span class="about-preview-pill" style="background:#065F4633;border:1px solid #10B981;color:#6EE7B7;">Python 3.13</span>
-                <span class="about-preview-pill" style="background:#7F1D1D33;border:1px solid #EF4444;color:#FCA5A5;">Streamlit Cloud</span>
-                <span class="about-preview-pill" style="background:#92400E33;border:1px solid #F59E0B;color:#FCD34D;">2 built-in models</span>
-                <span class="about-preview-pill" style="background:#164E6333;border:1px solid #06B6D4;color:#67E8F9;">4 prediction modes</span>
-                <span class="about-preview-pill" style="background:#4C1D9533;border:1px solid #8B5CF6;color:#C4B5FD;">Model Hub + HR Tools</span>
-            </div>
-            <div class="about-preview-grid">
-                <div class="about-preview-stat">
-                    <div class="about-preview-stat-kicker">Prediction Surface</div>
-                    <div class="about-preview-stat-value">Manual, Resume, Batch, Scenario</div>
-                    <div class="about-preview-stat-note">Multiple entry points for individual, bulk, and what-if exploration.</div>
-                </div>
-                <div class="about-preview-stat">
-                    <div class="about-preview-stat-kicker">Built-In Engines</div>
-                    <div class="about-preview-stat-value">General + Data Science</div>
-                    <div class="about-preview-stat-note">Separate models support broad roles and DS/ML-specific compensation patterns.</div>
-                </div>
-                <div class="about-preview-stat">
-                    <div class="about-preview-stat-kicker">Decision Support</div>
-                    <div class="about-preview-stat-value">Analytics, Planning, and Prep</div>
-                    <div class="about-preview-stat-note">Currency, tax, CoL, planning utilities, diagnostics, explainability, and practice support in one flow.</div>
-                </div>
-                <div class="about-preview-stat">
-                    <div class="about-preview-stat-kicker">Extensibility</div>
-                    <div class="about-preview-stat-value">Model Hub + HR Tools</div>
-                    <div class="about-preview-stat-note">Admins can add new bundles; hiring teams can benchmark, audit, and plan offers.</div>
-                </div>
-            </div>
-            <div class="about-preview-meta">
-                <div>
-                    <div class="about-preview-meta-label">Author</div>
-                    <div class="about-preview-meta-value">
-                        Yash Shah &nbsp;&middot;&nbsp;
-                        B.Tech Final Year, Computer Engineering &nbsp;&middot;&nbsp;
-                        Gandhinagar Institute of Technology
-                    </div>
-                </div>
-                <div class="about-preview-links">
-                    <a href="https://github.com/ybs294000/salaryscope" target="_blank">GitHub</a>
-                    <a href="mailto:yashbshah2004@gmail.com">Contact</a>
-                </div>
-            </div>
-        </div>
+<div class="about-shell">
+<div class="about-eyebrow">
+<span class="about-eyebrow-dot"></span>
+SalaryScope &nbsp;&mdash;&nbsp; Predict. Understand. Decide.
+</div>
+<div class="about-title">
+Salary intelligence for <span class="accent">job seekers, analysts, and hiring teams</span>
+</div>
+<div class="about-subtitle">
+SalaryScope is a machine learning-based salary prediction platform that helps users
+estimate compensation from structured inputs, resume data, uploaded datasets, and
+scenario comparisons. Alongside the prediction itself, the system provides supporting
+analytics, financial context, an AI assistant for guided explanation and drafting,
+an interview and aptitude practice layer for preparation workflows,
+a dedicated financial planning workspace for downstream salary interpretation,
+extensibility through the Model Hub, and HR-oriented
+planning tools to make the output more useful for interpretation and decision-making.
+</div>
+<div class="about-pill-row">
+<span class="about-pill" style="background:#1D4ED822;border:1px solid #3B82F644;color:#93C5FD;">v1.6.0</span>
+<span class="about-pill" style="background:#065F4622;border:1px solid #10B98144;color:#6EE7B7;">Python 3.13</span>
+<span class="about-pill" style="background:#7F1D1D22;border:1px solid #EF444444;color:#FCA5A5;">Streamlit Cloud</span>
+<span class="about-pill" style="background:#92400E22;border:1px solid #F59E0B44;color:#FCD34D;">2 built-in models</span>
+<span class="about-pill" style="background:#164E6322;border:1px solid #06B6D444;color:#67E8F9;">4 prediction modes</span>
+<span class="about-pill" style="background:#4C1D9522;border:1px solid #8B5CF644;color:#C4B5FD;">Model Hub + HR Tools</span>
+</div>
+<div class="about-stat-grid">
+<div class="about-stat">
+<div class="about-stat-kicker">Prediction Surface</div>
+<div class="about-stat-value">Manual, Resume, Batch, Scenario</div>
+<div class="about-stat-note">Multiple entry points for individual, bulk, and what-if exploration.</div>
+</div>
+<div class="about-stat">
+<div class="about-stat-kicker">Built-In Engines</div>
+<div class="about-stat-value">General + Data Science</div>
+<div class="about-stat-note">Separate models support broad roles and DS/ML-specific compensation patterns.</div>
+</div>
+<div class="about-stat">
+<div class="about-stat-kicker">Decision Support</div>
+<div class="about-stat-value">Analytics, Planning, and Prep</div>
+<div class="about-stat-note">Currency, tax, CoL, planning utilities, diagnostics, explainability, and practice support in one flow.</div>
+</div>
+<div class="about-stat">
+<div class="about-stat-kicker">Extensibility</div>
+<div class="about-stat-value">Model Hub + HR Tools</div>
+<div class="about-stat-note">Admins can add new bundles; hiring teams can benchmark, audit, and plan offers.</div>
+</div>
+</div>
+<div class="about-meta">
+<div>
+<div class="about-meta-label">Author</div>
+<div class="about-meta-value">
+Yash Shah &nbsp;&middot;&nbsp;
+B.Tech Final Year, Computer Engineering &nbsp;&middot;&nbsp;
+Gandhinagar Institute of Technology
+</div>
+</div>
+<div class="about-links">
+<a href="https://github.com/ybs294000/salaryscope" target="_blank">GitHub</a>
+<a href="mailto:yashbshah2004@gmail.com">Contact</a>
+</div>
+</div>
+</div>
         """,
         unsafe_allow_html=True,
     )
+
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 
     # -----------------------------------------------------------------------
     # Quick-start guide
@@ -316,36 +463,39 @@ def render_about_tab():
 
     with qs1:
         st.markdown(
-            '<div class="about-preview-step">'
-            '<div class="about-preview-step-no" style="background:linear-gradient(135deg,#2563EB,#38BDF8);">1</div>'
-            '<div class="about-preview-step-title">Choose the right engine first</div>'
-            '<div class="about-preview-step-copy">'
-            'Start with Model 1 for broader role coverage across general professions. '
-            'Use Model 2 when the profile is clearly in data science, analytics, ML, or adjacent DS/AI roles.'
+            '<div class="qs-step">'
+            '<div class="qs-step-no" style="background:linear-gradient(135deg,#2563EB,#38BDF8);">1</div>'
+            '<div class="qs-step-title">Choose the right engine first</div>'
+            '<div class="qs-step-copy">'
+            'Start with <strong style="color:#93C5FD;">Model 1</strong> for broader role coverage across general professions. '
+            'Use <strong style="color:#93C5FD;">Model 2</strong> when the profile is clearly in data science, analytics, ML, or adjacent DS/AI roles.'
             '</div></div>',
             unsafe_allow_html=True,
         )
 
     with qs2:
         st.markdown(
-            '<div class="about-preview-step">'
-            '<div class="about-preview-step-no" style="background:linear-gradient(135deg,#059669,#2DD4BF);">2</div>'
-            '<div class="about-preview-step-title">Use the input mode that matches your task</div>'
-            '<div class="about-preview-step-copy">'
-            'Manual is fastest for one profile, Resume is best when a CV already exists, '
-            'Batch is for dataset-scale runs, and Scenario is ideal when you want to compare changes side by side.'
+            '<div class="qs-step">'
+            '<div class="qs-step-no" style="background:linear-gradient(135deg,#059669,#2DD4BF);">2</div>'
+            '<div class="qs-step-title">Use the input mode that matches your task</div>'
+            '<div class="qs-step-copy">'
+            '<strong style="color:#6EE7B7;">Manual</strong> is fastest for one profile, '
+            '<strong style="color:#6EE7B7;">Resume</strong> is best when a CV already exists, '
+            '<strong style="color:#6EE7B7;">Batch</strong> is for dataset-scale runs, and '
+            '<strong style="color:#6EE7B7;">Scenario</strong> is ideal when you want to compare changes side by side.'
             '</div></div>',
             unsafe_allow_html=True,
         )
 
     with qs3:
         st.markdown(
-            '<div class="about-preview-step">'
-            '<div class="about-preview-step-no" style="background:linear-gradient(135deg,#D97706,#F59E0B);">3</div>'
-            '<div class="about-preview-step-title">Read the number in context, not alone</div>'
-            '<div class="about-preview-step-copy">'
+            '<div class="qs-step">'
+            '<div class="qs-step-no" style="background:linear-gradient(135deg,#D97706,#F59E0B);">3</div>'
+            '<div class="qs-step-title">Read the number in context, not alone</div>'
+            '<div class="qs-step-copy">'
             'The strongest experience comes from pairing the salary estimate with analytics, '
-            'currency and tax interpretation, cost-of-living comparison, feedback, and where relevant, HR tools.'
+            'currency and tax interpretation, cost-of-living comparison, feedback, and &#8212; where relevant &#8212; '
+            '<strong style="color:#FCD34D;">HR tools</strong>.'
             '</div></div>',
             unsafe_allow_html=True,
         )
@@ -353,6 +503,43 @@ def render_about_tab():
     st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
     st.caption(
         "Login is optional for predictions. Accounts mainly unlock saved history, Model Hub access, and AI Assistant access on Streamlit Cloud."
+    )
+
+    st.divider()
+
+    # -----------------------------------------------------------------------
+    # Feature spotlight grid
+    # -----------------------------------------------------------------------
+    st.markdown("#### :material/hub: &nbsp;What SalaryScope Does")
+    st.markdown(
+        '<div class="feature-grid">'
+        + _feature_card("Prediction", "Salary Prediction",
+            "Four input modes &#8212; manual form, PDF resume, bulk file upload (up to 50,000 records), "
+            "and scenario comparison &#8212; across two built-in models and any Model Hub bundle.",
+            "#4F8EF7")
+        + _feature_card("Resume", "Resume Analysis",
+            "NLP-powered extraction via spaCy and rule-based heuristics. Scores resumes out of 100 "
+            "across experience, education, and skills. Includes ATS readiness and parse confidence panels.",
+            "#10B981")
+        + _feature_card("Finance", "Financial Context",
+            "Currency conversion (100+ currencies), country-level tax estimation, cost-of-living "
+            "adjustment, CTC breakdown, take-home, savings, loan affordability, and budget allocation.",
+            "#F59E0B")
+        + _feature_card("HR Tools", "HR &amp; Hiring Tools",
+            "Five tools for hiring teams: Hiring Budget, Salary Benchmarking, Candidate Comparison, "
+            "Offer Competitiveness Checker, and Team Compensation Audit &#8212; all model-powered.",
+            "#8B5CF6")
+        + _feature_card("Assistant", "AI Assistant",
+            "Chat-style assistant grounded in app context. Helps explain predictions, draft negotiation "
+            "language, generate report-ready summaries, and answer app questions. Uses Ollama locally "
+            "or a Hugging Face Space on Streamlit Cloud.",
+            "#EC4899")
+        + _feature_card("Hub", "Model Hub",
+            "Admins upload independently trained sklearn-compatible or ONNX models. Users get all four "
+            "prediction modes per loaded bundle, with per-bundle schema, lexicons, and model cards.",
+            "#06B6D4")
+        + '</div>',
+        unsafe_allow_html=True,
     )
 
     st.divider()
@@ -577,7 +764,7 @@ def render_about_tab():
 **Salary Benchmarking Table**
 - Select a job title and location; model generates predictions across all experience levels
 - Results displayed in an editable `st.data_editor` table with HR Override, Band Min, Band Max, and Internal Notes columns
-- Predictions cached by input parameters — grid recomputes only when inputs change
+- Predictions cached by input parameters -- grid recomputes only when inputs change
 - Grouped bar chart comparing model estimate vs HR override vs band markers; CSV export
 
 **Candidate Comparison**
@@ -588,7 +775,7 @@ def render_about_tab():
 
 **Offer Competitiveness Checker**
 - Input a role profile and planned offer salary
-- Plotly gauge chart comparing planned offer against model reference; tiered interpretive guidance (>20% below, 10–20% below, within 10%, above reference)
+- Plotly gauge chart comparing planned offer against model reference; tiered interpretive guidance (>20% below, 10-20% below, within 10%, above reference)
 - Framed as comparison against model estimate, not a market claim, to reflect dataset limitations
 - CSV export
 
@@ -695,7 +882,7 @@ def render_about_tab():
 - Requests (cloud file retrieval)
 - bcrypt (password hashing utility)
 - Babel (Unicode CLDR territory data for country resolution)
-- Pillow (PIL) (salary prediction card image generation — PNG, 1200x630)
+- Pillow (PIL) (salary prediction card image generation -- PNG, 1200x630)
         """)
 
     # -----------------------------------------------------------------------
@@ -707,50 +894,64 @@ def render_about_tab():
             "Real-world accuracy depends on how closely your profile matches the training data."
         )
 
-        st.markdown("#### Model 1 - General Salary (Random Forest Regressor)")
-        m1c1, m1c2, m1c3 = st.columns(3)
-        m1c1.metric("Test R2", "0.964", help="Proportion of salary variance explained by the model.")
-        m1c2.metric("MAE", "$4,927", help="Mean Absolute Error -- average prediction error in USD.")
-        m1c3.metric("RMSE", "$9,761", help="Root Mean Squared Error in USD.")
+        col_m1, col_m2 = st.columns(2)
 
-        st.markdown("*Salary level classifier (HistGradientBoosting):*")
-        cl1, cl2, cl3, cl4 = st.columns(4)
-        cl1.metric("Accuracy", "96.6%")
-        cl2.metric("Precision", "96.6%")
-        cl3.metric("Recall", "96.6%")
-        cl4.metric("F1 Score", "96.6%")
+        with col_m1:
+            st.markdown("##### Model 1 - General Salary (Random Forest Regressor)")
+            m1c1, m1c2, m1c3 = st.columns(3)
+            m1c1.metric("Test R2", "0.964", help="Proportion of salary variance explained by the model.")
+            m1c2.metric("MAE", "$4,927", help="Mean Absolute Error -- average prediction error in USD.")
+            m1c3.metric("RMSE", "$9,761", help="Root Mean Squared Error in USD.")
+
+            st.markdown(
+                '<div style="margin-top:12px;margin-bottom:6px;font-size:0.78rem;font-weight:700;'
+                'color:#64748B;text-transform:uppercase;letter-spacing:0.07em;">Salary Level Classifier (HistGradientBoosting)</div>',
+                unsafe_allow_html=True,
+            )
+            cl1, cl2, cl3, cl4 = st.columns(4)
+            cl1.metric("Accuracy", "96.6%")
+            cl2.metric("Precision", "96.6%")
+            cl3.metric("Recall", "96.6%")
+            cl4.metric("F1 Score", "96.6%")
+
+        with col_m2:
+            st.markdown("##### Model 2 - Data Science Salary (XGBoost)")
+            st.caption("Trained on log-transformed target (log1p); metrics reported on the original USD scale.")
+            m2c1, m2c2, m2c3 = st.columns(3)
+            m2c1.metric("Test R2 (log scale)", "0.595", help="Proportion of log-salary variance explained.")
+            m2c2.metric("MAE", "$35,913", help="Mean Absolute Error on the USD scale after inverse transform.")
+            m2c3.metric("RMSE", "$48,774", help="Root Mean Squared Error on the USD scale.")
 
         st.divider()
 
-        st.markdown("#### Model 2 - Data Science Salary (XGBoost)")
-        st.caption("Trained on log-transformed target (log1p); metrics reported on the original USD scale.")
-        m2c1, m2c2, m2c3 = st.columns(3)
-        m2c1.metric("Test R2 (log scale)", "0.595", help="Proportion of log-salary variance explained.")
-        m2c2.metric("MAE", "$35,913", help="Mean Absolute Error on the USD scale after inverse transform.")
-        m2c3.metric("RMSE", "$48,774", help="Root Mean Squared Error on the USD scale.")
+        st.markdown("##### Candidate Model Comparison")
+        st.markdown(
+            """
+<table class="perf-table">
+<thead>
+<tr>
+<th>Model 1 &#8212; General Salary</th><th>Test R2</th><th>MAE</th>
+<th style="padding-left:28px;">Model 2 &#8212; Data Science</th><th>Test R2</th><th>MAE</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>Linear Regression</td><td>0.800</td><td>$16,884</td><td style="padding-left:28px;">Linear Regression (raw)</td><td>0.349</td><td>$40,169</td></tr>
+<tr><td>Decision Tree</td><td>0.862</td><td>$13,974</td><td style="padding-left:28px;">Gradient Boosting (raw)</td><td>0.399</td><td>$38,921</td></tr>
+<tr><td>Gradient Boosting</td><td>0.892</td><td>$12,405</td><td style="padding-left:28px;">Random Forest (log)</td><td>0.576</td><td>$37,878</td></tr>
+<tr><td>XGBoost (GridSearchCV)</td><td>0.960</td><td>$5,862</td><td style="padding-left:28px;">XGBoost (log)</td><td>0.594</td><td>$37,668</td></tr>
+<tr class="best"><td>Random Forest (GridSearchCV) <span class="badge-winner">final</span></td><td>0.964</td><td>$4,927</td><td style="padding-left:28px;">XGBoost (raw + engineered) <span class="badge-winner">final</span></td><td>0.595</td><td>$35,913</td></tr>
+</tbody>
+</table>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption(
+            "Model 2 lower R2 reflects the inherently higher variance in data science salary data -- "
+            "title, remote ratio, company size, and geography all interact in ways that are harder to model "
+            "than the broader patterns in Model 1's dataset."
+        )
 
-        st.markdown("""
-**Model comparison context (Model 1):**
-
-| Model | Test R2 | MAE |
-|---|---|---|
-| Linear Regression | 0.800 | $16,884 |
-| Decision Tree | 0.862 | $13,974 |
-| Gradient Boosting | 0.892 | $12,405 |
-| XGBoost (GridSearchCV) | 0.960 | $5,862 |
-| Random Forest (GridSearchCV) -- final | 0.964 | $4,927 |
-
-**Model comparison context (Model 2):**
-
-| Model | Test R2 | MAE |
-|---|---|---|
-| Linear Regression (raw) | 0.349 | $40,169 |
-| Gradient Boosting (raw) | 0.399 | $38,921 |
-| Random Forest (log) | 0.576 | $37,878 |
-| XGBoost (log) | 0.594 | $37,668 |
-| XGBoost (raw + engineered) -- final | 0.595 | $35,913 |
-        """)
-
+    
     # -----------------------------------------------------------------------
     # FAQ
     # -----------------------------------------------------------------------
@@ -780,9 +981,9 @@ def render_about_tab():
 
         st.markdown("**How accurate are the predictions?**")
         st.markdown(
-            "Model 1 achieves a test R2 of 0.964 with a mean absolute error of about $4,900 on "
+            "Model 1 achieves a test R2 of 0.964 with a mean absolute error of about \\$4,900 on "
             "the training dataset. Model 2 achieves a test R2 of 0.595 with a mean absolute error "
-            "of about $35,900. Both figures are measured on held-out test data and represent "
+            "of about \\$35,900. Both figures are measured on held-out test data and represent "
             "in-distribution accuracy -- predictions for unusual job roles, countries, or "
             "experience combinations outside the training data will be less reliable. "
             "See the Model Performance Summary above for full comparison tables."
@@ -856,45 +1057,57 @@ def render_about_tab():
             "CSV or XLSX. If you are logged in, all predictions are automatically saved to "
             "your prediction history in the Profile tab and can be exported from there."
         )
-
     # -----------------------------------------------------------------------
     # Privacy and data notice
     # -----------------------------------------------------------------------
     with st.expander(":material/shield: Privacy and Data Notice"):
+        st.markdown("**What is stored and where**")
+        st.markdown(
+            """
+<table class="privacy-table">
+<thead>
+<tr><th>Data</th><th>Logged-in users</th><th>Anonymous users</th></tr>
+</thead>
+<tbody>
+<tr><td>Prediction inputs and results</td><td>Stored in Firestore (linked to your account)</td><td>Not stored</td></tr>
+<tr><td>Prediction feedback</td><td>Stored in Firestore (no personal identifier)</td><td>Stored in Firestore (no personal identifier)</td></tr>
+<tr><td>Uploaded PDF resumes</td><td>Processed in memory only -- never stored</td><td>Processed in memory only -- never stored</td></tr>
+<tr><td>Uploaded batch files</td><td>Processed in memory only -- never stored</td><td>Processed in memory only -- never stored</td></tr>
+<tr><td>Session data</td><td>Held in browser session state (24-hour expiry)</td><td>Held in browser session state (24-hour expiry)</td></tr>
+<tr><td>Account credentials</td><td>Managed by Firebase Authentication -- passwords are never stored in plaintext</td><td>N/A</td></tr>
+</tbody>
+</table>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("**What is not done**")
         st.markdown("""
-**What is stored and where**
-
-| Data | Logged-in users | Anonymous users |
-|---|---|---|
-| Prediction inputs and results | Stored in Firestore (linked to your account) | Not stored |
-| Prediction feedback | Stored in Firestore (no personal identifier) | Stored in Firestore (no personal identifier) |
-| Uploaded PDF resumes | Processed in memory only -- never stored | Processed in memory only -- never stored |
-| Uploaded batch files | Processed in memory only -- never stored | Processed in memory only -- never stored |
-| Session data | Held in browser session state (24-hour expiry) | Held in browser session state (24-hour expiry) |
-| Account credentials | Managed by Firebase Authentication -- passwords are never stored in plaintext | N/A |
-
-**What is not done**
-
 - Resume files are never uploaded to any server or third-party storage. Text is extracted in-memory and discarded after the session ends.
 - Batch files are never persisted. They are read into memory, predictions are run, and the file is discarded.
 - No advertising, tracking, or analytics cookies are used.
 - Prediction inputs from anonymous users are not stored and cannot be retrieved.
 - Feedback data is stored without any personal identifier for anonymous users -- it cannot be linked back to a specific person or session.
+        """)
 
-**Third-party services used**
-
+        st.markdown("**Third-party services used**")
+        st.markdown("""
 - **Firebase Authentication and Firestore** -- account management and data storage (Google Cloud)
 - **HuggingFace Dataset Repo** -- Model Hub bundle storage (private repo, token-gated)
 - **ExchangeRate API** (open.er-api.com) -- live currency exchange rates; no personal data is sent
+        """)
 
-**Data retention**
-
+        st.markdown("**Data retention**")
+        st.markdown("""
 - Prediction history is retained until the user deletes their account.
 - Account deletion removes all Firestore records linked to the account.
 - Feedback records do not contain personal identifiers and are retained for model improvement purposes.
-
-> This notice is provided for transparency. SalaryScope is an academic project and is not a commercial product. For production deployments, additional data protection measures and formal privacy policies would be appropriate.
         """)
+
+        st.info(
+            "This notice is provided for transparency. SalaryScope is an academic project and is not a commercial product. "
+            "For production deployments, additional data protection measures and formal privacy policies would be appropriate."
+        )
 
     # -----------------------------------------------------------------------
     # Tab Guide
@@ -1095,17 +1308,30 @@ def render_about_tab():
     # Dataset citations
     # -----------------------------------------------------------------------
     with st.expander(":material/dataset: Dataset Citations"):
-        st.markdown("""
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            st.markdown("""
 **Model 1 - General Salary Dataset**
 
 > Abbootalebi, A. M. (2023). *Salary by Job Title and Country*. Kaggle.
 > https://www.kaggle.com/datasets/amirmahdiabbootalebi/salary-by-job-title-and-country
 
-- Covers a broad range of job titles, countries, education levels, and experience bands
+- Covers multiple industries and job titles across a limited set of countries, with education level and experience band features
+- Country coverage in this dataset is limited; predictions for countries not represented in the training data will be less reliable
 - Used to train the Random Forest Regressor, HistGradientBoosting salary level classifier, KMeans career stage model, and Apriori association rule miner
+            """)
 
----
+            st.markdown("""
+**Exchange Rates**
 
+> Open Exchange Rates. *ExchangeRate-API*. https://open.er-api.com
+> No API key required. Rates are cached in memory and refreshed periodically during a session.
+            """)
+
+        with c2:
+            st.markdown("""
 **Model 2 - Data Science Salaries Dataset**
 
 > Chaki, A. (2023). *Data Science Salaries 2023*. Kaggle.
@@ -1113,29 +1339,15 @@ def render_about_tab():
 
 - Covers data science and AI/ML roles across experience levels, employment types, company sizes, and locations
 - Used to train the XGBoost Regressor with log-transformed target and engineered job title features
+            """)
 
----
-
-**Exchange Rates**
-
-> Open Exchange Rates. *ExchangeRate-API*. https://open.er-api.com
-> No API key required. Rates are cached in memory and refreshed periodically during a session.
-
----
-
-**Cost-of-Living Indices**
+            st.markdown("""
+**Cost-of-Living & Tax Data**
 
 > Numbeo. *Cost of Living Index by Country*. https://www.numbeo.com/cost-of-living/
 > OECD. *Purchasing Power Parities*. https://data.oecd.org/price/purchasing-power-parities-ppp.htm
-
-Values are used as approximate relative indices for cross-country salary comparison. They are periodically updated in the application and may not reflect current real-time conditions.
-
----
-
-**Tax Rate Data**
-
 > OECD. *Taxing Wages*. https://www.oecd.org/tax/taxing-wages-20725124.htm
 > Various national government tax authority publications (2023/24 fiscal year).
 
-Effective rates are approximate and used for indicative post-tax estimation only.
-        """)
+Values are used as approximate relative indices for cross-country salary comparison. Effective tax rates are approximate and used for indicative post-tax estimation only.
+            """)
