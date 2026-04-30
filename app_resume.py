@@ -1259,7 +1259,7 @@ st.markdown(f"""
 <div style="width:82px;height:82px;display:flex;justify-content:center;align-items:center;border-radius:22px;background:rgba(79,142,247,0.12);border:1px solid rgba(79,142,247,0.25);">{_logo_html}</div>
 <h1 style="margin:0;background:linear-gradient(135deg,#4F8EF7 0%,#60A5FA 50%,#93C5FD 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">SalaryScope</h1>
 </div>
-<h3 style="text-align:center;color:#9BA3B0;font-weight:400;margin-top:0;">Salary Prediction System using Machine Learning</h3>
+<h3 style="text-align:center;color:#9BA3B0;font-weight:400;margin-top:0;">Predict Salaries · Analyze Trends · Plan Smarter</h3>
 """, unsafe_allow_html=True)
 
 st.divider()
