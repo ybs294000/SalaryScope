@@ -110,12 +110,12 @@ def show_profile():
     latest_salary = df.iloc[0]["Predicted Salary"]
     top_model = df["Model"].mode().iloc[0] if not df["Model"].mode().empty else "N/A"
 
-    col1, col2, col3, col4 = st.columns(4)
+    st.write("Account:", username)
 
-    col1.metric("Account", username)
-    col2.metric("Total Predictions", total_predictions)
-    col3.metric("Average Predicted Salary", f"${avg_salary:,.2f}")
-    col4.metric("Latest Prediction", f"${latest_salary:,.2f}")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Predictions", total_predictions)
+    col2.metric("Average Predicted Salary", f"${avg_salary:,.2f}")
+    col3.metric("Latest Prediction", f"${latest_salary:,.2f}")
 
     st.caption(f"Most used model: {top_model}")
 
