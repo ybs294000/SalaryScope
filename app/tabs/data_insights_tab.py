@@ -859,7 +859,7 @@ def _app2_dash2(df):
                 agg_es, x="Experience Level", y="Avg Salary",
                 color="Company Size",
                 barmode="group",
-                title="Avg Salary -- Experience Level vs Company Size",
+                title="Avg Salary — Experience Level vs Company Size",
                 color_discrete_sequence=_C()[:3],
                 labels={"Avg Salary": "Avg Annual Salary (USD)"},
                 category_orders={"Experience Level": _EXP_ORDER, "Company Size": _SIZE_ORDER},
@@ -921,7 +921,7 @@ def _app2_dash2(df):
             fig = px.bar(
                 cnt, x="Company Size", y="Count",
                 color="Experience Level",
-                title="Workforce Distribution -- Experience Tiers by Company Size",
+                title="Workforce Distribution — Experience Tiers by Company Size",
                 color_discrete_sequence=_C()[:4],
                 labels={"Count": "Number of Records"},
                 category_orders={"Company Size": _SIZE_ORDER, "Experience Level": _EXP_ORDER},
