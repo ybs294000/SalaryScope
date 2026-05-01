@@ -406,7 +406,7 @@ def render_scenario_tab(
                 st.plotly_chart(fig_exp_sc_a1, width='stretch')
 
                 st.divider()
-                st.subheader("Salary Sensitivity -- Experience Sweep")
+                st.subheader("Salary Sensitivity — Experience Sweep")
                 st.caption(
                     "Pick one scenario as a baseline and see how predicted salary changes "
                     "as Years of Experience increases from 0 to 40, holding all other inputs fixed."
@@ -444,7 +444,7 @@ def render_scenario_tab(
                     sweep_df_plot,
                     x="Years of Experience",
                     y="Predicted Salary (USD)",
-                    title=f"Salary Sensitivity: Experience Sweep -- {sweep_scenario_a1}",
+                    title=f"Salary Sensitivity: Experience Sweep — {sweep_scenario_a1}",
                     color_discrete_sequence=[get_colorway()[0]]
                 )
                 fig_sweep_a1.update_traces(line=dict(width=2.5))
@@ -453,7 +453,7 @@ def render_scenario_tab(
                 st.caption("This chart shows how predicted salary changes as years of experience increase while all other factors remain constant.")
 
                 st.divider()
-                st.subheader("Salary Sensitivity -- Education Sweep")
+                st.subheader("Salary Sensitivity — Education Sweep")
                 st.caption(
                     "See how predicted salary changes across each education level "
                     "for the selected baseline scenario."
@@ -937,7 +937,7 @@ def render_scenario_tab(
                 st.caption("This chart shows how predicted salary varies based on work mode (on-site, hybrid, remote).")
 
                 st.divider()
-                st.subheader("Salary Sensitivity -- Experience Level Sweep")
+                st.subheader("Salary Sensitivity — Experience Level Sweep")
                 st.caption(
                     "Pick one scenario as a baseline and see how predicted salary changes "
                     "across all four experience levels, holding all other inputs fixed."
@@ -985,7 +985,7 @@ def render_scenario_tab(
                     sweep_exp_df_a2,
                     x="Experience Level",
                     y="Predicted Salary (USD)",
-                    title=f"Salary Sensitivity: Experience Level Sweep -- {sweep_scenario_a2}",
+                    title=f"Salary Sensitivity: Experience Level Sweep — {sweep_scenario_a2}",
                     markers=True,
                     color_discrete_sequence=[get_colorway()[0]],
                     text="Predicted Salary (USD)"
@@ -1003,7 +1003,7 @@ def render_scenario_tab(
                 st.caption("This chart shows how predicted salary changes across experience levels while all other inputs remain constant.")
 
                 st.divider()
-                st.subheader("Salary Sensitivity -- Company Size Sweep")
+                st.subheader("Salary Sensitivity — Company Size Sweep")
                 st.caption(
                     "See how predicted salary changes across company sizes "
                     "for the selected baseline scenario."
