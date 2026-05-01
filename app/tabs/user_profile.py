@@ -49,6 +49,7 @@ def show_profile():
 
     st.caption("Review your saved prediction history, revisit past inputs, and export your records when needed.")
 
+    st.write("Account:", username)
     st.divider()
 
     rows = get_user_predictions(username)
@@ -109,8 +110,6 @@ def show_profile():
     avg_salary = df["Predicted Salary"].mean()
     latest_salary = df.iloc[0]["Predicted Salary"]
     top_model = df["Model"].mode().iloc[0] if not df["Model"].mode().empty else "N/A"
-
-    st.write("Account:", username)
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Predictions", total_predictions)
