@@ -303,7 +303,7 @@ def render_scenario_tab(
                 st.dataframe(res_df_a1, width='stretch', hide_index=True)
 
                 best_row = res_df_a1.loc[res_df_a1["Predicted Salary (USD)"].idxmax()]
-                st.success(f"Highest predicted salary: {best_row['Scenario']} -- ${best_row['Predicted Salary (USD)']:,.0f}")
+                st.success(f"Highest predicted salary: {best_row['Scenario']} — ${best_row['Predicted Salary (USD)']:,.0f}")
 
                 st.divider()
                 st.subheader("Predicted Salary Comparison")
@@ -483,7 +483,7 @@ def render_scenario_tab(
                     edu_sweep_df_plot,
                     x="Education",
                     y="Predicted Salary (USD)",
-                    title=f"Salary by Education Level -- {sweep_scenario_a1}",
+                    title=f"Salary by Education Level — {sweep_scenario_a1}",
                     color="Education",
                     color_discrete_sequence=get_colorway()[:4],
                     text="Predicted Salary (USD)"
@@ -863,7 +863,7 @@ def render_scenario_tab(
                 st.dataframe(res_df_a2, width='stretch', hide_index=True)
 
                 best_row_a2 = res_df_a2.loc[res_df_a2["Predicted Salary (USD)"].idxmax()]
-                st.success(f"Highest predicted salary: {best_row_a2['Scenario']} -- ${best_row_a2['Predicted Salary (USD)']:,.0f}")
+                st.success(f"Highest predicted salary: {best_row_a2['Scenario']} — ${best_row_a2['Predicted Salary (USD)']:,.0f}")
 
                 st.divider()
                 st.subheader("Predicted Salary Comparison")
@@ -1040,7 +1040,7 @@ def render_scenario_tab(
                     size_sweep_df_a2,
                     x="Company Size",
                     y="Predicted Salary (USD)",
-                    title=f"Salary by Company Size -- {sweep_scenario_a2}",
+                    title=f"Salary by Company Size — {sweep_scenario_a2}",
                     color="Company Size",
                     color_discrete_sequence=get_colorway_3_stages(),
                     text="Predicted Salary (USD)"
