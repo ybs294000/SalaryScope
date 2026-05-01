@@ -191,7 +191,7 @@ def render_model_hub_tab(
     user          : Logged-in user dict (from auth layer). None = not logged in.
     is_admin_user : True if user has admin privileges.
     """
-    st.header(":material/hub: Model Hub")
+    st.header(":material/apps: Model Hub")
     st.caption(
         "Run predictions using curated models available in the hub. "
         "Each model has its own input schema and target variable."
