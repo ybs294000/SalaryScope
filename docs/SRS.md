@@ -669,7 +669,6 @@ The application communicates with external services over HTTPS. All Firebase RES
 | onnxruntime | 1.18+ | ONNX model inference for Model Hub ONNX bundles |
 | skl2onnx | 1.17+ | sklearn-to-ONNX conversion (used offline when preparing ONNX bundles) |
 | babel | Latest stable | Country name resolution (CLDR) |
-| bcrypt | Latest stable | Password hashing utility |
 | psutil | Latest stable | Memory monitoring in admin panel |
 | requests | Latest stable | HTTP calls to Firebase REST API and exchange rate API |
 

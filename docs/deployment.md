@@ -81,7 +81,7 @@ Install from `requirements.txt`:
 pip install -r requirements.txt
 ```
 
-Key packages include: `streamlit`, `scikit-learn`, `xgboost`, `shap`, `mlxtend`, `spacy`, `pdfplumber`, `firebase-admin`, `huggingface_hub>=0.20`, `reportlab`, `plotly`, `pandas`, `numpy`, `joblib`, `babel`, `bcrypt`, `psutil`, `requests`, `onnxruntime>=1.18` (required for loading ONNX bundles at runtime), `skl2onnx>=1.17` (used offline when converting sklearn models to ONNX — not required for running the app).
+Key packages include: `streamlit`, `scikit-learn`, `xgboost`, `shap`, `mlxtend`, `spacy`, `pdfplumber`, `firebase-admin`, `huggingface_hub>=0.20`, `reportlab`, `plotly`, `pandas`, `numpy`, `joblib`, `babel`, `psutil`, `requests`, `onnxruntime>=1.18` (required for loading ONNX bundles at runtime), `skl2onnx>=1.17` (used offline when converting sklearn models to ONNX — not required for running the app).
 
 For resume analysis, also download the spaCy English model:
 

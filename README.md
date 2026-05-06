@@ -1216,7 +1216,7 @@ HF_SPACE_TIMEOUT      = "180"                       # optional
 | Database | Firebase Firestore, Firebase Admin SDK |
 | Model Storage | HuggingFace Dataset Repo (via huggingface_hub SDK) |
 | AI Assistant Inference | Ollama (local), Hugging Face Space (cloud) |
-| Security | bcrypt |
+| Security | Firebase Authentication, password policy validation, rate limiting |
 | Deployment | Streamlit Cloud |
 | Language | Python 3.13+ |
 | NLP | spaCy, Regex, PhraseMatcher |
