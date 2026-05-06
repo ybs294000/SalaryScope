@@ -143,7 +143,9 @@ The application runs in a web browser, making it platform-independent and easily
 | AI Assistant | ✅ | ❌ |
 | Interview Prep | ✅ | ❌ |
 
-The lite app was built to stay within Streamlit Cloud free-tier memory limits by removing the most resource-intensive features and their dependencies (spaCy, pdfplumber, HuggingFace Hub, and the full financial tools chain). Both apps share the same Firebase project, so prediction history is unified across them.
+The full app now runs on Streamlit Community Cloud within the currently available memory envelope (about 2.7 GB RAM for the deployment environment), so the lite app is no longer framed as the only cloud-friendly option. The lite app still remains valuable as a simpler, lower-resource variant that removes the most resource-intensive features and dependencies (such as spaCy, pdfplumber, HuggingFace Hub integration, and the full financial tools chain), which helps keep startup lighter and overall usage leaner.
+
+Both apps share the same Firebase project, so prediction history is unified across them.
 
 The repository contains the complete implementation in `app_resume.py`. The lite app entry point is `app-lite.py`.
 
