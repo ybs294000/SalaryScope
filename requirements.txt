@@ -1,10 +1,11 @@
 streamlit==1.54.0
 pandas
-numpy
-scikit-learn
+# Serialized models require the same runtime versions used during training.
+numpy==2.4.4
+scikit-learn==1.8.0
 xgboost
 plotly
-joblib
+joblib==1.5.3
 requests
 reportlab
 openpyxl
