@@ -785,11 +785,11 @@ def generate_salary_leaderboard(
     # Medal logic
     def add_medal(rank, title):
         if rank == 1:
-            return f"{title} \U0001F947"
+            return f"{title} "
         elif rank == 2:
-            return f"{title} \U0001F948"
+            return f"{title} "
         elif rank == 3:
-            return f"{title} \U0001F949"
+            return f"{title} "
         return title
 
     role_avg["Job Title"] = role_avg.apply(
