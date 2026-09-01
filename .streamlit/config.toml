@@ -71,8 +71,6 @@ chartCategoricalColors = [
 # ---------------------------------------------------------------------------
 [theme.dark]
 
-base = "dark"
-
 # --primary: #3E7DE0
 # Drives: focused widget border ring, slider thumb, checkbox tick,
 #         st.button type="primary" fill, selected multiselect pills,
@@ -139,8 +137,6 @@ primaryColor             = "#4F8EF7"   # slightly brighter for the sidebar
 # (via apply_theme) will share the same visual language.
 # ---------------------------------------------------------------------------
 [theme.light]
-
-base = "light"
 
 # Blue-600 — WCAG AA contrast ratio 5.9:1 on white
 primaryColor = "#2563EB"
